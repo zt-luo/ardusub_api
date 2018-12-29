@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp",
+			"glib.h": "c",
+			"gprintf.h": "c",
+			"stdio.h": "c",
+			"gthread.h": "c",
+			"galloca.h": "c",
+			"cmath": "c",
+			"mavlink.h": "c",
+			"gio.h": "c"
+		}
+	}
+}
