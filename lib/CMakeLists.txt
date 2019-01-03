@@ -4,9 +4,9 @@ project(ardusub VERSION 0.1.0)
 add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 -W -static)
 # TODO: separate debug options
 
-set(MAVLINK_V2_0_INC_DIR "../mavlink/include/mavlink/v2.0")
+set(MAVLINK_V2_0_INC_DIR "../mavlink/v2.0")
 
-set(LIB_SRC_LIST "ardusub_interface.c")
+set(LIB_SRC_LIST "src/ardusub_interface.c")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)

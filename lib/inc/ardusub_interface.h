@@ -7,7 +7,7 @@
 
 #include <common/mavlink.h>
 
-#include "../include/ardusub_api.h"
+#include "ardusub_api.h"
 
 
 // ------------------------------------------------------------------------------

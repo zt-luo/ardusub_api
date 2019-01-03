@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "ardusub_interface.h"
+#include "../inc/ardusub_interface.h"
 
 void ardusub_api_init()
 {

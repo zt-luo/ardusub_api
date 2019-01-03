@@ -20,7 +20,8 @@
 			"ardusub_api.h\u0000ub_api.h": "c",
 			"ardusub_api.h\u0000usub_api.h": "c",
 			"ardusub_api.h\u0000_api.h": "c",
-			"ardusub_interface.h": "c"
+			"ardusub_interface.h": "c",
+			"ardusub_api.h\u0000dusub_api.h": "c"
 		}
 	}
 }

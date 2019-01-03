@@ -1,5 +1,5 @@
 /**
- * @file main.c
+ * @file simple_example.c
  * @author Zongtong Luo (luozongtong123@163.com)
  * @brief 
  * @version 0.1
@@ -9,7 +9,7 @@
  * 
  */
 
-#include "../include/ardusub_api.h"
+#include "../lib/inc/ardusub_api.h"
 
 /**
  * @brief 
