@@ -18,6 +18,7 @@ typedef enum control_mode_enum
 
 extern void ardusub_api_init();
 extern void ardusub_api_deinit();
+extern void ardusub_api_run();
 
 void ardusub_api_do_set_servo(float servo_no, float pwm);
 void ardusub_api_do_motor_test(float motor_no, float pwm);

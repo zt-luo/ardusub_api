@@ -14,7 +14,13 @@
 			"galloca.h": "c",
 			"cmath": "c",
 			"mavlink.h": "c",
-			"gio.h": "c"
+			"gio.h": "c",
+			"ardusub_api.h": "c",
+			"ardusub_api.h\u0000b_api.h": "c",
+			"ardusub_api.h\u0000ub_api.h": "c",
+			"ardusub_api.h\u0000usub_api.h": "c",
+			"ardusub_api.h\u0000_api.h": "c",
+			"ardusub_interface.h": "c"
 		}
 	}
 }

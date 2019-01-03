@@ -31,6 +31,13 @@ void ardusub_api_deinit()
     ;
 }
 
+void ardusub_api_run()
+{
+    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+    g_main_loop_run(loop);
+    g_main_loop_unref(loop);
+}
+
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer socket_udp_write)

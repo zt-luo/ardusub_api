@@ -7,7 +7,8 @@
 
 #include <common/mavlink.h>
 
-#include "ardusub_api.h"
+#include "../include/ardusub_api.h"
+
 
 // ------------------------------------------------------------------------------
 //   Defines
@@ -215,6 +216,7 @@ GMutex target_socket_mutex;
 // ------------------------------------------------------------------------------
 void ardusub_api_init();
 void ardusub_api_deinit();
+void arsusub_api_run();
 void ardusub_sys_add(guint8 sysid);
 
 void ardusub_udp_write_init(guint8 sysid, GSocket *p_target_socket);
