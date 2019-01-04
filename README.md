@@ -1,3 +1,5 @@
+**Still in unstable state.**
+
 # 环境配置
 
 1. 需要安装 [Scoop](https://scoop.sh/)
