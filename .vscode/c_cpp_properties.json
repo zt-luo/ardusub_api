@@ -47,9 +47,8 @@
             "includePath": [
                 "${SCOOP}/apps/glib2/current/include/glib-2.0/**",
                 "${SCOOP}/apps/glib2/current/lib/glib-2.0/include",
-                "${workspaceFolder}/mavlink/include/mavlink/v2.0/**",
-                "${workspaceFolder}/inc/**",
-                "${workspaceFolder}"
+                "${workspaceFolder}/mavlink/v2.0/**",
+                "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -60,9 +59,8 @@
                 "path": [
                     "${SCOOP}/apps/glib2/current/include/glib-2.0/**",
                     "${SCOOP}/apps/glib2/current/lib/glib-2.0/include",
-                    "${workspaceFolder}/mavlink/include/mavlink/v2.0/**",
-                    "${workspaceFolder}/inc/**",
-                    "${workspaceFolder}"
+                    "${workspaceFolder}/mavlink/v2.0/**",
+                    "${workspaceFolder}/**"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

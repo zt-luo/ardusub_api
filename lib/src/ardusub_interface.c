@@ -2,17 +2,17 @@
 
 #include "../inc/ardusub_interface.h"
 
-void ardusub_api_init()
+void as_api_init()
 {
     // only init once
-    if (TRUE != ardusub_init_status)
+    if (TRUE != as_init_status)
     {
         // initialize attributes
         control_status = 0; // whether the autopilot is in offboard control mode
 
-        system_id = 0;    // system id
-        autopilot_id = 0; // autopilot component id
-        companion_id = 0; // companion computer component id
+        target_system = 0;    // system id
+        target_autopilot = 0; // autopilot component id
+        target_companion = 0; // companion computer component id
 
         // serial_port = serial_port_; // serial port management object
 
@@ -20,18 +20,18 @@ void ardusub_api_init()
         parameter_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
         target_socket_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
 
-        ardusub_udp_read_init();
+        as_udp_read_init();
 
-        ardusub_init_status = TRUE;
+        as_init_status = TRUE;
     }
 }
 
-void ardusub_api_deinit()
+void as_api_deinit()
 {
     ;
 }
 
-void ardusub_api_run()
+void as_api_run()
 {
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
@@ -62,7 +62,7 @@ gboolean udp_read_callback(GIOChannel *channel,
     // g_print("%s", msg_tmp);
 
     guint8 msgid;
-    msgid = ardusub_handle_messages(msg_tmp, bytes_read);
+    msgid = as_handle_messages(msg_tmp, bytes_read);
 
     // if (FALSE != msgid)
     // {
@@ -72,7 +72,7 @@ gboolean udp_read_callback(GIOChannel *channel,
     return TRUE;
 }
 
-void ardusub_udp_read_init()
+void as_udp_read_init()
 {
     GSocket *socket_udp_read;
     GError *error = NULL;
@@ -102,7 +102,7 @@ void ardusub_udp_read_init()
     guint source = g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
 }
 
-void ardusub_udp_write_init(guint8 sysid, GSocket *p_target_socket)
+void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
 {
     GError *error = NULL;
     gchar inet_address_string[16] = {0};
@@ -129,7 +129,7 @@ void ardusub_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     }
 }
 
-void ardusub_sys_add(guint8 sysid)
+void as_sys_add(guint8 sysid)
 {
     guint8 *p_sysid = g_new0(guint8, 1);
     *p_sysid = sysid;
@@ -148,7 +148,7 @@ void ardusub_sys_add(guint8 sysid)
 
     GSocket *p_target_socket = g_new0(GSocket, 1);
     // init write socket for new system
-    ardusub_udp_write_init(sysid, p_target_socket);
+    as_udp_write_init(sysid, p_target_socket);
     g_hash_table_insert(target_socket_hash_table, p_sysid, p_target_socket);
     // p_target_socket = g_hash_table_lookup(target_socket_hash_table, p_sysid);
     // guint8 sysid123 = 1;
@@ -174,7 +174,7 @@ void ardusub_sys_add(guint8 sysid)
  * @param bytes_read :buff lenth
  * @return guint8 :FALSE if never parse successful, msgid if parse successful
  */
-guint8 ardusub_handle_messages(gchar *msg_tmp, gsize bytes_read)
+guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 {
     mavlink_message_t message;
     mavlink_status_t status;
@@ -191,7 +191,7 @@ guint8 ardusub_handle_messages(gchar *msg_tmp, gsize bytes_read)
     if (NULL == system_key[message.sysid])
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
-        ardusub_sys_add(message.sysid);
+        as_sys_add(message.sysid);
         // NOTE: this doesn't handle multiple compid for one sysid.
         current_messages->sysid = message.sysid;
         current_messages->compid = message.compid;
@@ -541,8 +541,8 @@ void do_set_servo(float servo_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
-    cmd_long.target_system = system_id;
-    cmd_long.target_component = companion_id;
+    cmd_long.target_system = target_system;
+    cmd_long.target_component = target_companion;
     cmd_long.command = MAV_CMD_DO_SET_SERVO;
     cmd_long.confirmation = 0;
     cmd_long.param1 = servo_no;
@@ -553,7 +553,7 @@ void do_set_servo(float servo_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, companion_id, &message, &cmd_long);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &cmd_long);
 
     // --------------------------------------------------------------------------
     //   WRITE
@@ -573,8 +573,8 @@ void do_motor_test(float motor_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
-    cmd_long.target_system = system_id;
-    cmd_long.target_component = companion_id;
+    cmd_long.target_system = target_system;
+    cmd_long.target_component = target_companion;
     cmd_long.command = MAV_CMD_DO_MOTOR_TEST;
     cmd_long.confirmation = 0;
     cmd_long.param1 = motor_no - 1;
@@ -589,7 +589,7 @@ void do_motor_test(float motor_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, companion_id, &message, &cmd_long);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &cmd_long);
 
     // --------------------------------------------------------------------------
     //   WRITE
@@ -608,7 +608,7 @@ void do_set_mode(control_mode_t mode_)
     // --------------------------------------------------------------------------
 
     mavlink_set_mode_t set_mode;
-    set_mode.target_system = system_id;
+    set_mode.target_system = target_system;
     set_mode.base_mode = 209; //81
     set_mode.custom_mode = mode_;
 
@@ -617,7 +617,7 @@ void do_set_mode(control_mode_t mode_)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, companion_id, &message, &set_mode);
+    mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, target_companion, &message, &set_mode);
     // --------------------------------------------------------------------------
     //   WRITE
     // --------------------------------------------------------------------------
@@ -639,12 +639,12 @@ void request_param_list(void)
     mavlink_message_t message;
 
     //companion_id STATION_COMID
-    mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, companion_id, &message, &param_list);
+    mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, target_companion, &message, &param_list);
 
     // Send
     send_udp_message(&message);
 
-    printf("request_param_list msg wrote!");
+    printf("request_param_list msg wrote!\n");
 }
 
 void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
@@ -654,8 +654,8 @@ void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_
     //   PACK PAYLOAD
     // --------------------------------------------------------------------------
     mavlink_rc_channels_override_t rc_channels_override;
-    rc_channels_override.target_system = system_id;
-    rc_channels_override.target_component = companion_id;
+    rc_channels_override.target_system = target_system;
+    rc_channels_override.target_component = target_companion;
     rc_channels_override.chan1_raw = ch1;
     rc_channels_override.chan2_raw = ch2;
     rc_channels_override.chan3_raw = ch3;
@@ -669,7 +669,7 @@ void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_rc_channels_override_encode(STATION_SYSYEM_ID, companion_id, &message,
+    mavlink_msg_rc_channels_override_encode(STATION_SYSYEM_ID, target_companion, &message,
                                             &rc_channels_override);
 
     // --------------------------------------------------------------------------
@@ -754,15 +754,15 @@ int toggle_offboard_control(bool flag)
 {
     // Prepare command for off-board mode
     mavlink_command_long_t com = {0};
-    com.target_system = system_id;
-    com.target_component = autopilot_id;
+    com.target_system = target_system;
+    com.target_component = target_autopilot;
     com.command = MAV_CMD_NAV_GUIDED_ENABLE;
     com.confirmation = true;
     com.param1 = (float)flag; // flag >0.5 => start, <0.5 => stop
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, companion_id, &message, &com);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &com);
 
     // Send the message
 }
@@ -795,15 +795,15 @@ void vehicle_disarm()
 {
     mavlink_command_long_t cmd = {0};
 
-    cmd.target_system = system_id;
-    cmd.target_component = autopilot_id;
+    cmd.target_system = target_system;
+    cmd.target_component = target_autopilot;
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
     cmd.param1 = 0;
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, companion_id, &message, &cmd);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &cmd);
 
     // Send the message
     send_udp_message(&message);

@@ -20,8 +20,8 @@
  */
 int main(int argc, char *argv[])
 {
-    ardusub_api_init();
-    ardusub_api_run();  // none return Fun
+    as_api_init();
+    as_api_run();  // none return Fun
 
     return 0;
 }

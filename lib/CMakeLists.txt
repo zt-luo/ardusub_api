@@ -1,13 +1,20 @@
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.13.0)
 project(ardusub VERSION 0.1.0)
+
+# compile options
 add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 -W -static)
 # TODO: separate debug options
 
+# include dir
 set(MAVLINK_V2_0_INC_DIR "../mavlink/v2.0")
 
-set(LIB_SRC_LIST "src/ardusub_interface.c")
+# src list
+set(LIB_SRC_LIST 
+    "src/ardusub_interface.c"
+    "src/ardusub_api.c")
 
+# check and search moudles
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_search_module(GLIB REQUIRED glib-2.0)
@@ -18,10 +25,12 @@ pkg_search_module(GIO REQUIRED gio-2.0)
 
 include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${MAVLINK_V2_0_INC_DIR})
 link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
-# target_link_libraries(${PROJECT_NAME} ${GLIB_LIBRARIES} ${GTHREAD_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME} ${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
 
+# generate shared library
 add_library(ardusub_shared SHARED ${LIB_SRC_LIST})
-SET_TARGET_PROPERTIES(ardusub_shared PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
+set_target_properties(ardusub_shared PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
 
+# generate static library
 add_library(ardusub_static STATIC ${LIB_SRC_LIST})
-SET_TARGET_PROPERTIES(ardusub_static PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
+set_target_properties(ardusub_static PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
