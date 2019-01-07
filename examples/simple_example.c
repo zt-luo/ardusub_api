@@ -24,7 +24,8 @@
  */
 int main(int argc, char *argv[])
 {
-    as_api_init("192.168.1.");
+    // as_api_init("192.168.1.");
+    as_api_init(NULL);
 
     // as_api_run();
 
@@ -46,12 +47,9 @@ int main(int argc, char *argv[])
 
     g_usleep(2000000);
 
-    as_api_manual_control(200, 0, 0, 0, 0);
+    as_api_manual_control(0, 0, 0, 0, 0);
 
-    g_usleep(2000000);
-    g_usleep(2000000);
-    g_usleep(2000000);
-    g_usleep(2000000);
+    g_usleep(1000000);
 
     g_print("vehicle disarm...\n");
     vehicle_disarm();

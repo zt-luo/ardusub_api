@@ -84,6 +84,7 @@ void as_udp_read_init()
     GError *error = NULL;
     GSocketAddress *gsock_addr_read = G_SOCKET_ADDRESS(
         // g_inet_socket_address_new(g_inet_address_new_from_string("192.168.1.120"), 14551));
+        // g_inet_socket_address_new(g_inet_address_new_from_string("192.168.2.1"), 14551));
         g_inet_socket_address_new(g_inet_address_new_any(G_SOCKET_FAMILY_IPV4), 14551));
     socket_udp_read = g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &error);
 
@@ -189,8 +190,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     g_mutex_lock(&parameter_mutex);
     g_mutex_lock(&target_socket_mutex);
 
-    
-    if (NULL == system_key[message.sysid])  // find new system
+    if (NULL == system_key[message.sysid]) // find new system
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
         as_sys_add(message.sysid);
@@ -530,6 +530,16 @@ void as_handle_message_id(mavlink_message_t message)
 
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
 {
+    uint8_t sys_id = 1;
+
+    if (system_count > 1)
+    {
+        va_list ap;
+        va_start(ap, 1);
+        sys_id = va_arg(ap, int);
+        va_end(ap);
+    }
+
     mavlink_message_t message;
     mavlink_manual_control_t mc;
 
@@ -538,25 +548,9 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
     mc.z = z;
     mc.r = r;
     mc.buttons = buttons;
+    mc.target = sys_id;
 
-    uint8_t sys_id = 0;
-    uint8_t comp_id = 0;
-
-    if (system_count > 1)
-    {
-        va_list ap;
-        va_start(ap, 2);
-        sys_id = va_arg(ap, int);
-        comp_id = va_arg(ap, int);
-        va_end(ap);
-    }
-    else
-    {
-        sys_id = 1;
-        comp_id = 1;
-    }
-
-    mavlink_msg_manual_control_encode(sys_id, comp_id, &message, &mc);
+    mavlink_msg_manual_control_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &mc);
 
     send_udp_message(&message);
 }
@@ -620,7 +614,7 @@ void do_set_servo(float servo_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &cmd_long);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd_long);
 
     // --------------------------------------------------------------------------
     //   WRITE
@@ -653,7 +647,7 @@ void do_motor_test(float motor_no, float pwm)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &cmd_long);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd_long);
 
     // --------------------------------------------------------------------------
     //   WRITE
@@ -681,7 +675,7 @@ void do_set_mode(control_mode_t mode_)
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &set_mode);
+    mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &set_mode);
     // --------------------------------------------------------------------------
     //   WRITE
     // --------------------------------------------------------------------------
@@ -703,7 +697,7 @@ void request_param_list(void)
     mavlink_message_t message;
 
     //companion_id STATION_COMID
-    mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &param_list);
+    mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &param_list);
 
     // Send
     send_udp_message(&message);
@@ -733,7 +727,7 @@ void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_
     // --------------------------------------------------------------------------
 
     mavlink_message_t message;
-    mavlink_msg_rc_channels_override_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message,
+    mavlink_msg_rc_channels_override_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
                                             &rc_channels_override);
 
     // --------------------------------------------------------------------------
@@ -826,7 +820,7 @@ int toggle_offboard_control(bool flag)
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &com);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &com);
 
     // Send the message
     // TODO:
@@ -849,7 +843,7 @@ void vehicle_arm()
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &cmd);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
     // Send the message
     send_udp_message(&message);
@@ -870,7 +864,7 @@ void vehicle_disarm()
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, SRATION_COMPONENT_ID, &message, &cmd);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
     // Send the message
     send_udp_message(&message);

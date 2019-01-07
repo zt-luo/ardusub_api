@@ -28,7 +28,7 @@
 #define MAX_BYTES (279)
 
 #define STATION_SYSYEM_ID (255)
-#define SRATION_COMPONENT_ID (0)
+#define STATION_COMPONENT_ID (0)
 
 #define SUBNET_ADDRESS ("192.168.2.")
 
