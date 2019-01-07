@@ -2,7 +2,17 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(ardusub_api VERSION 0.1.0)
 
-add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 -W -static)
+# check and search moudles
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+pkg_search_module(GLIB REQUIRED glib-2.0)
+pkg_check_modules(GTHREAD REQUIRED gthread-2.0)
+pkg_search_module(GTHREAD REQUIRED gthread-2.0)
+pkg_check_modules(GIO REQUIRED gio-2.0)
+pkg_search_module(GIO REQUIRED gio-2.0)
+
+include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
+link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     MESSAGE(STATUS "current platform: Linux ")

@@ -15,7 +15,7 @@
             "type": "cppdbg",
             "request": "launch",
             // "program": "${fileDirname}/build/${fileBasenameNoExtension}.exe",
-            "program": "${fileDirname}/build/main.exe",
+            "program": "${workspaceFolder}/build/examples/simple_example.exe",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

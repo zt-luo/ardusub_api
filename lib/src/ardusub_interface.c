@@ -1,8 +1,6 @@
-#include <stdio.h>
-
 #include "../inc/ardusub_interface.h"
 
-void as_api_init()
+void as_api_init(char* p_subnet_address)
 {
     // only init once
     if (TRUE != as_init_status)
@@ -13,6 +11,15 @@ void as_api_init()
         target_system = 0;    // system id
         target_autopilot = 0; // autopilot component id
         target_companion = 0; // companion computer component id
+
+        if (NULL == p_subnet_address)
+        {
+            subnet_address = p_subnet_address;
+        }
+        else
+        {
+            subnet_address = SUBNET_ADDRESS;
+        }
 
         // serial_port = serial_port_; // serial port management object
 
@@ -99,7 +106,7 @@ void as_udp_read_init()
 
     GIOChannel *channel = g_io_channel_win32_new_socket(fd);
     g_io_channel_set_encoding(channel, NULL, &error);
-    guint source = g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
+    g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
 }
 
 void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
@@ -107,7 +114,7 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     GError *error = NULL;
     gchar inet_address_string[16] = {0};
 
-    g_snprintf(inet_address_string, 16, "%s%d", SUBNET_ADDRESS, sysid + 1);
+    g_snprintf(inet_address_string, 16, "%s%d", subnet_address, sysid + 1);
 
     GSocketAddress *gsock_addr_write = G_SOCKET_ADDRESS(
         g_inet_socket_address_new(g_inet_address_new_from_string(inet_address_string), 14551));
@@ -131,6 +138,8 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
 
 void as_sys_add(guint8 sysid)
 {
+    system_count++;
+
     guint8 *p_sysid = g_new0(guint8, 1);
     *p_sysid = sysid;
     system_key[sysid] = p_sysid;
@@ -188,6 +197,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     if (FALSE == msgReceived)
         return msgReceived;
 
+    // find new system
     if (NULL == system_key[message.sysid])
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
@@ -234,7 +244,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     case MAVLINK_MSG_ID_HEARTBEAT:
     {
-        printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+        // printf("MAVLINK_MSG_ID_HEARTBEAT\n");
         mavlink_msg_heartbeat_decode(&message, &(current_messages->heartbeat));
 
         /* Queries the system monotonic time. in microseconds (gint64) */
@@ -251,6 +261,8 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         //        current_messages->heartbeat.type, current_messages->heartbeat.autopilot,
         //        current_messages->heartbeat.base_mode, current_messages->heartbeat.custom_mode,
         //        current_messages->heartbeat.system_status, current_messages->heartbeat.mavlink_version);
+
+        g_message("Heartbeat from system:%d", current_messages->sysid);
 
         // send heartbeat
         send_heartbeat();
@@ -352,11 +364,11 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
     case MAVLINK_MSG_ID_COMMAND_ACK:
     {
-        printf("MAVLINK_MSG_ID_COMMAND_ACK\n");
+        // printf("MAVLINK_MSG_ID_COMMAND_ACK\n");
         mavlink_msg_command_ack_decode(&message, &(current_messages->command_ack));
         current_messages->time_stamps.command_ack = g_get_monotonic_time();
-        printf("Command_ACK, command:%d, result:%d. \n", current_messages->command_ack.command,
-               current_messages->command_ack.result);
+        // printf("Command_ACK, command:%d, result:%d. \n", current_messages->command_ack.command,
+        //        current_messages->command_ack.result);
         break;
     }
     case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
@@ -465,7 +477,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
     case MAVLINK_MSG_ID_STATUSTEXT:
     {
-        printf("MAVLINK_MSG_ID_STATUSTEXT\n");
+        // printf("MAVLINK_MSG_ID_STATUSTEXT\n");
         mavlink_msg_statustext_decode(&message, &(current_messages->statustext));
         current_messages->time_stamps.statustext = g_get_monotonic_time();
         printf("severity: %d, statustext: ", current_messages->statustext.severity);
@@ -475,26 +487,36 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
     case MAVLINK_MSG_ID_PARAM_VALUE:
     {
-        printf("MAVLINK_MSG_ID_PARAM_VALUE\n");
+        // printf("MAVLINK_MSG_ID_PARAM_VALUE\n");
         mavlink_msg_param_value_decode(&message, &(current_messages->param_value));
         current_messages->time_stamps.param_value = g_get_monotonic_time();
 
-        for (gint i = 0; i < 16; i++)
+        guint16 _param_index = current_messages->param_value.param_index;
+
+        if (_param_index > PARAM_COUNT - 1)
         {
-            current_parameter[current_messages->param_value.param_index].param_id[i] =
-                current_messages->param_value.param_id[i];
+            g_warning("PARAM_COUNT out of range! param_index:%d", _param_index);
+            //TODO: fix this
+        }
+        else
+        {
+            for (gint i = 0; i < 16; i++)
+            {
+                current_parameter[_param_index].param_id[i] =
+                    current_messages->param_value.param_id[i];
+            }
+
+            current_parameter[_param_index].param_type =
+                current_messages->param_value.param_type;
+
+            current_parameter[_param_index].param_value.param_float =
+                current_messages->param_value.param_value;
         }
 
-        current_parameter[current_messages->param_value.param_index].param_type =
-            current_messages->param_value.param_type;
-
-        current_parameter[current_messages->param_value.param_index].param_value.param_float =
-            current_messages->param_value.param_value;
-
-        printf("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
-               current_messages->param_value.param_id, current_messages->param_value.param_value,
-               current_messages->param_value.param_type, current_messages->param_value.param_count,
-               current_messages->param_value.param_index);
+        // printf("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
+        //        current_messages->param_value.param_id, current_messages->param_value.param_value,
+        //        current_messages->param_value.param_type, current_messages->param_value.param_count,
+        //        current_messages->param_value.param_index);
 
         break;
     }
@@ -512,11 +534,62 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     return message.msgid;
 }
 
+void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
+{
+    mavlink_message_t message;
+    mavlink_manual_control_t mc;
+
+    mc.x = x;
+    mc.y = y;
+    mc.z = z;
+    mc.r = r;
+    mc.buttons = buttons;
+
+    uint8_t sys_id = 0;
+    uint8_t comp_id = 0;
+
+    if (system_count > 1)
+    {
+        va_list ap;
+        va_start(ap, 2);
+        sys_id = va_arg(ap, int);
+        comp_id = va_arg(ap, int);
+        va_end(ap);
+    }
+    else
+    {
+        sys_id = 1;
+        comp_id = 1;
+    }
+
+    mavlink_msg_manual_control_encode(sys_id, comp_id, &message, &mc);
+
+    send_udp_message(&message);
+}
+
+Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
+{
+    g_mutex_lock(&message_mutex);
+    Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key[sysid]);
+    g_mutex_unlock(&message_mutex);
+
+    return p_message;
+}
+
+int as_api_check_active_sys(uint8_t sysid)
+{
+    if (NULL == system_key[sysid])
+    {
+        return 0;
+    }
+    else
+    {
+        return !0;
+    }
+}
+
 void send_heartbeat(void)
 {
-    char msg_buf[MAX_BYTES] = {0};
-    unsigned msg_len;
-
     mavlink_message_t message;
     mavlink_heartbeat_t hb;
 
@@ -558,12 +631,9 @@ void do_set_servo(float servo_no, float pwm)
     // --------------------------------------------------------------------------
     //   WRITE
     // --------------------------------------------------------------------------
+    send_udp_message(&message);
 
-    // do the write
-    // int len = write_message(message);
-    printf("do_set_servo msg wrote!");
-
-    // check the write
+    // printf("do_set_servo msg wrote!");
 }
 
 void do_motor_test(float motor_no, float pwm)
@@ -765,6 +835,9 @@ int toggle_offboard_control(bool flag)
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &com);
 
     // Send the message
+    // TODO:
+
+    return 0;
 }
 
 // ------------------------------------------------------------------------------
@@ -774,15 +847,15 @@ void vehicle_arm()
 {
     mavlink_command_long_t cmd = {0};
 
-    cmd.target_system = 1;
-    cmd.target_component = 1;
+    cmd.target_system = target_system;
+    cmd.target_component = target_autopilot;
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
-    cmd.param1 = 1.0;
+    cmd.param1 = 1.0F;
 
     // Encode
     mavlink_message_t message;
-    mavlink_msg_command_long_encode(255, 0, &message, &cmd);
+    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, target_companion, &message, &cmd);
 
     // Send the message
     send_udp_message(&message);
@@ -799,7 +872,7 @@ void vehicle_disarm()
     cmd.target_component = target_autopilot;
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
-    cmd.param1 = 0;
+    cmd.param1 = 0.0F;
 
     // Encode
     mavlink_message_t message;
@@ -819,7 +892,9 @@ static void send_udp_message(mavlink_message_t *message)
     msg_len = mavlink_msg_to_send_buffer((uint8_t *)msg_buf, message);
 
     // Send
+    g_mutex_lock(&send_socket_mutex);
     g_socket_send(current_target_socket, msg_buf, msg_len, NULL, &error);
+    g_mutex_unlock(&send_socket_mutex);
 
     /* don't forget to check for errors */
     if (error != NULL)

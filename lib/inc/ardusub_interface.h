@@ -1,4 +1,6 @@
-#pragma once
+#include <stdio.h>
+#include <stdint.h>
+#include <stdarg.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -27,167 +29,150 @@
 
 #define STATION_SYSYEM_ID (255)
 
-#define SUBNET_ADDRESS ("192.168.1.")
+#define SUBNET_ADDRESS ("192.168.2.")
 
-    // ------------------------------------------------------------------------------
-    //   Data Structures
-    // ------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+//   Data Structures
+// ------------------------------------------------------------------------------
 
-    typedef struct Time_Stamps_struct
-    {
-        uint64_t heartbeat;
-        uint64_t sys_status;
-        uint64_t battery_status;
-        uint64_t radio_status;
-        uint64_t local_position_ned;
-        uint64_t global_position_int;
-        uint64_t position_target_local_ned;
-        uint64_t position_target_global_int;
-        uint64_t highres_imu;
-        uint64_t attitude;
-        uint64_t servo_output_raw;
-        uint64_t command_ack;
-        uint64_t named_value_float;
-        uint64_t vfr_hud;
-        uint64_t power_status;
-        uint64_t system_time;
-        uint64_t mission_current;
-        uint64_t gps_raw_int;
-        uint64_t nav_controller_output;
-        uint64_t rc_channels;
-        uint64_t vibration;
-        uint64_t raw_imu;
-        uint64_t scaled_pressure;
-        uint64_t scaled_imu2;
-        uint64_t scaled_pressure2;
-        uint64_t rc_channels_raw;
-        uint64_t statustext;
-        uint64_t param_value;
-    } Time_Stamps;
+typedef struct Time_Stamps_s
+{
+    uint64_t heartbeat;
+    uint64_t sys_status;
+    uint64_t battery_status;
+    uint64_t radio_status;
+    uint64_t local_position_ned;
+    uint64_t global_position_int;
+    uint64_t position_target_local_ned;
+    uint64_t position_target_global_int;
+    uint64_t highres_imu;
+    uint64_t attitude;
+    uint64_t servo_output_raw;
+    uint64_t command_ack;
+    uint64_t named_value_float;
+    uint64_t vfr_hud;
+    uint64_t power_status;
+    uint64_t system_time;
+    uint64_t mission_current;
+    uint64_t gps_raw_int;
+    uint64_t nav_controller_output;
+    uint64_t rc_channels;
+    uint64_t vibration;
+    uint64_t raw_imu;
+    uint64_t scaled_pressure;
+    uint64_t scaled_imu2;
+    uint64_t scaled_pressure2;
+    uint64_t rc_channels_raw;
+    uint64_t statustext;
+    uint64_t param_value;
+} Time_Stamps_t;
 
-    inline void reset_timestamps(void)
-    {
-        ;
-    }
+typedef struct messages_set_s
+{
 
-    // Struct containing information on the MAV we are currently connected to
+    int sysid;
+    int compid;
 
-    typedef struct Mavlink_Messages_
-    {
+    // Heartbeat
+    mavlink_heartbeat_t heartbeat;
 
-        int sysid;
-        int compid;
+    // System Status
+    mavlink_sys_status_t sys_status;
 
-        // Heartbeat
-        mavlink_heartbeat_t heartbeat;
+    // Ping
+    mavlink_ping_t ping;
 
-        // System Status
-        mavlink_sys_status_t sys_status;
+    // Battery Status
+    mavlink_battery_status_t battery_status;
 
-        // Ping
-        mavlink_ping_t ping;
+    // Radio Status
+    mavlink_radio_status_t radio_status;
 
-        // Battery Status
-        mavlink_battery_status_t battery_status;
+    // Local Position
+    mavlink_local_position_ned_t local_position_ned;
 
-        // Radio Status
-        mavlink_radio_status_t radio_status;
+    // Global Position
+    mavlink_global_position_int_t global_position_int;
 
-        // Local Position
-        mavlink_local_position_ned_t local_position_ned;
+    // Local Position Target
+    mavlink_position_target_local_ned_t position_target_local_ned;
 
-        // Global Position
-        mavlink_global_position_int_t global_position_int;
+    // Global Position Target
+    mavlink_position_target_global_int_t position_target_global_int;
 
-        // Local Position Target
-        mavlink_position_target_local_ned_t position_target_local_ned;
+    // HiRes IMU
+    mavlink_highres_imu_t highres_imu;
 
-        // Global Position Target
-        mavlink_position_target_global_int_t position_target_global_int;
+    // Attitude
+    mavlink_attitude_t attitude;
 
-        // HiRes IMU
-        mavlink_highres_imu_t highres_imu;
+    // Servo Output Raw
+    mavlink_servo_output_raw_t servo_output_raw;
 
-        // Attitude
-        mavlink_attitude_t attitude;
+    // Command ACK
+    mavlink_command_ack_t command_ack;
 
-        // Servo Output Raw
-        mavlink_servo_output_raw_t servo_output_raw;
+    // Named Value Float
+    mavlink_named_value_float_t named_value_float;
 
-        // Command ACK
-        mavlink_command_ack_t command_ack;
+    // VFR_HUD
+    mavlink_vfr_hud_t vfr_hud;
 
-        // Named Value Float
-        mavlink_named_value_float_t named_value_float;
+    // Power Status
+    mavlink_power_status_t power_status;
 
-        // VFR_HUD
-        mavlink_vfr_hud_t vfr_hud;
+    // System Time
+    mavlink_system_time_t system_time;
 
-        // Power Status
-        mavlink_power_status_t power_status;
+    // Mission Current
+    mavlink_mission_current_t mission_current;
 
-        // System Time
-        mavlink_system_time_t system_time;
+    // GPS Raw INT
+    mavlink_gps_raw_int_t gps_raw_int;
 
-        // Mission Current
-        mavlink_mission_current_t mission_current;
+    // NAV Controller Output
+    mavlink_nav_controller_output_t nav_controller_output;
 
-        // GPS Raw INT
-        mavlink_gps_raw_int_t gps_raw_int;
+    // RC Channels
+    mavlink_rc_channels_t rc_channels;
 
-        // NAV Controller Output
-        mavlink_nav_controller_output_t nav_controller_output;
+    // Vibration
+    mavlink_vibration_t vibration;
 
-        // RC Channels
-        mavlink_rc_channels_t rc_channels;
+    // Raw IMU
+    mavlink_raw_imu_t raw_imu;
 
-        // Vibration
-        mavlink_vibration_t vibration;
+    // Scaled Pressure
+    mavlink_scaled_pressure_t scaled_pressure;
 
-        // Raw IMU
-        mavlink_raw_imu_t raw_imu;
+    // Scaled IMU2
+    mavlink_scaled_imu2_t scaled_imu2;
 
-        // Scaled Pressure
-        mavlink_scaled_pressure_t scaled_pressure;
+    // Scaled Pressure (depth sensor)
+    mavlink_scaled_pressure2_t scaled_pressure2;
 
-        // Scaled IMU2
-        mavlink_scaled_imu2_t scaled_imu2;
+    // RC channels raw
+    mavlink_rc_channels_raw_t rc_channels_raw;
 
-        // Scaled Pressure (depth sensor)
-        mavlink_scaled_pressure2_t scaled_pressure2;
+    // StatusText
+    mavlink_statustext_t statustext;
 
-        // RC channels raw
-        mavlink_rc_channels_raw_t rc_channels_raw;
+    // Param Value
+    mavlink_param_value_t param_value;
 
-        // StatusText
-        mavlink_statustext_t statustext;
+    // System Parameters?
 
-        // Param Value
-        mavlink_param_value_t param_value;
+    // Time Stamps
+    Time_Stamps_t time_stamps;
 
-        // System Parameters?
+} Mavlink_Messages_t;
 
-        // Time Stamps
-        Time_Stamps time_stamps;
-
-    } Mavlink_Messages_t;
-
-    typedef struct Mavlink_Parameter_s
-    {
-        char param_id[16];
-        mavlink_param_union_t param_value;
-        enum MAV_PARAM_TYPE param_type; // NOTE: if param_type == 0 , then this Parameter is empty.
-    } Mavlink_Parameter_t;
-
-    typedef struct Debug_Info_Bite_s
-    {
-        guint64 b000_b063;
-        guint64 b064_b127;
-        guint64 b128_b191;
-        guint64 b192_b255;
-        guint64 b256_b319;
-        guint64 b320_b383;
-    }  Debug_Info_Bite_t;
+typedef struct Mavlink_Parameter_s
+{
+    char param_id[16];
+    mavlink_param_union_t param_value;
+    enum MAV_PARAM_TYPE param_type; // NOTE: if param_type == 0 , then this Parameter is empty.
+} Mavlink_Parameter_t;
 
 #ifdef __cplusplus
 extern "C"
@@ -206,7 +191,11 @@ extern "C"
     static int target_autopilot;
     static int target_companion;
 
+    static guint system_count;
+
     static gboolean as_init_status;
+
+    static char* subnet_address;
 
     /* START only manipulated by as_handle_messages() START */
     static Mavlink_Messages_t *current_messages;
@@ -224,14 +213,21 @@ extern "C"
     GMutex message_mutex;
     GMutex parameter_mutex;
     GMutex target_socket_mutex;
+    GMutex send_socket_mutex;
 
     // ------------------------------------------------------------------------------
     //   Prototypes
     // ------------------------------------------------------------------------------
-    void as_api_init();
+    void as_api_init(char* subnet_address);
     void as_api_deinit();
     void as_api_run();
-    void as_sys_add(guint8 sysid);
+    void as_sys_add(uint8_t sysid);
+
+    int as_api_check_active_sys(uint8_t sysid);
+
+    void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
+
+        Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 
     void as_udp_write_init(guint8 sysid, GSocket *p_target_socket);
     void as_udp_read_init();
@@ -243,9 +239,6 @@ extern "C"
     void disable_offboard_control();
     void vehicle_arm();
     void vehicle_disarm();
-
-    void start();
-    void stop();
 
     void do_set_servo(float servo_no, float pwm);
     void do_motor_test(float motor_no, float pwm);
