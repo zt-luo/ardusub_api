@@ -28,6 +28,7 @@
 #define MAX_BYTES (279)
 
 #define STATION_SYSYEM_ID (255)
+#define SRATION_COMPONENT_ID (0)
 
 #define SUBNET_ADDRESS ("192.168.2.")
 
@@ -189,7 +190,6 @@ extern "C"
     //target system id
     static int target_system;
     static int target_autopilot;
-    static int target_companion;
 
     static guint system_count;
 

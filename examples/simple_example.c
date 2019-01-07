@@ -49,6 +49,9 @@ int main(int argc, char *argv[])
     as_api_manual_control(200, 0, 0, 0, 0);
 
     g_usleep(2000000);
+    g_usleep(2000000);
+    g_usleep(2000000);
+    g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
     vehicle_disarm();
