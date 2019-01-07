@@ -233,6 +233,7 @@ extern "C"
     void as_udp_read_init();
 
     guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read);
+    void as_handle_message_id(mavlink_message_t message);
     int as_write_message(mavlink_message_t message);
 
     void enable_offboard_control();

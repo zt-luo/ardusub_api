@@ -1,6 +1,6 @@
 #include "../inc/ardusub_interface.h"
 
-void as_api_init(char* p_subnet_address)
+void as_api_init(char *p_subnet_address)
 {
     // only init once
     if (TRUE != as_init_status)
@@ -143,35 +143,21 @@ void as_sys_add(guint8 sysid)
     *p_sysid = sysid;
     system_key[sysid] = p_sysid;
 
-    // lock the hash table
-    g_mutex_lock(&message_mutex);
-    g_mutex_lock(&parameter_mutex);
-    g_mutex_lock(&target_socket_mutex);
-
     Mavlink_Messages_t *p_message = g_new0(Mavlink_Messages_t, 1);
     g_hash_table_insert(message_hash_table, p_sysid, p_message);
 
     Mavlink_Parameter_t *p_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
     g_hash_table_insert(parameter_hash_table, p_sysid, p_parameter);
 
-    GSocket *p_target_socket = g_new0(GSocket, 1);
     // init write socket for new system
+    GSocket *p_target_socket = g_new0(GSocket, 1);
     as_udp_write_init(sysid, p_target_socket);
     g_hash_table_insert(target_socket_hash_table, p_sysid, p_target_socket);
-    // p_target_socket = g_hash_table_lookup(target_socket_hash_table, p_sysid);
-    // guint8 sysid123 = 1;
-    // p_target_socket = g_hash_table_lookup(target_socket_hash_table, &sysid123);
-    // p_target_socket = g_hash_table_lookup(target_socket_hash_table, system_key[sysid]);
 
     // set current message parameter and target_socket.
     current_messages = p_message;
     current_parameter = p_parameter;
     current_target_socket = p_target_socket;
-
-    // unlock the hash table
-    g_mutex_unlock(&message_mutex);
-    g_mutex_unlock(&parameter_mutex);
-    g_mutex_unlock(&target_socket_mutex);
 }
 
 /**
@@ -194,38 +180,36 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
 
     if (FALSE == msgReceived)
+    {
         return msgReceived;
+    }
 
-    // find new system
-    if (NULL == system_key[message.sysid])
+    // lock the hash table
+    g_mutex_lock(&message_mutex);
+    g_mutex_lock(&parameter_mutex);
+    g_mutex_lock(&target_socket_mutex);
+
+    
+    if (NULL == system_key[message.sysid])  // find new system
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
         as_sys_add(message.sysid);
+
         // NOTE: this doesn't handle multiple compid for one sysid.
         current_messages->sysid = message.sysid;
         current_messages->compid = message.compid;
-        g_mutex_lock(&message_mutex);
+
         //TODO: request full parameters
         request_param_list(); // no guarantee
     }
     else
     {
-        // lock the hash table
-        g_mutex_lock(&message_mutex);
-        g_mutex_lock(&parameter_mutex);
-        g_mutex_lock(&target_socket_mutex);
 
         Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key[message.sysid]);
 
         Mavlink_Parameter_t *p_parameter = g_hash_table_lookup(parameter_hash_table, system_key[message.sysid]);
 
         GSocket *p_target_socket = g_hash_table_lookup(target_socket_hash_table, system_key[message.sysid]);
-
-        // unlock the hash table
-        // NOTE: do not unlock message_mutex untill message handled!!
-        // g_mutex_unlock(&message_mutex);
-        g_mutex_unlock(&parameter_mutex);
-        g_mutex_unlock(&target_socket_mutex);
 
         // set current message parameter and target_socket.
         current_messages = p_message;
@@ -240,6 +224,18 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         target_autopilot = message.compid;
     }
 
+    as_handle_message_id(message);
+
+    // unlock the message hash table
+    g_mutex_unlock(&message_mutex);
+    g_mutex_unlock(&parameter_mutex);
+    g_mutex_unlock(&target_socket_mutex);
+
+    return message.msgid;
+}
+
+void as_handle_message_id(mavlink_message_t message)
+{
     // Handle Message ID
     switch (message.msgid)
     {
@@ -530,11 +526,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
 
     } // end: switch msgid
-
-    // unlock the message hash table
-    g_mutex_unlock(&message_mutex);
-
-    return message.msgid;
 }
 
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
