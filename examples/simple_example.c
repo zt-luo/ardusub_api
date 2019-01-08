@@ -24,8 +24,22 @@
  */
 int main(int argc, char *argv[])
 {
-    // as_api_init("192.168.1.");
-    as_api_init(NULL);
+    int s;
+    g_print("input 1 or 2 :");
+    scanf("%d", &s);
+    g_print("subnet address 192.168.%d.*\n", s);
+    if (1 == s)
+    {
+        as_api_init("192.168.1.");
+    }
+    else if (2 == s)
+    {
+        as_api_init(NULL);
+    }
+    else
+    {
+        g_error("invalde input!");
+    }
 
     // as_api_run();
 
@@ -49,7 +63,8 @@ int main(int argc, char *argv[])
 
     as_api_manual_control(0, 0, 0, 0, 0);
 
-    g_usleep(1000000);
+    g_usleep(2000000);
+    g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
     vehicle_disarm();

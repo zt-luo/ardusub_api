@@ -2,7 +2,7 @@
 
 void as_api_init(char *p_subnet_address)
 {
-    // only init once
+    //! only init once
     if (TRUE != as_init_status)
     {
         // initialize attributes

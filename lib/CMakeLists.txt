@@ -6,10 +6,6 @@ project(ardusub VERSION 0.1.0)
 add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 -W -Wall -static)
 # TODO: separate debug options
 
-# include dir
-set(MAVLINK_V2_0_INC_DIR "../mavlink/v2.0")
-include_directories(${MAVLINK_V2_0_INC_DIR})
-
 # src list
 set(LIB_SRC_LIST 
     "src/ardusub_api.c"

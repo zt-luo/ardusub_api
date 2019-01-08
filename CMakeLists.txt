@@ -14,6 +14,10 @@ pkg_search_module(GIO REQUIRED gio-2.0)
 include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
 link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
 
+# add mavlink include dir
+set(MAVLINK_V2_0_INC_DIR "mavlink/v2.0")
+include_directories(${MAVLINK_V2_0_INC_DIR})
+
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     MESSAGE(STATUS "current platform: Linux ")
 
@@ -30,6 +34,7 @@ ENDIF (CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 ADD_SUBDIRECTORY(lib)
 ADD_SUBDIRECTORY(examples)
+ADD_SUBDIRECTORY("tools/msg decoder")
 
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 # set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

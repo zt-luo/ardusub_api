@@ -5,12 +5,11 @@
 // ${fileDirname}: the current opened file's dirname    
 // ${fileExtname}: the current opened file's extension  
 // ${cwd}: the current working directory of the spawned process
-
 {
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "Launch simple_example",
             //"preLaunchTask": "build",
             "type": "cppdbg",
             "request": "launch",
@@ -30,5 +29,27 @@
                     "ignoreFailures": true
                 }
             ]
-        }]
+        },
+        {
+            "name": "Launch msg decoder",
+            //"preLaunchTask": "build",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/tools/msg decoder/decoder.exe",
+            "args": ["fd0b000065ff00450000d9030300f50103000000013f51"],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build/tools/msg decoder",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
 }
