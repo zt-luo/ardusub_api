@@ -19,9 +19,10 @@ Application Options:
 ``` powershell
 .\decoder.exe -r fd0b000000ff0045000003000300f5010300000001eb6f fd0b000002ff0045000003000300f50103000000013496 fd0900000fff00000000000000000608c00403db85
 
-.\decoder.exe -j .\msg.json
+.\decoder.exe -j .\msg.json > .\msg.txt
 ```
-json file is export from Wireshark. 
+
+json file is export from Wireshark.  
 File -> Export Packet Dissections -> As JSON...
 
 ![Export Packet Dissections](https://raw.githubusercontent.com/luozongtong123/ardusub_api/master/doc/img/export_packet_dissections.png)
