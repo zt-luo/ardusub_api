@@ -9,14 +9,18 @@ gsize cal_str_len(gchar *str);
 void as_handle_message_id(mavlink_message_t message);
 void json_iterator(JsonArray *array, guint index_, JsonNode *element_node, gpointer user_data);
 
+mavlink_message_t message;
+mavlink_status_t status;
+
+gsize raw_msg_count = 0;
+gsize decoded_msg_count = 0;
+
 int main(int argc, char const *argv[])
 {
     JsonParser *parser;
     JsonNode *root, *udp_pack, *data;
     JsonReader *reader;
     GError *error = NULL;
-
-    gsize udp_pack_count = 0;
 
     parser = json_parser_new();
 
@@ -37,30 +41,21 @@ int main(int argc, char const *argv[])
     root = json_parser_get_root(parser);
     json_node_seal(root);
     reader = json_reader_new(root);
-    if (TRUE == json_reader_is_array(reader))
-    {
-        g_print("reader is on array.\n");
-        udp_pack_count = json_reader_count_elements(reader);
-        g_print("count elements %d\n", udp_pack_count);
 
-        json_array_foreach_element(json_node_get_array(root), json_iterator, NULL);
-    }
-    else
+    if (FALSE == json_reader_is_array(reader))
     {
-        g_print("reader is not on array.\n");
+        g_error("Broken json file.\n");
     }
 
-    /* manipulate the object tree and then exit */
+    raw_msg_count = json_reader_count_elements(reader);
+    // g_print("count elements %d\n", raw_msg_count);
+
+    g_print("Got %d raw msg data...\n", raw_msg_count);
+    g_print("-------------------------------\n\n");
+
+    json_array_foreach_element(json_node_get_array(root), json_iterator, NULL);
 
     g_object_unref(parser);
-
-    gsize decoded_msg_count = 0;
-
-    mavlink_message_t message;
-    mavlink_status_t status;
-
-    g_print("Got %d raw msg data...\n", argc - 1);
-    g_print("-------------------------------\n\n");
 
     for (int i = 1; i < argc; i++)
     {
@@ -118,8 +113,56 @@ gsize cal_str_len(gchar *str)
 
 void json_iterator(JsonArray *array, guint index_, JsonNode *element_node, gpointer user_data)
 {
-    g_print("this is element %d\n", index_);
-    // json_reader_read_member();
+    // g_print("this is element %d\n", index_);
+
+    JsonReader *reader = json_reader_new(element_node);
+    json_reader_read_member(reader, "_source");
+    json_reader_read_member(reader, "layers");
+    json_reader_read_member(reader, "data");
+
+    json_reader_read_member(reader, "data.data");
+    gchar *data_str;
+    data_str = json_reader_get_string_value(reader);
+    // g_print("data:%s\n", data_str);
+    json_reader_end_member(reader);
+
+    if (TRUE != json_reader_read_member(reader, "data.len"))
+        g_error("Broken json file.\n");
+    gchar *data_len_str;
+    data_len_str = json_reader_get_string_value(reader);
+    gsize data_len = (gsize)strtol(data_len_str, NULL, 10);
+    // g_print("data_len:%d\n", data_len);
+
+    gchar **data_str_split;
+    data_str_split = g_strsplit(data_str, ":", -1);
+    gchar *data_member = {0};
+
+    for (gsize i = 0; i < data_len; i++)
+    {
+        data_member = data_str_split[i];
+
+        g_print("%s", data_member);
+
+        if (data_len - 1 == i)
+        {
+            g_print("\n");
+        }
+
+        guint8 num = (guint8)strtol(data_member, NULL, 16);
+        gboolean msg_received = mavlink_parse_char(MAVLINK_COMM_1, num, &message, &status);
+
+        if (TRUE == msg_received)
+        {
+            decoded_msg_count++;
+            // g_print("msg id: %d\n", message.msgid);
+            as_handle_message_id(message);
+            g_print("\n");
+        }
+    }
+
+    g_strfreev(data_str_split);
+
+    g_object_unref(reader);
 }
 
 void as_handle_message_id(mavlink_message_t message)
