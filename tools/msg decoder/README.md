@@ -24,6 +24,6 @@ Application Options:
 json file is export from Wireshark. 
 File -> Export Packet Dissections -> As JSON...
 
-![Export Packet Dissections](http://github.com/luozongtong123/ardusub_api//raw/master/doc/img/export_packet_dissections.png)
+![Export Packet Dissections](https://raw.githubusercontent.com/luozongtong123/ardusub_api/master/doc/img/export_packet_dissections.png)
 
 details:TBD
