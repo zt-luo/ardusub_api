@@ -107,7 +107,7 @@ void decode_from_json_file()
     }
     else
     {
-        g_print("%s opend!\n",  json_file);
+        g_print("%s opend!\n", json_file);
     }
 
     root = json_parser_get_root(parser);
@@ -122,17 +122,17 @@ void decode_from_json_file()
     raw_msg_count = json_reader_count_elements(reader);
     // g_print("count elements %d\n", raw_msg_count);
 
-    g_print("Got %d raw msg data from json file: %s ...\n",
+    g_print("Got %d raw MAVLink message data \nfrom json file: '%s' ...\n",
             raw_msg_count, json_file);
-    g_print("----------------------------------------------\n\n");
+    g_print("------------------------------------------------------\n\n");
 
     json_array_foreach_element(json_node_get_array(root), json_iterator, NULL);
 
     g_object_unref(parser);
     g_object_unref(reader);
 
-    g_print("------------------------------------------------\n");
-    g_print("%d msg decoded from json file: %s.\n",
+    g_print("------------------------------------------------------\n");
+    g_print("%d MAVLink message decoded \nfrom json file: '%s'.\n",
             decoded_msg_count, json_file);
 }
 
@@ -140,8 +140,8 @@ void decode_from_raw_hex(int argc, char const *argv[])
 {
     raw_msg_count = argc - 1;
 
-    g_print("Got %d raw msg data from raw hex data...\n", raw_msg_count);
-    g_print("------------------------------------------------\n");
+    g_print("Got %d raw MAVLink message data \nfrom raw hex data...\n", raw_msg_count);
+    g_print("------------------------------------------------------\n");
 
     for (int i = 2; i < argc; i++)
     {
@@ -173,8 +173,8 @@ void decode_from_raw_hex(int argc, char const *argv[])
         }
     }
 
-    g_print("------------------------------------------------\n");
-    g_print("%d msg decoded from raw hex data.\n",
+    g_print("------------------------------------------------------\n");
+    g_print("%d MAVLink message decoded \nfrom raw hex data.\n",
             decoded_msg_count);
 }
 
@@ -208,8 +208,19 @@ void json_iterator(JsonArray *array, guint index_,
     JsonReader *reader = json_reader_new(element_node);
     json_reader_read_member(reader, "_source");
     json_reader_read_member(reader, "layers");
-    json_reader_read_member(reader, "data");
 
+    // read frame.time
+    json_reader_read_member(reader, "frame");
+    json_reader_read_member(reader, "frame.time");
+    gchar *time_str;
+    time_str = json_reader_get_string_value(reader);
+    time_str[31] = NULL;
+    // reset cursor to "layers"
+    json_reader_end_member(reader);
+    json_reader_end_member(reader);
+
+    // read data.data and data.len
+    json_reader_read_member(reader, "data");
     json_reader_read_member(reader, "data.data");
     gchar *data_str;
     data_str = json_reader_get_string_value(reader);
@@ -241,7 +252,11 @@ void json_iterator(JsonArray *array, guint index_,
         if (TRUE == msg_received)
         {
             decoded_msg_count++;
-            // g_print("msg id: %d\n", message.msgid);
+
+            g_print("\n%s", time_str);
+            g_print(" FROM sysid:%d, compid:%d\n",
+                    message.sysid, message.compid);
+
             as_handle_message_id(message);
             g_print("\n");
         }
@@ -254,9 +269,6 @@ void json_iterator(JsonArray *array, guint index_,
 
 void as_handle_message_id(mavlink_message_t message)
 {
-    g_print(" FROM sysid:%d, compid:%d\n",
-            message.sysid, message.compid);
-
     // Handle Message ID
     switch (message.msgid)
     {

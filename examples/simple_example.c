@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
     g_usleep(2000000);
 
-    as_api_manual_control(0, 0, 500, 0, 0);
+    as_api_manual_control(500, 0, 500, 0, 0);
 
     g_usleep(2000000);
     g_usleep(2000000);
