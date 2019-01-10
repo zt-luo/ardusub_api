@@ -188,9 +188,9 @@ extern "C"
     static char heartbeat_writing_status;
     static char control_status;
 
-    //target system id
-    static int target_system;
-    static int target_autopilot;
+    //current target system id
+    static int current_target_system;
+    static int current_target_autopilot;
 
     static guint system_count;
 
@@ -200,21 +200,22 @@ extern "C"
 
     /* START only manipulated by as_handle_messages() START */
     static Mavlink_Messages_t *current_messages;
-    // MAX parameters number is definded in PARAM_COUNT
     static Mavlink_Parameter_t *current_parameter;
     static GSocket *current_target_socket;
     static guint8 *system_key[255];
+    static volatile guint8 arm_status[255];
     /* STOP  only manipulated by as_handle_messages()  STOP */
 
     GHashTable *message_hash_table;
     GHashTable *parameter_hash_table;
     GHashTable *target_socket_hash_table;
+    GHashTable *manual_control_table;
 
     //globle mutex
     GMutex message_mutex;
     GMutex parameter_mutex;
     GMutex target_socket_mutex;
-    GMutex send_socket_mutex;
+    GMutex manual_control_mutex[255];
 
     // ------------------------------------------------------------------------------
     //   Prototypes
@@ -236,11 +237,12 @@ extern "C"
     guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read);
     void as_handle_message_id(mavlink_message_t message);
     int as_write_message(mavlink_message_t message);
+    void manual_control_worker(gpointer data);
 
     void enable_offboard_control();
     void disable_offboard_control();
-    void vehicle_arm();
-    void vehicle_disarm();
+    void vehicle_arm(guint8 target_system);
+    void vehicle_disarm(guint8 target_system);
 
     void do_set_servo(float servo_no, float pwm);
     void do_motor_test(float motor_no, float pwm);
@@ -259,7 +261,8 @@ extern "C"
                                GIOCondition condition,
                                gpointer socket_udp_write);
 
-    static void send_udp_message(mavlink_message_t *message);
+    void send_udp_message(mavlink_message_t *message);
+    void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message);
 
     // ------------------------------------------------------------------------------
     //   Inline Functions

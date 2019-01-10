@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     g_print("system 1 is active.\n");
 
     g_print("vehicle arm...\n");
-    vehicle_arm();
+    vehicle_arm(1);
 
     g_usleep(2000000);
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
-    vehicle_disarm();
+    vehicle_disarm(1);
     g_usleep(2000000);
 
     while (1)

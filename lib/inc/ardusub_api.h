@@ -42,8 +42,8 @@ extern "C"
     extern void as_api_deinit();
     extern void as_api_run();
 
-    extern void vehicle_arm();
-    extern void vehicle_disarm();
+    extern void vehicle_arm(guint8 target_system);
+    extern void vehicle_disarm(guint8 target_system);
 
     extern int as_api_check_active_sys(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
