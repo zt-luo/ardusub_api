@@ -217,6 +217,8 @@ extern "C"
     GMutex target_socket_mutex;
     GMutex manual_control_mutex[255];
 
+    GAsyncQueue *statustex_queue[255];
+
     // ------------------------------------------------------------------------------
     //   Prototypes
     // ------------------------------------------------------------------------------
@@ -263,6 +265,9 @@ extern "C"
 
     void send_udp_message(mavlink_message_t *message);
     void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message);
+    
+    mavlink_statustext_t *statustex_queue_pop(uint8_t target_system);
+    void statustex_queue_push();
 
     // ------------------------------------------------------------------------------
     //   Inline Functions

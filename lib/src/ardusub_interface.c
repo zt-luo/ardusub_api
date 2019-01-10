@@ -160,6 +160,8 @@ void as_sys_add(guint8 sysid)
     p_manual_control->z = 500; // 500 is z axis zero leval
     g_hash_table_insert(manual_control_table, p_sysid, p_manual_control);
 
+    statustex_queue[sysid] = g_async_queue_new();
+
     // set current message parameter and target_socket.
     current_messages = p_message;
     current_parameter = p_parameter;
@@ -193,6 +195,10 @@ void manual_control_worker(gpointer data)
             g_free(safe_manual_control); // free
 
             g_usleep(100000);
+        }
+        else
+        {
+            g_usleep(100);
         }
     }
 }
@@ -974,4 +980,33 @@ void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message)
     {
         g_error(error->message);
     }
+}
+
+//! NULL-able return value
+mavlink_statustext_t *statustex_queue_pop(uint8_t target_system)
+{
+    static mavlink_statustext_t *last_statustex;
+
+    if (NULL != last_statustex)
+    {
+        // free last statustex after pop
+        g_free(last_statustex);
+    }
+
+    last_statustex = g_async_queue_try_pop(statustex_queue[target_system]);
+
+    return last_statustex;
+}
+
+void statustex_queue_push()
+{
+    // TODO: fix this
+    if (g_async_queue_length(statustex_queue[current_target_system]) > 50)
+    {
+        statustex_queue_pop(current_target_system);
+    }
+
+    g_async_queue_push(statustex_queue[current_target_system],
+                       g_memdup(&current_messages->statustext,
+                                sizeof(mavlink_statustext_t)));
 }

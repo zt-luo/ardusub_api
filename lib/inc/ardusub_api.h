@@ -4,10 +4,18 @@
 //   Defines
 // ------------------------------------------------------------------------------
 
-
 // ------------------------------------------------------------------------------
 //   Data Structures
 // ------------------------------------------------------------------------------
+#ifndef MAVLINK_H
+
+typedef struct __mavlink_statustext_t
+{
+    uint8_t severity; /*<  Severity of status. Relies on the definitions within RFC-5424.*/
+    char text[50];    /*<  Status text message, without null termination character*/
+} mavlink_statustext_t;
+
+#endif // MAVLINK_H
 
 // Auto Pilot Modes enumeration
 typedef enum control_mode_enum
@@ -38,12 +46,14 @@ extern "C"
 {
 #endif
 
-    extern void as_api_init(char* subnet_address);
+    extern void as_api_init(char *subnet_address);
     extern void as_api_deinit();
     extern void as_api_run();
 
-    extern void vehicle_arm(guint8 target_system);
-    extern void vehicle_disarm(guint8 target_system);
+    extern void vehicle_arm(uint8_t target_system);
+    extern void vehicle_disarm(uint8_t target_system);
+
+    extern mavlink_statustext_t *statustex_queue_pop(uint8_t target_system);
 
     extern int as_api_check_active_sys(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);

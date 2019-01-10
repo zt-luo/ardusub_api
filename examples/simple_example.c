@@ -25,7 +25,7 @@
 int main(int argc, char *argv[])
 {
     int s;
-    g_print("input 1 or 2 :");
+    g_print("input 1 or 2 : ");
     scanf("%d", &s);
     g_print("subnet address 192.168.%d.*\n", s);
     if (1 == s)
@@ -61,16 +61,33 @@ int main(int argc, char *argv[])
 
     g_usleep(2000000);
 
-    as_api_manual_control(500, 0, 500, 0, 0);
+    as_api_manual_control(100, 0, 500, 0, 0);
 
     g_usleep(2000000);
+    g_usleep(2000000);
+    g_usleep(2000000);
+
+    mavlink_statustext_t *statustxt;
+
+    for (gint i = 0; i < 3; i++)
+    {
+        statustxt = statustex_queue_pop(1);
+        if (statustxt != NULL)
+        {
+            g_print("severity:%d, text:%s\n", statustxt->severity, statustxt->text);
+        }
+        else
+        {
+            g_print("No statustxt.\n");
+        }
+    }
+
     g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
     vehicle_disarm(1);
-    g_usleep(2000000);
 
-    while (1)
-        ;
+    scanf("%d", &s);
+
     return 0;
 }
