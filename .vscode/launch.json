@@ -15,7 +15,7 @@
             "request": "launch",
             // "program": "${fileDirname}/build/${fileBasenameNoExtension}.exe",
             "program": "${workspaceFolder}/build/examples/simple_example.exe",
-            "args": [],
+            "args": ["1"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

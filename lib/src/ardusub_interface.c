@@ -30,6 +30,8 @@ void as_api_init(char *p_subnet_address)
         as_udp_read_init();
 
         as_init_status = TRUE;
+
+        g_thread_new("as_api_main", (GThreadFunc)as_api_run, NULL);
     }
 }
 
@@ -49,6 +51,11 @@ gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer data)
 {
+    if (NULL != data)
+    {
+        g_free(data);
+    }
+
     // g_print("Received data from client!\n");
 
     gchar msg_tmp[MAX_BYTES] = {'\0'};
@@ -160,14 +167,15 @@ void as_sys_add(guint8 sysid)
 
     statustex_queue[sysid] = g_async_queue_new();
 
-    //TODO: request full parameters
-    request_param_list(); // no guarantee
-    g_usleep(100000);
-
     // set current message parameter and target_socket.
     current_messages = p_message;
     current_parameter = p_parameter;
     current_target_socket = p_target_socket;
+
+    if (-1 == request_full_parameters(sysid))
+    {
+        g_error("faild to request full parameters!\n");
+    }
 
     // init manual_control_worker thread
     g_thread_new("manual_control_worker", (GThreadFunc)manual_control_worker, NULL);
@@ -175,6 +183,11 @@ void as_sys_add(guint8 sysid)
 
 void manual_control_worker(gpointer data)
 {
+    if (NULL != data)
+    {
+        g_free(data);
+    }
+
     GSocket *my_target_socket = current_target_socket;
     guint8 my_target_system = current_target_system;
 
@@ -182,12 +195,19 @@ void manual_control_worker(gpointer data)
     {
         if (1 == g_atomic_int_get((volatile gint *)&arm_status[my_target_system])) // Atomic Operation
         {
-            g_mutex_lock(&manual_control_mutex[my_target_system]); // lock
+            g_mutex_lock(&manual_control_hash_table_mutex);
+
             mavlink_manual_control_t *my_manual_control =
                 g_hash_table_lookup(manual_control_table, system_key[my_target_system]);
+
+            g_mutex_unlock(&manual_control_hash_table_mutex);
+
+            g_mutex_lock(&manual_control_mutex[my_target_system]); // lock
+
             mavlink_manual_control_t *safe_manual_control =
                 g_memdup(my_manual_control, sizeof(mavlink_manual_control_t)); // memdup
-            g_mutex_unlock(&manual_control_mutex[my_target_system]);           // unlock
+
+            g_mutex_unlock(&manual_control_mutex[my_target_system]); // unlock
 
             mavlink_message_t message;
             mavlink_msg_manual_control_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
@@ -215,6 +235,9 @@ void manual_control_worker(gpointer data)
  */
 guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 {
+    // only one as_handle_messages thread is runing
+    // g_mutex_lock(&handle_messages_mutex);
+
     mavlink_message_t message;
     mavlink_status_t status;
     gboolean msgReceived = FALSE;
@@ -231,15 +254,15 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
 
     // NOTE: this doesn't handle multiple compid for one sysid.
-    current_messages->sysid = message.sysid;
-    current_messages->compid = message.compid;
     current_target_system = message.sysid;
     current_target_autopilot = message.compid;
 
     // lock the hash table
-    g_mutex_lock(&message_mutex);
-    g_mutex_lock(&parameter_mutex);
-    g_mutex_lock(&target_socket_mutex);
+    g_mutex_lock(&message_hash_table_mutex);
+    g_mutex_lock(&parameter_hash_table_mutex);
+    g_mutex_lock(&target_socket_hash_table_mutex);
+
+    g_mutex_lock(&message_mutex[current_target_system]);
 
     if (NULL == system_key[message.sysid]) // find new system
     {
@@ -263,13 +286,19 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         current_target_socket = p_target_socket;
     }
 
+    current_messages->sysid = message.sysid;
+    current_messages->compid = message.compid;
+
     as_handle_message_id(message);
 
     // unlock the message hash table
-    g_mutex_unlock(&message_mutex);
-    g_mutex_unlock(&parameter_mutex);
-    g_mutex_unlock(&target_socket_mutex);
+    g_mutex_unlock(&message_mutex[current_target_system]);
+    g_mutex_unlock(&parameter_hash_table_mutex);
+    g_mutex_unlock(&target_socket_hash_table_mutex);
 
+    g_mutex_unlock(&message_hash_table_mutex);
+
+    // g_mutex_unlock(&handle_messages_mutex);
     return message.msgid;
 }
 
@@ -542,17 +571,18 @@ void as_handle_message_id(mavlink_message_t message)
         }
         else
         {
-            for (gint i = 0; i < 16; i++)
-            {
-                current_parameter[_param_index].param_id[i] =
-                    current_messages->param_value.param_id[i];
-            }
+            g_mutex_lock(&parameter_mutex[current_target_system]);
+
+            strcpy(current_parameter[_param_index].param_id,
+                   current_messages->param_value.param_id);
 
             current_parameter[_param_index].param_type =
                 current_messages->param_value.param_type;
 
             current_parameter[_param_index].param_value.param_float =
                 current_messages->param_value.param_value;
+
+            g_mutex_unlock(&parameter_mutex[current_target_system]);
         }
 
         // printf("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
@@ -590,9 +620,12 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
         return;
     }
 
-    g_mutex_lock(&manual_control_mutex[sys_id]); // lock
+    g_mutex_lock(&manual_control_hash_table_mutex);
     mavlink_manual_control_t *p_manual_control =
         g_hash_table_lookup(manual_control_table, system_key[sys_id]);
+    g_mutex_unlock(&manual_control_hash_table_mutex);
+
+    g_mutex_lock(&manual_control_mutex[sys_id]); // lock
     p_manual_control->x = x;
     p_manual_control->y = y;
     p_manual_control->z = z;
@@ -603,9 +636,9 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 {
-    g_mutex_lock(&message_mutex);
+    g_mutex_lock(&message_hash_table_mutex);
     Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key[sysid]);
-    g_mutex_unlock(&message_mutex);
+    g_mutex_unlock(&message_hash_table_mutex);
 
     return p_message;
 }
@@ -732,12 +765,46 @@ void do_set_mode(control_mode_t mode_)
     // check the write
 }
 
-void request_param_list(void)
+gint request_full_parameters(guint8 sysid)
+{
+    //TODO: request full parameters
+    send_param_request_list(); // no guarantee
+    g_usleep(100000);
+
+    g_mutex_lock(&parameter_mutex[sysid]);
+
+    g_mutex_unlock(&parameter_mutex[sysid]);
+
+    return 0;
+}
+
+void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index)
+{
+    if (-1 == param_index)
+    {
+        return;
+    }
+
+    mavlink_param_request_read_t prr = {0};
+
+    prr.target_system = target_system;
+    prr.target_component = target_component;
+    prr.param_index = param_index;
+    strcpy(prr.param_id, ""); // if param_index != -1, param_id is not useed
+
+    mavlink_message_t message;
+
+    mavlink_msg_param_request_read_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &prr);
+
+    send_udp_message(&message);
+}
+
+void send_param_request_list()
 {
     mavlink_param_request_list_t param_list = {0};
 
-    param_list.target_system = current_messages->sysid;
-    param_list.target_component = current_messages->compid;
+    param_list.target_system = current_target_system;
+    param_list.target_component = current_target_autopilot;
 
     // Encode
     mavlink_message_t message;
@@ -748,7 +815,7 @@ void request_param_list(void)
     // Send
     send_udp_message(&message);
 
-    // g_message("request_param_list msg wrote!");
+    // g_message("param_request_list msg wrote!");
 }
 
 void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,

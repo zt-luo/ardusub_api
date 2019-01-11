@@ -24,15 +24,25 @@
  */
 int main(int argc, char *argv[])
 {
-    int s;
-    g_print("input 1 or 2 : ");
-    scanf("%d", &s);
-    g_print("subnet address 192.168.%d.*\n", s);
-    if (1 == s)
+    char s = 0;
+
+    if (argc > 1)
+    {
+        s = argv[1][0];
+    }
+    else
+    {
+        g_print("input 1 or 2 : ");
+        scanf("%s", &s);
+    }
+
+    g_print("subnet address 192.168.%c.*\n", s);
+
+    if ('1' == s)
     {
         as_api_init("192.168.1.");
     }
-    else if (2 == s)
+    else if ('2' == s)
     {
         as_api_init(NULL);
     }
@@ -43,8 +53,6 @@ int main(int argc, char *argv[])
 
     // as_api_run();
 
-    g_print("Creating as_api_run_worker thread...\n");
-    g_thread_new("as_api_run_worker", (GThreadFunc)as_api_run, NULL);
     g_usleep(2000000);
 
     g_print("Checking if system 1 is active...\n");
@@ -82,7 +90,7 @@ int main(int argc, char *argv[])
     g_print("vehicle disarm...\n");
     vehicle_disarm(1);
 
-    scanf("%d", &s);
+    scanf("%c", &s);
 
     return 0;
 }

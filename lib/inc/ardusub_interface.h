@@ -187,23 +187,23 @@ extern "C"
 
     static char control_status;
 
-    //current target system id
-    static int current_target_system;
-    static int current_target_autopilot;
-
     static guint system_count;
 
     static gboolean as_init_status;
 
     static char *subnet_address;
 
-    /* START only manipulated by as_handle_messages() START */
-    static Mavlink_Messages_t *current_messages;
-    static Mavlink_Parameter_t *current_parameter;
-    static GSocket *current_target_socket;
+    /* START only used by as_handle_messages() and as_handle_messages_id() START */
+    // static int current_target_system;
+    // static int current_target_autopilot;
+    // static Mavlink_Messages_t *current_messages;
+    // static Mavlink_Parameter_t *current_parameter;
+    // static GSocket *current_target_socket;
+    /* STOP  only used by as_handle_messages() and as_handle_messages_id()  STOP */
+
+    //TODO: Atomic Operations should apply on this
     static guint8 *system_key[255];
     static volatile guint8 arm_status[255];
-    /* STOP  only manipulated by as_handle_messages()  STOP */
 
     GHashTable *message_hash_table;
     GHashTable *parameter_hash_table;
@@ -211,10 +211,16 @@ extern "C"
     GHashTable *manual_control_table;
 
     //globle mutex
-    GMutex message_mutex;
-    GMutex parameter_mutex;
-    GMutex target_socket_mutex;
+    GMutex handle_messages_mutex;
+
+    GMutex message_mutex[255];
+    GMutex parameter_mutex[255];
     GMutex manual_control_mutex[255];
+
+    GMutex message_hash_table_mutex;
+    GMutex parameter_hash_table_mutex;
+    GMutex target_socket_hash_table_mutex;
+    GMutex manual_control_hash_table_mutex;
 
     GAsyncQueue *statustex_queue[255];
 
@@ -249,7 +255,9 @@ extern "C"
     void do_set_servo(float servo_no, float pwm);
     void do_motor_test(float motor_no, float pwm);
     void do_set_mode(control_mode_t mode_);
-    void request_param_list(void);
+    gint request_full_parameters(guint8 sysid);
+    void send_param_request_list();
+    void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
     void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                    uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
     void send_heartbeat(void);
