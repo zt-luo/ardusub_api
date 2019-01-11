@@ -69,17 +69,12 @@ int main(int argc, char *argv[])
 
     mavlink_statustext_t *statustxt;
 
-    for (gint i = 0; i < 3; i++)
+    g_print("statustex count:%d\n", as_api_statustex_cpunt(1));
+    statustxt = as_api_statustex_queue_pop(1);
+    for (gint i = 0; i < 50 && statustxt != NULL; i++)
     {
-        statustxt = statustex_queue_pop(1);
-        if (statustxt != NULL)
-        {
-            g_print("severity:%d, text:%s\n", statustxt->severity, statustxt->text);
-        }
-        else
-        {
-            g_print("No statustxt.\n");
-        }
+        g_print("severity:%d, text:%s\n", statustxt->severity, statustxt->text);
+        statustxt = as_api_statustex_queue_pop(1);
     }
 
     g_usleep(2000000);

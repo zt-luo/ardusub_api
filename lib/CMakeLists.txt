@@ -8,7 +8,6 @@ add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 -W -Wall -static)
 
 # src list
 set(LIB_SRC_LIST 
-    "src/ardusub_api.c"
     "src/ardusub_interface.c")
 
 # generate shared library

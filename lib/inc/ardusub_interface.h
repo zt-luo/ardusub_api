@@ -185,7 +185,6 @@ extern "C"
     //   Variables
     // ------------------------------------------------------------------------------
 
-    static char heartbeat_writing_status;
     static char control_status;
 
     //current target system id
@@ -196,7 +195,7 @@ extern "C"
 
     static gboolean as_init_status;
 
-    static char* subnet_address;
+    static char *subnet_address;
 
     /* START only manipulated by as_handle_messages() START */
     static Mavlink_Messages_t *current_messages;
@@ -222,16 +221,17 @@ extern "C"
     // ------------------------------------------------------------------------------
     //   Prototypes
     // ------------------------------------------------------------------------------
-    void as_api_init(char* subnet_address);
+    void as_api_init(char *subnet_address);
     void as_api_deinit();
     void as_api_run();
     void as_sys_add(uint8_t sysid);
 
     int as_api_check_active_sys(uint8_t sysid);
-
     void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
+    mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
+    int as_api_statustex_cpunt(uint8_t target_system);
 
-        Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
+    Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 
     void as_udp_write_init(guint8 sysid, GSocket *p_target_socket);
     void as_udp_read_init();
@@ -265,7 +265,7 @@ extern "C"
 
     void send_udp_message(mavlink_message_t *message);
     void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message);
-    
+
     mavlink_statustext_t *statustex_queue_pop(uint8_t target_system);
     void statustex_queue_push();
 

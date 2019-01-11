@@ -47,7 +47,7 @@ void as_api_run()
 
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
-                           gpointer socket_udp_write)
+                           gpointer data)
 {
     // g_print("Received data from client!\n");
 
@@ -68,8 +68,7 @@ gboolean udp_read_callback(GIOChannel *channel,
     }
     // g_print("%s", msg_tmp);
 
-    guint8 msgid;
-    msgid = as_handle_messages(msg_tmp, bytes_read);
+    as_handle_messages(msg_tmp, bytes_read);
 
     // if (FALSE != msgid)
     // {
@@ -522,11 +521,11 @@ void as_handle_message_id(mavlink_message_t message)
     {
         // printf("MAVLINK_MSG_ID_STATUSTEXT\n");
         mavlink_msg_statustext_decode(&message, &(current_messages->statustext));
-        //TODO: save statustext to somewhere
         current_messages->time_stamps.statustext = g_get_monotonic_time();
-        printf("severity: %d, statustext: ", current_messages->statustext.severity);
-        printf(current_messages->statustext.text);
-        printf("\n");
+        statustex_queue_push();
+        // printf("severity: %d, statustext: ", current_messages->statustext.severity);
+        // printf(current_messages->statustext.text);
+        // printf("\n");
         break;
     }
     case MAVLINK_MSG_ID_PARAM_VALUE:
@@ -750,7 +749,7 @@ void request_param_list(void)
     // Send
     send_udp_message(&message);
 
-    g_message("request_param_list msg wrote!");
+    // g_message("request_param_list msg wrote!");
 }
 
 void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
@@ -983,6 +982,16 @@ void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message)
 }
 
 //! NULL-able return value
+mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system)
+{
+    return statustex_queue_pop(target_system);
+}
+
+int as_api_statustex_cpunt(uint8_t target_system)
+{
+    return g_async_queue_length(statustex_queue[target_system]);
+}
+
 mavlink_statustext_t *statustex_queue_pop(uint8_t target_system)
 {
     static mavlink_statustext_t *last_statustex;
