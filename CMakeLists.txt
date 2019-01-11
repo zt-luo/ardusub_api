@@ -2,7 +2,8 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(ardusub_api VERSION 0.1.0)
 
-add_compile_options(-std=c99)
+add_compile_options(-std=c99
+                    -W -Wall)
 
 # check and search moudles
 find_package(PkgConfig REQUIRED)

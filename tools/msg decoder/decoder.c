@@ -5,8 +5,8 @@
 #include <json-glib/json-glib.h>
 #include <common/mavlink.h>
 
-gsize raw_msg_count = 0;
-gsize decoded_msg_count = 0;
+guint32 raw_msg_count = 0;
+guint32 decoded_msg_count = 0;
 
 static gboolean raw_hex = FALSE;
 static gchar *json_file = NULL;
@@ -20,7 +20,7 @@ static GOptionEntry entries[] =
         {"raw", 'r', 0, G_OPTION_ARG_NONE, &raw_hex, "Decode from raw hex", "<raw hex separated by spaces>"},
         {NULL}};
 
-gsize cal_str_len(gchar *str);
+gsize cal_str_len(const gchar *str);
 void as_handle_message_id(mavlink_message_t message);
 
 void decode_from_json_file();
@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
     // free something
     g_strfreev(args);
     g_option_context_free(context);
-    g_option_group_free(group);
+    g_option_group_unref(group);
 
     if (NULL != json_file)
     {
@@ -103,7 +103,7 @@ void decode_from_json_file()
                 json_file, error->message);
         g_error_free(error);
         g_object_unref(parser);
-        return EXIT_FAILURE;
+        return;
     }
     else
     {
@@ -148,9 +148,8 @@ void decode_from_raw_hex(int argc, char const *argv[])
         g_print("%s", argv[i]);
         gsize str_len = cal_str_len(argv[i]);
         gchar str_char[3] = {0};
-        guint8 num = 0;
 
-        for (int j = 0; j < str_len; j++)
+        for (guint8 j = 0; j < str_len; j++)
         {
             str_char[0] = argv[i][j];
             j++;
@@ -178,13 +177,13 @@ void decode_from_raw_hex(int argc, char const *argv[])
             decoded_msg_count);
 }
 
-gsize cal_str_len(gchar *str)
+gsize cal_str_len(const gchar *str)
 {
     gsize len = 0;
     gint i = 0;
     gchar c = str[i];
 
-    while (c != NULL)
+    while (c != 0)
     {
         len++;
         i++;
@@ -203,7 +202,22 @@ void json_iterator(JsonArray *array, guint index_,
                    JsonNode *element_node,
                    gpointer user_data)
 {
+    if (NULL != array)
+    {
+        g_free(array);
+    }
+
+    if (NULL != user_data)
+    {
+        g_free(user_data);
+    }
+
     // g_print("this is element %d\n", index_);
+
+    if (index_ > 1024)
+    {
+        g_message("wow, this is a big file, and it takes time.");
+    }
 
     JsonReader *reader = json_reader_new(element_node);
     json_reader_read_member(reader, "_source");
@@ -213,8 +227,10 @@ void json_iterator(JsonArray *array, guint index_,
     json_reader_read_member(reader, "frame");
     json_reader_read_member(reader, "frame.time");
     gchar *time_str;
-    time_str = json_reader_get_string_value(reader);
-    time_str[31] = NULL;
+    const gchar *c_time_str;
+    c_time_str = json_reader_get_string_value(reader);
+    time_str = g_memdup(c_time_str, 32);
+    time_str[31] = 0;
     // reset cursor to "layers"
     json_reader_end_member(reader);
     json_reader_end_member(reader);
@@ -222,15 +238,13 @@ void json_iterator(JsonArray *array, guint index_,
     // read data.data and data.len
     json_reader_read_member(reader, "data");
     json_reader_read_member(reader, "data.data");
-    gchar *data_str;
-    data_str = json_reader_get_string_value(reader);
+    const gchar *data_str = json_reader_get_string_value(reader);
     // g_print("data:%s\n", data_str);
     json_reader_end_member(reader);
 
     if (TRUE != json_reader_read_member(reader, "data.len"))
         g_error("Broken json file.\n");
-    gchar *data_len_str;
-    data_len_str = json_reader_get_string_value(reader);
+    const gchar *data_len_str = json_reader_get_string_value(reader);
     gsize data_len = (gsize)strtol(data_len_str, NULL, 10);
     // g_print("data_len:%d\n", data_len);
 
@@ -261,6 +275,11 @@ void json_iterator(JsonArray *array, guint index_,
             g_print("\n");
         }
     }
+
+    g_free((gpointer)c_time_str);
+    g_free(time_str);
+    g_free((gpointer)data_str);
+    g_free((gpointer)data_len_str);
 
     g_strfreev(data_str_split);
 
@@ -295,7 +314,7 @@ void as_handle_message_id(mavlink_message_t message)
         mavlink_msg_system_time_decode(&message, &st);
 
         g_print("SYSTEM_TIME(#2) -> ");
-        g_print("time_unix_usec:%d, time_boot_ms:%d \n",
+        g_print("time_unix_usec:%llu, time_boot_ms:%d \n",
                 st.time_unix_usec, st.time_boot_ms);
 
         break;
@@ -308,7 +327,7 @@ void as_handle_message_id(mavlink_message_t message)
         mavlink_msg_param_request_read_decode(&message, &prr);
 
         g_print("PARAM_REQUEST_READ(#20) -> ");
-        g_print("target_system:%d, target_component:%d, param_id:%d, param_index:%d \n",
+        g_print("target_system:%d, target_component:%d, param_id:%s, param_index:%d \n",
                 prr.target_system, prr.target_component,
                 prr.param_id, prr.param_index);
 
@@ -393,7 +412,7 @@ void as_handle_message_id(mavlink_message_t message)
         g_print("COMMAND_LONG (#76) -> ");
         g_print("target_system:%d, target_component:%d, command:%d, confirmation:%d, ",
                 cl.target_system, cl.target_component, cl.command, cl.confirmation);
-        g_print("param1:%d, param2:%d, param3:%d, param4:%d, param5:%d, param6:%d, param7:%d \n",
+        g_print("param1:%f, param2:%f, param3:%f, param4:%f, param5:%f, param6:%f, param7:%f \n",
                 cl.param1, cl.param2, cl.param3, cl.param4, cl.param5, cl.param6, cl.param7);
 
         break;

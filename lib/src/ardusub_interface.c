@@ -150,9 +150,8 @@ void as_sys_add(guint8 sysid)
     Mavlink_Parameter_t *p_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
     g_hash_table_insert(parameter_hash_table, p_sysid, p_parameter);
 
-    // init write socket for new system
     GSocket *p_target_socket = g_new0(GSocket, 1);
-    as_udp_write_init(sysid, p_target_socket);
+    as_udp_write_init(sysid, p_target_socket); // init write socket for new system
     g_hash_table_insert(target_socket_hash_table, p_sysid, p_target_socket);
 
     mavlink_manual_control_t *p_manual_control = g_new0(mavlink_manual_control_t, 1);
@@ -160,6 +159,10 @@ void as_sys_add(guint8 sysid)
     g_hash_table_insert(manual_control_table, p_sysid, p_manual_control);
 
     statustex_queue[sysid] = g_async_queue_new();
+
+    //TODO: request full parameters
+    request_param_list(); // no guarantee
+    g_usleep(100000);
 
     // set current message parameter and target_socket.
     current_messages = p_message;
@@ -227,6 +230,9 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         return msgReceived;
     }
 
+    // NOTE: this doesn't handle multiple compid for one sysid.
+    current_messages->sysid = message.sysid;
+    current_messages->compid = message.compid;
     current_target_system = message.sysid;
     current_target_autopilot = message.compid;
 
@@ -239,13 +245,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
         as_sys_add(message.sysid);
-
-        // NOTE: this doesn't handle multiple compid for one sysid.
-        current_messages->sysid = message.sysid;
-        current_messages->compid = message.compid;
-
-        //TODO: request full parameters
-        request_param_list(); // no guarantee
     }
     else
     {
@@ -262,10 +261,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         current_messages = p_message;
         current_parameter = p_parameter;
         current_target_socket = p_target_socket;
-
-        // NOTE: this doesn't handle multiple compid for one sysid.
-        current_messages->sysid = message.sysid;
-        current_messages->compid = message.compid;
     }
 
     as_handle_message_id(message);
@@ -538,8 +533,12 @@ void as_handle_message_id(mavlink_message_t message)
 
         if (_param_index > PARAM_COUNT - 1)
         {
-            g_warning("param_index out of range! param_index:%d, PARAM_COUNT:%d\n", _param_index, PARAM_COUNT);
-            //TODO: fix this
+            // param_index out of range!
+            g_warning("param_index out of range! param_index:%s, param_index:%d, PARAM_COUNT:%d\n",
+                      current_messages->param_value.param_id,
+                      _param_index, PARAM_COUNT);
+
+            break;
         }
         else
         {

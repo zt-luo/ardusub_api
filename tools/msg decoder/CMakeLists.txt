@@ -2,7 +2,9 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(decoder VERSION 0.1.0)
 
-add_compile_options(-g -O0 -w -static)
+add_compile_options(-g -O0 
+                    # -Wno-unused-parameter 
+                    -static)
 # add_compile_options(-g -O0 -w)
 
 pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)

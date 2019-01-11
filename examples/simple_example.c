@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     // as_api_run();
 
     g_print("Creating as_api_run_worker thread...\n");
-    GThread *as_api_run_worker = g_thread_new("as_api_run_worker", (GThreadFunc)as_api_run, NULL);
+    g_thread_new("as_api_run_worker", (GThreadFunc)as_api_run, NULL);
     g_usleep(2000000);
 
     g_print("Checking if system 1 is active...\n");
