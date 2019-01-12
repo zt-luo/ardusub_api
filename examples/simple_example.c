@@ -15,6 +15,8 @@
 
 #include "../lib/inc/ardusub_api.h"
 
+//TODO: (simple_example.exe:8684): GLib-CRITICAL **: 19:51:01.978: g_error_new_literal: assertion 'message != NULL' failed
+
 /**
  * @brief 
  * 
@@ -33,7 +35,7 @@ int main(int argc, char *argv[])
     else
     {
         g_print("input 1 or 2 : ");
-        scanf("%s", &s);
+        scanf("%c", &s);
     }
 
     g_print("subnet address 192.168.%c.*\n", s);
@@ -53,8 +55,6 @@ int main(int argc, char *argv[])
 
     // as_api_run();
 
-    g_usleep(2000000);
-
     g_print("Checking if system 1 is active...\n");
 
     while (0 == as_api_check_active_sys(1))
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     g_print("system 1 is active.\n");
 
     g_print("vehicle arm...\n");
-    vehicle_arm(1);
+    vehicle_arm(1, 1);
 
     g_usleep(2000000);
 
@@ -88,9 +88,17 @@ int main(int argc, char *argv[])
     g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
-    vehicle_disarm(1);
+    vehicle_disarm(1, 1);
 
-    scanf("%c", &s);
+    g_usleep(2000000);
+    vehicle_arm(1, 1);
+    g_usleep(2000000);
+    g_usleep(2000000);
+    vehicle_disarm(1, 1);
+
+    while (1)
+        ;
+    scanf("%s", &s);
 
     return 0;
 }

@@ -185,8 +185,6 @@ extern "C"
     //   Variables
     // ------------------------------------------------------------------------------
 
-    static char control_status;
-
     static guint system_count;
 
     static gboolean as_init_status;
@@ -230,7 +228,10 @@ extern "C"
     void as_api_init(char *subnet_address);
     void as_api_deinit();
     void as_api_run();
-    void as_sys_add(uint8_t sysid);
+    void as_sys_add(guint8 target_system, guint8 target_autopilot,
+                    Mavlink_Messages_t *current_messages,
+                    Mavlink_Parameter_t *current_parameter,
+                    GSocket *current_target_socket);
 
     int as_api_check_active_sys(uint8_t sysid);
     void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
@@ -243,40 +244,35 @@ extern "C"
     void as_udp_read_init();
 
     guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read);
-    void as_handle_message_id(mavlink_message_t message);
+    void as_handle_message_id(mavlink_message_t message,
+                              Mavlink_Messages_t *current_messages,
+                              Mavlink_Parameter_t *current_parameter);
     int as_write_message(mavlink_message_t message);
     void manual_control_worker(gpointer data);
 
     void enable_offboard_control();
     void disable_offboard_control();
-    void vehicle_arm(guint8 target_system);
-    void vehicle_disarm(guint8 target_system);
+    void vehicle_arm(guint8 target_system, guint8 target_autopilot);
+    void vehicle_disarm(guint8 target_system, guint8 target_autopilot);
 
-    void do_set_servo(float servo_no, float pwm);
-    void do_motor_test(float motor_no, float pwm);
-    void do_set_mode(control_mode_t mode_);
-    gint request_full_parameters(guint8 sysid);
-    void send_param_request_list();
+    void do_set_servo(guint8 target_system,
+                      guint8 target_autopilot,
+                      gfloat servo_no, gfloat pwm);
+    void do_set_mode(control_mode_t mode, guint8 target_system);
+    gint request_full_parameters(guint8 target_system, guint8 target_component);
+    void send_param_request_list(guint8 target_system, guint8 target_autopilot);
     void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
-    void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+    void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+                                   uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                    uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
-    void send_heartbeat(void);
-
-    // TODO:
-    // Serial_Port *serial_port;
-
-    int toggle_offboard_control(bool flag);
+    void send_heartbeat(guint8 target_system,
+                        Mavlink_Messages_t *current_messages);
 
     gboolean udp_read_callback(GIOChannel *channel,
                                GIOCondition condition,
                                gpointer socket_udp_write);
 
-    void send_udp_message(mavlink_message_t *message);
-    void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message);
+    void send_udp_message(guint8 target_system, mavlink_message_t *message);
 
-    mavlink_statustext_t *statustex_queue_pop(uint8_t target_system);
-    void statustex_queue_push();
-
-    // ------------------------------------------------------------------------------
-    //   Inline Functions
-    // ------------------------------------------------------------------------------
+    mavlink_statustext_t *statustex_queue_pop(guint8 target_system);
+    void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);

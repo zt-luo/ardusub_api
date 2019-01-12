@@ -6,10 +6,6 @@ void as_api_init(char *p_subnet_address)
     if (TRUE != as_init_status)
     {
         // initialize attributes
-        control_status = 0; // whether the autopilot is in offboard control mode
-
-        current_target_system = 0;    // system id
-        current_target_autopilot = 0; // autopilot component id
 
         if (NULL == p_subnet_address)
         {
@@ -143,13 +139,20 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     }
 }
 
-void as_sys_add(guint8 sysid)
+void as_sys_add(guint8 target_system, guint8 target_autopilot,
+                Mavlink_Messages_t *current_messages,
+                Mavlink_Parameter_t *current_parameter,
+                GSocket *current_target_socket)
 {
     system_count++;
 
     guint8 *p_sysid = g_new0(guint8, 1);
-    *p_sysid = sysid;
-    system_key[sysid] = p_sysid;
+    *p_sysid = target_system;
+
+    // lock the hash table
+    g_mutex_lock(&message_hash_table_mutex);
+    g_mutex_lock(&parameter_hash_table_mutex);
+    g_mutex_lock(&target_socket_hash_table_mutex);
 
     Mavlink_Messages_t *p_message = g_new0(Mavlink_Messages_t, 1);
     g_hash_table_insert(message_hash_table, p_sysid, p_message);
@@ -158,38 +161,44 @@ void as_sys_add(guint8 sysid)
     g_hash_table_insert(parameter_hash_table, p_sysid, p_parameter);
 
     GSocket *p_target_socket = g_new0(GSocket, 1);
-    as_udp_write_init(sysid, p_target_socket); // init write socket for new system
+    as_udp_write_init(target_system, p_target_socket); // init write socket for new system
     g_hash_table_insert(target_socket_hash_table, p_sysid, p_target_socket);
 
     mavlink_manual_control_t *p_manual_control = g_new0(mavlink_manual_control_t, 1);
     p_manual_control->z = 500; // 500 is z axis zero leval
     g_hash_table_insert(manual_control_table, p_sysid, p_manual_control);
 
-    statustex_queue[sysid] = g_async_queue_new();
+    // unlock the message hash table
+    g_mutex_unlock(&parameter_hash_table_mutex);
+    g_mutex_unlock(&target_socket_hash_table_mutex);
+    g_mutex_unlock(&message_hash_table_mutex);
+
+    system_key[target_system] = p_sysid;
+
+    statustex_queue[target_system] = g_async_queue_new();
 
     // set current message parameter and target_socket.
     current_messages = p_message;
     current_parameter = p_parameter;
     current_target_socket = p_target_socket;
 
-    if (-1 == request_full_parameters(sysid))
+    if (-1 == request_full_parameters(target_system, target_autopilot))
     {
         g_error("faild to request full parameters!\n");
     }
 
     // init manual_control_worker thread
-    g_thread_new("manual_control_worker", (GThreadFunc)manual_control_worker, NULL);
+    g_thread_new("manual_control_worker", (GThreadFunc)manual_control_worker, p_sysid);
 }
 
 void manual_control_worker(gpointer data)
 {
-    if (NULL != data)
-    {
-        g_free(data);
-    }
+    guint8 my_target_system = *(guint8 *)data;
 
-    GSocket *my_target_socket = current_target_socket;
-    guint8 my_target_system = current_target_system;
+    g_mutex_lock(&target_socket_hash_table_mutex);
+    GSocket *my_target_socket = g_hash_table_lookup(target_socket_hash_table,
+                                                    system_key[my_target_system]);
+    g_mutex_unlock(&target_socket_hash_table_mutex);
 
     while (TRUE)
     {
@@ -212,7 +221,7 @@ void manual_control_worker(gpointer data)
             mavlink_message_t message;
             mavlink_msg_manual_control_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
                                               &message, safe_manual_control);
-            sendto_udp_message(my_target_socket, &message);
+            send_udp_message(my_target_system, &message);
 
             g_free(safe_manual_control); // free
 
@@ -237,6 +246,12 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 {
     // only one as_handle_messages thread is runing
     // g_mutex_lock(&handle_messages_mutex);
+    guint8 target_system;
+    guint8 target_autopilot;
+
+    Mavlink_Messages_t *current_messages;
+    Mavlink_Parameter_t *current_parameter;
+    GSocket *current_target_socket;
 
     mavlink_message_t message;
     mavlink_status_t status;
@@ -254,56 +269,64 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     }
 
     // NOTE: this doesn't handle multiple compid for one sysid.
-    current_target_system = message.sysid;
-    current_target_autopilot = message.compid;
+    target_system = message.sysid;
+    target_autopilot = message.compid;
 
-    // lock the hash table
-    g_mutex_lock(&message_hash_table_mutex);
-    g_mutex_lock(&parameter_hash_table_mutex);
-    g_mutex_lock(&target_socket_hash_table_mutex);
+    g_mutex_lock(&message_mutex[target_system]);
 
-    g_mutex_lock(&message_mutex[current_target_system]);
-
-    if (NULL == system_key[message.sysid]) // find new system
+    if (NULL == system_key[target_system]) // find new system
     {
         // add system to hash table if sysid NOT exsit in hash table's key set
-        as_sys_add(message.sysid);
+        as_sys_add(target_system, target_autopilot,
+                   current_messages,
+                   current_parameter,
+                   current_target_socket);
     }
     else
     {
-        Mavlink_Messages_t *p_message =
-            g_hash_table_lookup(message_hash_table, system_key[message.sysid]);
-
-        Mavlink_Parameter_t *p_parameter =
-            g_hash_table_lookup(parameter_hash_table, system_key[message.sysid]);
-
-        GSocket *p_target_socket =
-            g_hash_table_lookup(target_socket_hash_table, system_key[message.sysid]);
+        // lock the hash table
+        g_mutex_lock(&message_hash_table_mutex);
+        g_mutex_lock(&parameter_hash_table_mutex);
+        g_mutex_lock(&target_socket_hash_table_mutex);
 
         // set current message parameter and target_socket.
-        current_messages = p_message;
-        current_parameter = p_parameter;
-        current_target_socket = p_target_socket;
+        current_messages =
+            g_hash_table_lookup(message_hash_table,
+                                system_key[target_system]);
+
+        current_parameter =
+            g_hash_table_lookup(parameter_hash_table,
+                                system_key[target_system]);
+
+        current_target_socket =
+            g_hash_table_lookup(target_socket_hash_table,
+                                system_key[target_system]);
+
+        // unlock the message hash table
+        g_mutex_unlock(&parameter_hash_table_mutex);
+        g_mutex_unlock(&target_socket_hash_table_mutex);
+        g_mutex_unlock(&message_hash_table_mutex);
     }
 
-    current_messages->sysid = message.sysid;
-    current_messages->compid = message.compid;
+    current_messages->sysid = target_system;
+    current_messages->compid = target_autopilot;
 
-    as_handle_message_id(message);
+    as_handle_message_id(message,
+                         current_messages,
+                         current_parameter);
 
-    // unlock the message hash table
-    g_mutex_unlock(&message_mutex[current_target_system]);
-    g_mutex_unlock(&parameter_hash_table_mutex);
-    g_mutex_unlock(&target_socket_hash_table_mutex);
-
-    g_mutex_unlock(&message_hash_table_mutex);
+    g_mutex_unlock(&message_mutex[target_system]);
 
     // g_mutex_unlock(&handle_messages_mutex);
     return message.msgid;
 }
 
-void as_handle_message_id(mavlink_message_t message)
+void as_handle_message_id(mavlink_message_t message,
+                          Mavlink_Messages_t *current_messages,
+                          Mavlink_Parameter_t *current_parameter)
 {
+    guint8 target_system = current_messages->sysid;
+
     // Handle Message ID
     switch (message.msgid)
     {
@@ -331,7 +354,10 @@ void as_handle_message_id(mavlink_message_t message)
         g_message("heartbeat msg from system:%d", current_messages->sysid);
 
         // send heartbeat
-        send_heartbeat();
+        if (NULL != system_key[target_system])
+        {
+            send_heartbeat(target_system, current_messages);
+        }
 
         break;
     }
@@ -350,6 +376,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         printf("MAVLINK_MSG_ID_PING\n");
         mavlink_msg_ping_decode(&message, &(current_messages->ping));
+        //TODO: fix this
         printf("PING: time_usec:%I64u, seq:%d, target_system:%d, target_component:%d\n",
                current_messages->ping.time_usec, current_messages->ping.seq,
                current_messages->ping.target_system, current_messages->ping.target_component);
@@ -546,7 +573,7 @@ void as_handle_message_id(mavlink_message_t message)
         // printf("MAVLINK_MSG_ID_STATUSTEXT\n");
         mavlink_msg_statustext_decode(&message, &(current_messages->statustext));
         current_messages->time_stamps.statustext = g_get_monotonic_time();
-        statustex_queue_push();
+        statustex_queue_push(target_system, current_messages);
         // printf("severity: %d, statustext: ", current_messages->statustext.severity);
         // printf(current_messages->statustext.text);
         // printf("\n");
@@ -571,7 +598,7 @@ void as_handle_message_id(mavlink_message_t message)
         }
         else
         {
-            g_mutex_lock(&parameter_mutex[current_target_system]);
+            g_mutex_lock(&parameter_mutex[target_system]);
 
             strcpy(current_parameter[_param_index].param_id,
                    current_messages->param_value.param_id);
@@ -582,7 +609,7 @@ void as_handle_message_id(mavlink_message_t message)
             current_parameter[_param_index].param_value.param_float =
                 current_messages->param_value.param_value;
 
-            g_mutex_unlock(&parameter_mutex[current_target_system]);
+            g_mutex_unlock(&parameter_mutex[target_system]);
         }
 
         // printf("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
@@ -655,10 +682,13 @@ int as_api_check_active_sys(uint8_t sysid)
     }
 }
 
-void send_heartbeat(void)
+void send_heartbeat(guint8 target_system,
+                    Mavlink_Messages_t *current_messages)
 {
     mavlink_message_t message;
     mavlink_heartbeat_t hb;
+
+    // TODO: change this value fix value
 
     hb.type = current_messages->heartbeat.type;
     hb.autopilot = current_messages->heartbeat.autopilot;
@@ -669,20 +699,22 @@ void send_heartbeat(void)
 
     mavlink_msg_heartbeat_encode(255, 1, &message, &hb);
 
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 
     // g_print("heart breat sended!\n");
 }
 
-void do_set_servo(float servo_no, float pwm)
+void do_set_servo(guint8 target_system,
+                  guint8 target_autopilot,
+                  gfloat servo_no, gfloat pwm)
 {
     // --------------------------------------------------------------------------
     //   PACK PAYLOAD
     // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
-    cmd_long.target_system = current_target_system;
-    cmd_long.target_component = current_target_autopilot;
+    cmd_long.target_system = target_system;
+    cmd_long.target_component = target_autopilot;
     cmd_long.command = MAV_CMD_DO_SET_SERVO;
     cmd_long.confirmation = 0;
     cmd_long.param1 = servo_no;
@@ -698,20 +730,22 @@ void do_set_servo(float servo_no, float pwm)
     // --------------------------------------------------------------------------
     //   WRITE
     // --------------------------------------------------------------------------
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 
     // printf("do_set_servo msg wrote!");
 }
 
-void do_motor_test(float motor_no, float pwm)
+void do_motor_test(guint8 target_system,
+                   guint8 target_autopilot,
+                   gfloat motor_no, gfloat pwm)
 {
     // --------------------------------------------------------------------------
     //   PACK PAYLOAD
     // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
-    cmd_long.target_system = current_target_system;
-    cmd_long.target_component = current_target_autopilot;
+    cmd_long.target_system = target_system;
+    cmd_long.target_component = target_autopilot;
     cmd_long.command = MAV_CMD_DO_MOTOR_TEST;
     cmd_long.confirmation = 0;
     cmd_long.param1 = motor_no - 1;
@@ -738,16 +772,16 @@ void do_motor_test(float motor_no, float pwm)
     // check the write
 }
 
-void do_set_mode(control_mode_t mode_)
+void do_set_mode(control_mode_t mode, guint8 target_system)
 {
     // --------------------------------------------------------------------------
     //   PACK PAYLOAD
     // --------------------------------------------------------------------------
 
     mavlink_set_mode_t set_mode;
-    set_mode.target_system = current_target_system;
+    set_mode.target_system = target_system;
     set_mode.base_mode = 209; //81
-    set_mode.custom_mode = mode_;
+    set_mode.custom_mode = mode;
 
     // --------------------------------------------------------------------------
     //   ENCODE
@@ -765,15 +799,15 @@ void do_set_mode(control_mode_t mode_)
     // check the write
 }
 
-gint request_full_parameters(guint8 sysid)
+gint request_full_parameters(guint8 target_system, guint8 target_component)
 {
     //TODO: request full parameters
-    send_param_request_list(); // no guarantee
+    send_param_request_list(target_system, target_component); // no guarantee
     g_usleep(100000);
 
-    g_mutex_lock(&parameter_mutex[sysid]);
-
-    g_mutex_unlock(&parameter_mutex[sysid]);
+    g_mutex_lock(&parameter_mutex[target_system]);
+    // creat a new thread to do this
+    g_mutex_unlock(&parameter_mutex[target_system]);
 
     return 0;
 }
@@ -796,15 +830,15 @@ void send_param_request_read(guint8 target_system, guint8 target_component, gint
 
     mavlink_msg_param_request_read_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &prr);
 
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 }
 
-void send_param_request_list()
+void send_param_request_list(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_param_request_list_t param_list = {0};
 
-    param_list.target_system = current_target_system;
-    param_list.target_component = current_target_autopilot;
+    param_list.target_system = target_system;
+    param_list.target_component = target_autopilot;
 
     // Encode
     mavlink_message_t message;
@@ -813,20 +847,21 @@ void send_param_request_list()
     mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &param_list);
 
     // Send
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 
     // g_message("param_request_list msg wrote!");
 }
 
-void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+                               uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
 {
     // --------------------------------------------------------------------------
     //   PACK PAYLOAD
     // --------------------------------------------------------------------------
     mavlink_rc_channels_override_t rc_channels_override;
-    rc_channels_override.target_system = current_target_system;
-    rc_channels_override.target_component = current_target_autopilot;
+    rc_channels_override.target_system = target_system;
+    rc_channels_override.target_component = target_autopilot;
     rc_channels_override.chan1_raw = ch1;
     rc_channels_override.chan2_raw = ch2;
     rc_channels_override.chan3_raw = ch3;
@@ -854,102 +889,14 @@ void send_rc_channels_override(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_
 }
 
 // ------------------------------------------------------------------------------
-//   Start Off-Board Mode
-// ------------------------------------------------------------------------------
-void enable_offboard_control()
-{
-    // Should only send this command once
-    if (control_status == false)
-    {
-        printf("ENABLE OFFBOARD MODE\n");
-
-        // ----------------------------------------------------------------------
-        //   TOGGLE OFF-BOARD MODE
-        // ----------------------------------------------------------------------
-
-        // Sends the command to go off-board
-        int success = toggle_offboard_control(true);
-
-        // Check the command was written
-        if (success)
-        {
-            control_status = true;
-        }
-        else
-        {
-            fprintf(stderr, "Error: off-board mode not set, could not write message\n");
-            //throw EXIT_FAILURE;
-        }
-
-        printf("\n");
-
-    } // end: if not offboard_status
-}
-
-// ------------------------------------------------------------------------------
-//   Stop Off-Board Mode
-// ------------------------------------------------------------------------------
-void disable_offboard_control()
-{
-
-    // Should only send this command once
-    if (control_status == true)
-    {
-        printf("DISABLE OFFBOARD MODE\n");
-
-        // ----------------------------------------------------------------------
-        //   TOGGLE OFF-BOARD MODE
-        // ----------------------------------------------------------------------
-
-        // Sends the command to stop off-board
-        int success = toggle_offboard_control(false);
-
-        // Check the command was written
-        if (success)
-            control_status = false;
-        else
-        {
-            fprintf(stderr, "Error: off-board mode not set, could not write message\n");
-            //throw EXIT_FAILURE;
-        }
-
-        printf("\n");
-
-    } // end: if offboard_status
-}
-
-// ------------------------------------------------------------------------------
-//   Toggle Off-Board Mode
-// ------------------------------------------------------------------------------
-int toggle_offboard_control(bool flag)
-{
-    // Prepare command for off-board mode
-    mavlink_command_long_t com = {0};
-    com.target_system = current_target_system;
-    com.target_component = current_target_autopilot;
-    com.command = MAV_CMD_NAV_GUIDED_ENABLE;
-    com.confirmation = true;
-    com.param1 = (float)flag; // flag >0.5 => start, <0.5 => stop
-
-    // Encode
-    mavlink_message_t message;
-    mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &com);
-
-    // Send the message
-    // TODO:
-
-    return 0;
-}
-
-// ------------------------------------------------------------------------------
 //   ARM the vehicle
 // ------------------------------------------------------------------------------
-void vehicle_arm(guint8 target_system)
+void vehicle_arm(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_command_long_t cmd = {0};
 
     cmd.target_system = target_system;
-    cmd.target_component = current_target_autopilot;
+    cmd.target_component = target_autopilot;
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
     cmd.param1 = 1.0F;
@@ -959,7 +906,7 @@ void vehicle_arm(guint8 target_system)
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
     // Send the message
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 
     // clear manual_control value
     g_mutex_lock(&manual_control_mutex[target_system]); // lock
@@ -978,12 +925,12 @@ void vehicle_arm(guint8 target_system)
 // ------------------------------------------------------------------------------
 //   DISARM the vehicle
 // ------------------------------------------------------------------------------
-void vehicle_disarm(guint8 target_system)
+void vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_command_long_t cmd = {0};
 
-    cmd.target_system = current_target_system;
-    cmd.target_component = current_target_autopilot;
+    cmd.target_system = target_system;
+    cmd.target_component = target_autopilot;
     cmd.command = MAV_CMD_COMPONENT_ARM_DISARM;
     cmd.confirmation = 0;
     cmd.param1 = 0.0F;
@@ -993,7 +940,7 @@ void vehicle_disarm(guint8 target_system)
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
     // Send the message
-    send_udp_message(&message);
+    send_udp_message(target_system, &message);
 
     g_atomic_int_set((volatile gint *)&arm_status[target_system], 0);
 
@@ -1009,30 +956,16 @@ void vehicle_disarm(guint8 target_system)
     g_mutex_unlock(&manual_control_mutex[target_system]); // unlock
 }
 
-void send_udp_message(mavlink_message_t *message)
+void send_udp_message(guint8 target_system, mavlink_message_t *message)
 {
     guint msg_len;
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
-    // Translate message to buffer
-    msg_len = mavlink_msg_to_send_buffer((uint8_t *)msg_buf, message);
-
-    // Send
-    g_socket_send(current_target_socket, msg_buf, msg_len, NULL, &error);
-
-    /* don't forget to check for errors */
-    if (error != NULL)
-    {
-        g_error(error->message);
-    }
-}
-
-void sendto_udp_message(GSocket *target_socket, mavlink_message_t *message)
-{
-    guint msg_len;
-    gchar msg_buf[MAX_BYTES];
-    GError *error = NULL;
+    g_mutex_lock(&target_socket_hash_table_mutex);
+    GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
+                                                 system_key[target_system]);
+    g_mutex_unlock(&target_socket_hash_table_mutex);
 
     // Translate message to buffer
     msg_len = mavlink_msg_to_send_buffer((uint8_t *)msg_buf, message);
@@ -1058,7 +991,7 @@ int as_api_statustex_cpunt(uint8_t target_system)
     return g_async_queue_length(statustex_queue[target_system]);
 }
 
-mavlink_statustext_t *statustex_queue_pop(uint8_t target_system)
+mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
 {
     static mavlink_statustext_t *last_statustex;
 
@@ -1073,15 +1006,16 @@ mavlink_statustext_t *statustex_queue_pop(uint8_t target_system)
     return last_statustex;
 }
 
-void statustex_queue_push()
+void statustex_queue_push(guint8 target_system,
+                          Mavlink_Messages_t *current_messages)
 {
-    // TODO: fix this
-    if (g_async_queue_length(statustex_queue[current_target_system]) > 50)
+    // TODO: fix this ??? need fix ???
+    if (g_async_queue_length(statustex_queue[target_system]) > 50)
     {
-        statustex_queue_pop(current_target_system);
+        statustex_queue_pop(target_system);
     }
 
-    g_async_queue_push(statustex_queue[current_target_system],
+    g_async_queue_push(statustex_queue[target_system],
                        g_memdup(&current_messages->statustext,
                                 sizeof(mavlink_statustext_t)));
 }

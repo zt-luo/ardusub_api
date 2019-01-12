@@ -50,8 +50,8 @@ extern "C"
     extern void as_api_deinit();
     extern void as_api_run();
 
-    extern void vehicle_arm(uint8_t target_system);
-    extern void vehicle_disarm(uint8_t target_system);
+    extern void vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
+    extern void vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
 
     //! NULL-able return value
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
@@ -59,8 +59,6 @@ extern "C"
 
     extern int as_api_check_active_sys(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
-
-    extern void do_set_servo(float servo_no, float pwm);
 
 #ifdef __cplusplus
 }
