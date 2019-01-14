@@ -2,6 +2,20 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(ardusub_api VERSION 0.1.0)
 
+set(DEBUG_WITH_VS "no")
+
+
+
+if (DEBUG_WITH_VS matches "yes")
+
+link_directories("C:/gstreamer/1.0/x86_64/lib")
+link_libraries(glib-2.0 intl gthread-2.0 gobject-2.0 json-glib-1.0 gio-2.0)
+include_directories("C:/gstreamer/1.0/x86_64/include/glib-2.0" 
+                    "C:/gstreamer/1.0/x86_64/include/json-glib-1.0"
+                    "C:/gstreamer/1.0/x86_64/lib/glib-2.0/include")
+                    
+else ()
+
 add_compile_options(-std=c99
                     -W -Wall)
 
@@ -16,6 +30,9 @@ pkg_search_module(GIO REQUIRED gio-2.0)
 
 include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
 link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
+
+endif (DEBUG_WITH_VS matches "yes")
+
 
 # add mavlink include dir
 set(MAVLINK_V2_0_INC_DIR "mavlink/v2.0")

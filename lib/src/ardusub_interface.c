@@ -154,15 +154,12 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
     g_mutex_lock(&parameter_hash_table_mutex);
     g_mutex_lock(&target_socket_hash_table_mutex);
 
-    Mavlink_Messages_t *p_message = g_new0(Mavlink_Messages_t, 1);
-    g_hash_table_insert(message_hash_table, p_sysid, p_message);
+    g_hash_table_insert(message_hash_table, p_sysid, current_messages);
 
-    Mavlink_Parameter_t *p_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
-    g_hash_table_insert(parameter_hash_table, p_sysid, p_parameter);
+    g_hash_table_insert(parameter_hash_table, p_sysid, current_parameter);
 
-    GSocket *p_target_socket = g_new0(GSocket, 1);
-    as_udp_write_init(target_system, p_target_socket); // init write socket for new system
-    g_hash_table_insert(target_socket_hash_table, p_sysid, p_target_socket);
+    as_udp_write_init(target_system, current_target_socket); // init write socket for new system
+    g_hash_table_insert(target_socket_hash_table, p_sysid, current_target_socket);
 
     mavlink_manual_control_t *p_manual_control = g_new0(mavlink_manual_control_t, 1);
     p_manual_control->z = 500; // 500 is z axis zero leval
@@ -173,14 +170,9 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
     g_mutex_unlock(&target_socket_hash_table_mutex);
     g_mutex_unlock(&message_hash_table_mutex);
 
-    system_key[target_system] = p_sysid;
-
     statustex_queue[target_system] = g_async_queue_new();
 
-    // set current message parameter and target_socket.
-    current_messages = p_message;
-    current_parameter = p_parameter;
-    current_target_socket = p_target_socket;
+    system_key[target_system] = p_sysid;
 
     if (-1 == request_full_parameters(target_system, target_autopilot))
     {
@@ -249,9 +241,9 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     guint8 target_system;
     guint8 target_autopilot;
 
-    Mavlink_Messages_t *current_messages;
-    Mavlink_Parameter_t *current_parameter;
-    GSocket *current_target_socket;
+    Mavlink_Messages_t *current_messages = NULL;
+    Mavlink_Parameter_t *current_parameter = NULL;
+    GSocket *current_target_socket = NULL;
 
     mavlink_message_t message;
     mavlink_status_t status;
@@ -276,6 +268,10 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     if (NULL == system_key[target_system]) // find new system
     {
+        current_messages = g_new0(Mavlink_Messages_t, 1);
+        current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
+        current_target_socket = g_new0(GSocket, 1);
+
         // add system to hash table if sysid NOT exsit in hash table's key set
         as_sys_add(target_system, target_autopilot,
                    current_messages,
@@ -905,9 +901,6 @@ void vehicle_arm(guint8 target_system, guint8 target_autopilot)
     mavlink_message_t message;
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
-    // Send the message
-    send_udp_message(target_system, &message);
-
     // clear manual_control value
     g_mutex_lock(&manual_control_mutex[target_system]); // lock
     mavlink_manual_control_t *p_manual_control =
@@ -920,6 +913,9 @@ void vehicle_arm(guint8 target_system, guint8 target_autopilot)
     g_mutex_unlock(&manual_control_mutex[target_system]); // unlock
 
     g_atomic_int_set((volatile gint *)&arm_status[target_system], 1);
+
+    // Send the message
+    send_udp_message(target_system, &message);
 }
 
 // ------------------------------------------------------------------------------
@@ -961,6 +957,13 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
     guint msg_len;
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
+
+    if (NULL == system_key[target_system])
+    {
+        //TODO: fix this
+        g_message("NULL system_key[%d]\n", target_system);
+        return;
+    }
 
     g_mutex_lock(&target_socket_hash_table_mutex);
     GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
