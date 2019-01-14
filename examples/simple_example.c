@@ -15,8 +15,6 @@
 
 #include "../lib/inc/ardusub_api.h"
 
-//TODO: (simple_example.exe:8684): GLib-CRITICAL **: 19:51:01.978: g_error_new_literal: assertion 'message != NULL' failed
-
 /**
  * @brief 
  * 
