@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(simple_example VERSION 0.1.0)
 
-if (DEBUG_WITH_VS matches "yes")
+if (DEBUG_WITH_VS MATCHES "yes")
 
 link_directories("C:/gstreamer/1.0/x86_64/lib")
 
@@ -13,7 +13,7 @@ add_compile_options(-g -O0
                     -static)
 # TODO: add different compile options for different compiler
 
-endif (DEBUG_WITH_VS matches "yes")
+endif (DEBUG_WITH_VS MATCHES "yes")
 
 set(ARDUSUB_API_LIB_INC_DIR "../lib/inc")
 

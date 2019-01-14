@@ -6,7 +6,7 @@ set(DEBUG_WITH_VS "no")
 
 
 
-if (DEBUG_WITH_VS matches "yes")
+if (DEBUG_WITH_VS MATCHES "yes")
 
 link_directories("C:/gstreamer/1.0/x86_64/lib")
 link_libraries(glib-2.0 intl gthread-2.0 gobject-2.0 json-glib-1.0 gio-2.0)
@@ -31,7 +31,7 @@ pkg_search_module(GIO REQUIRED gio-2.0)
 include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
 link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
 
-endif (DEBUG_WITH_VS matches "yes")
+endif (DEBUG_WITH_VS MATCHES "yes")
 
 
 # add mavlink include dir
