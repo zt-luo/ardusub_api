@@ -187,11 +187,6 @@ void manual_control_worker(gpointer data)
 {
     guint8 my_target_system = *(guint8 *)data;
 
-    g_mutex_lock(&target_socket_hash_table_mutex);
-    GSocket *my_target_socket = g_hash_table_lookup(target_socket_hash_table,
-                                                    system_key[my_target_system]);
-    g_mutex_unlock(&target_socket_hash_table_mutex);
-
     while (TRUE)
     {
         if (1 == g_atomic_int_get((volatile gint *)&arm_status[my_target_system])) // Atomic Operation
@@ -243,7 +238,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     Mavlink_Messages_t *current_messages = NULL;
     Mavlink_Parameter_t *current_parameter = NULL;
-    GSocket *current_target_socket = NULL;
 
     mavlink_message_t message;
     mavlink_status_t status;
@@ -270,7 +264,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     {
         current_messages = g_new0(Mavlink_Messages_t, 1);
         current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
-        current_target_socket = g_new0(GSocket, 1);
+        GSocket *current_target_socket = g_new0(GSocket, 1);
 
         // add system to hash table if sysid NOT exsit in hash table's key set
         as_sys_add(target_system, target_autopilot,
@@ -283,7 +277,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         // lock the hash table
         g_mutex_lock(&message_hash_table_mutex);
         g_mutex_lock(&parameter_hash_table_mutex);
-        g_mutex_lock(&target_socket_hash_table_mutex);
 
         // set current message parameter and target_socket.
         current_messages =
@@ -294,15 +287,13 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
             g_hash_table_lookup(parameter_hash_table,
                                 system_key[target_system]);
 
-        current_target_socket =
-            g_hash_table_lookup(target_socket_hash_table,
-                                system_key[target_system]);
-
         // unlock the message hash table
-        g_mutex_unlock(&parameter_hash_table_mutex);
-        g_mutex_unlock(&target_socket_hash_table_mutex);
         g_mutex_unlock(&message_hash_table_mutex);
+        g_mutex_unlock(&parameter_hash_table_mutex);
     }
+
+    g_assert(current_messages != NULL);
+    g_assert(current_parameter != NULL);
 
     current_messages->sysid = target_system;
     current_messages->compid = target_autopilot;
@@ -958,12 +949,8 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
-    if (NULL == system_key[target_system])
-    {
-        //TODO: fix this
-        g_message("NULL system_key[%d]\n", target_system);
-        return;
-    }
+    g_assert(NULL != system_key[target_system]);
+    g_assert(NULL != message);
 
     g_mutex_lock(&target_socket_hash_table_mutex);
     GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
