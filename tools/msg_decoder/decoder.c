@@ -128,9 +128,6 @@ void decode_from_json_file()
 
     json_array_foreach_element(json_node_get_array(root), json_iterator, NULL);
 
-    g_object_unref(parser);
-    g_object_unref(reader);
-
     g_print("------------------------------------------------------\n");
     g_print("%d MAVLink message decoded \nfrom json file: '%s'.\n",
             decoded_msg_count, json_file);
@@ -202,10 +199,9 @@ void json_iterator(JsonArray *array, guint index_,
                    JsonNode *element_node,
                    gpointer user_data)
 {
-    if (NULL != array)
-    {
-        g_free(array);
-    }
+
+    g_assert(NULL != array);
+    g_assert(NULL != element_node);
 
     if (NULL != user_data)
     {
@@ -213,11 +209,6 @@ void json_iterator(JsonArray *array, guint index_,
     }
 
     // g_print("this is element %d\n", index_);
-
-    if (index_ > 1024)
-    {
-        g_message("wow, this is a big file, and it takes time.");
-    }
 
     JsonReader *reader = json_reader_new(element_node);
     json_reader_read_member(reader, "_source");
@@ -251,6 +242,8 @@ void json_iterator(JsonArray *array, guint index_,
     gchar **data_str_split;
     data_str_split = g_strsplit(data_str, ":", -1);
     gchar *data_member = {0};
+
+    g_print("[%d]", index_ + 1);
 
     for (gsize i = 0; i < data_len; i++)
     {
