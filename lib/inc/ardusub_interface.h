@@ -219,10 +219,10 @@ extern "C"
     GMutex parameter_mutex[255];
     GMutex manual_control_mutex[255];
 
-    GMutex message_hash_table_mutex;
-    GMutex parameter_hash_table_mutex;
-    GMutex target_socket_hash_table_mutex;
-    GMutex manual_control_hash_table_mutex;
+    GRWLock message_hash_table_lock;
+    GRWLock parameter_hash_table_lock;
+    GRWLock target_socket_hash_table_lock;
+    GRWLock manual_control_hash_table_lock;
 
     GAsyncQueue *statustex_queue[255];
 

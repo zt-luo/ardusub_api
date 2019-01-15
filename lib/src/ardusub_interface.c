@@ -156,9 +156,9 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
     *p_sysid = target_system;
 
     // lock the hash table
-    g_mutex_lock(&message_hash_table_mutex);
-    g_mutex_lock(&parameter_hash_table_mutex);
-    g_mutex_lock(&target_socket_hash_table_mutex);
+    g_rw_lock_writer_lock(&message_hash_table_lock);
+    g_rw_lock_writer_lock(&parameter_hash_table_lock);
+    g_rw_lock_writer_lock(&target_socket_hash_table_lock);
 
     g_hash_table_insert(message_hash_table, p_sysid, current_messages);
 
@@ -172,9 +172,9 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
     g_hash_table_insert(manual_control_table, p_sysid, p_manual_control);
 
     // unlock the message hash table
-    g_mutex_unlock(&parameter_hash_table_mutex);
-    g_mutex_unlock(&target_socket_hash_table_mutex);
-    g_mutex_unlock(&message_hash_table_mutex);
+    g_rw_lock_writer_unlock(&message_hash_table_lock);
+    g_rw_lock_writer_unlock(&parameter_hash_table_lock);
+    g_rw_lock_writer_unlock(&target_socket_hash_table_lock);
 
     statustex_queue[target_system] = g_async_queue_new();
 
@@ -201,12 +201,12 @@ gpointer manual_control_worker(gpointer data)
     {
         if (1 == g_atomic_int_get((volatile gint *)&arm_status[my_target_system])) // Atomic Operation
         {
-            g_mutex_lock(&manual_control_hash_table_mutex);
+            g_rw_lock_reader_lock(&manual_control_hash_table_lock);
 
             mavlink_manual_control_t *my_manual_control =
                 g_hash_table_lookup(manual_control_table, system_key_);
 
-            g_mutex_unlock(&manual_control_hash_table_mutex);
+            g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
             g_mutex_lock(&manual_control_mutex[my_target_system]); // lock
 
@@ -287,8 +287,8 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     else
     {
         // lock the hash table
-        g_mutex_lock(&message_hash_table_mutex);
-        g_mutex_lock(&parameter_hash_table_mutex);
+        g_rw_lock_reader_lock(&message_hash_table_lock);
+        g_rw_lock_reader_lock(&parameter_hash_table_lock);
 
         // set current message parameter and target_socket.
         current_messages =
@@ -300,8 +300,8 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
                                 system_key[target_system]);
 
         // unlock the message hash table
-        g_mutex_unlock(&message_hash_table_mutex);
-        g_mutex_unlock(&parameter_hash_table_mutex);
+        g_rw_lock_reader_unlock(&message_hash_table_lock);
+        g_rw_lock_reader_unlock(&parameter_hash_table_lock);
     }
 
     g_assert(current_messages != NULL);
@@ -646,10 +646,10 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
         return;
     }
 
-    g_mutex_lock(&manual_control_hash_table_mutex);
+    g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
         g_hash_table_lookup(manual_control_table, system_key[sys_id]);
-    g_mutex_unlock(&manual_control_hash_table_mutex);
+    g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_mutex_lock(&manual_control_mutex[sys_id]); // lock
     p_manual_control->x = x;
@@ -665,9 +665,9 @@ Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
     gpointer system_key_ = g_atomic_pointer_get(system_key + sysid);
     g_assert(NULL != system_key_);
 
-    g_mutex_lock(&message_hash_table_mutex);
+    g_rw_lock_reader_lock(&message_hash_table_lock);
     Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key_);
-    g_mutex_unlock(&message_hash_table_mutex);
+    g_rw_lock_reader_unlock(&message_hash_table_lock);
 
     g_assert(NULL != p_message);
 
@@ -982,10 +982,10 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
 
     g_assert(TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)));
 
-    g_mutex_lock(&target_socket_hash_table_mutex);
+    g_rw_lock_reader_lock(&target_socket_hash_table_lock);
     GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
                                                  system_key_);
-    g_mutex_unlock(&target_socket_hash_table_mutex);
+    g_rw_lock_reader_unlock(&target_socket_hash_table_lock);
 
     g_assert(NULL != target_socket);
 
