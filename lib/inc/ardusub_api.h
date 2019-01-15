@@ -31,6 +31,15 @@ typedef enum control_mode_enum
     MANUAL = 19    // Pass-through input with no stabilization
 } control_mode_t;
 
+// indicate the status controled from this api
+typedef enum system_status_enum
+{
+    SYS_UN_INIT = 0,
+    SYS_INITIATING = 1,
+    SYS_DISARMED = 2,
+    SYS_ARMED = 3,
+} system_status_t;
+
 typedef struct Debug_Info_Bite_s
 {
     uint64_t b000_b063;
@@ -48,16 +57,16 @@ extern "C"
 
     extern void as_api_init(char *subnet_address);
     extern void as_api_deinit();
-    extern void* as_api_run(void *data);
+    extern void *as_api_run(void *data);
 
-    extern void vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
-    extern void vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
+    extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
+    extern void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
 
     //! NULL-able return value
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
     extern int as_api_statustex_cpunt(uint8_t target_system);
 
-    extern int as_api_check_active_sys(uint8_t sysid);
+    extern int as_api_check_vehicle(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
 
 #ifdef __cplusplus

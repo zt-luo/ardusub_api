@@ -178,105 +178,96 @@ typedef struct Mavlink_Parameter_s
     enum MAV_PARAM_TYPE param_type; // NOTE: if param_type == 0 , then this Parameter is empty.
 } Mavlink_Parameter_t;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+// ------------------------------------------------------------------------------
+//   Variables
+// ------------------------------------------------------------------------------
 
-    // ------------------------------------------------------------------------------
-    //   Variables
-    // ------------------------------------------------------------------------------
+static guint sys_count;
 
-    static guint system_count;
+static char *subnet_address;
 
-    static gboolean as_init_status;
+//TODO: Atomic Operations should apply on this
+static guint8 *sys_key[255];
+static guint8 udp_write_ready[255];
+static system_status_t vehicle_status[255];
 
-    static char *subnet_address;
+GHashTable *message_hash_table;
+GHashTable *parameter_hash_table;
+GHashTable *target_socket_hash_table;
+GHashTable *manual_control_table;
 
-    /* START only used by as_handle_messages() and as_handle_messages_id() START */
-    // static int current_target_system;
-    // static int current_target_autopilot;
-    // static Mavlink_Messages_t *current_messages;
-    // static Mavlink_Parameter_t *current_parameter;
-    // static GSocket *current_target_socket;
-    /* STOP  only used by as_handle_messages() and as_handle_messages_id()  STOP */
+//globle mutex
+GMutex message_mutex[255];
+GMutex parameter_mutex[255];
+GMutex manual_control_mutex[255];
 
-    //TODO: Atomic Operations should apply on this
-    static guint8 *system_key[255];
-    static volatile guint8 arm_status[255];
-    static guint8 udp_write_ready[255];
+GRWLock message_hash_table_lock;
+GRWLock parameter_hash_table_lock;
+GRWLock target_socket_hash_table_lock;
+GRWLock manual_control_hash_table_lock;
 
-    GHashTable *message_hash_table;
-    GHashTable *parameter_hash_table;
-    GHashTable *target_socket_hash_table;
-    GHashTable *manual_control_table;
+GAsyncQueue *statustex_queue[255];
 
-    //globle mutex
-    GMutex handle_messages_mutex;
+// ------------------------------------------------------------------------------
+//   Prototypes
+// ------------------------------------------------------------------------------
 
-    //TODO: Atomic Operations needed?
-    GMutex message_mutex[255];
-    GMutex parameter_mutex[255];
-    GMutex manual_control_mutex[255];
+//
+// public api
+void as_api_init(char *subnet_address);
+void as_api_deinit();
+void *as_api_run(gpointer data);
+int as_api_check_vehicle(uint8_t sysid);
+void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot);
+void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot);
+void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
+int as_api_statustex_cpunt(uint8_t target_system);
+mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
-    GRWLock message_hash_table_lock;
-    GRWLock parameter_hash_table_lock;
-    GRWLock target_socket_hash_table_lock;
-    GRWLock manual_control_hash_table_lock;
-
-    GAsyncQueue *statustex_queue[255];
-
-    // ------------------------------------------------------------------------------
-    //   Prototypes
-    // ------------------------------------------------------------------------------
-    void as_api_init(char *subnet_address);
-    void as_api_deinit();
-    gpointer as_api_run(gpointer data);
-    void as_sys_add(guint8 target_system, guint8 target_autopilot,
+//
+// func inside high leval
+void as_system_init(guint8 target_system, guint8 target_autopilot,
                     Mavlink_Messages_t *current_messages,
                     Mavlink_Parameter_t *current_parameter,
                     GSocket *current_target_socket);
 
-    int as_api_check_active_sys(uint8_t sysid);
-    void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
-    mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
-    int as_api_statustex_cpunt(uint8_t target_system);
+Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 
-    Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
+void as_udp_write_init(guint8 sysid, GSocket *p_target_socket);
+void as_udp_read_init();
 
-    void as_udp_write_init(guint8 sysid, GSocket *p_target_socket);
-    void as_udp_read_init();
+guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read);
+void as_handle_message_id(mavlink_message_t message,
+                          Mavlink_Messages_t *current_messages,
+                          Mavlink_Parameter_t *current_parameter);
+int as_write_message(mavlink_message_t message);
 
-    guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read);
-    void as_handle_message_id(mavlink_message_t message,
-                              Mavlink_Messages_t *current_messages,
-                              Mavlink_Parameter_t *current_parameter);
-    int as_write_message(mavlink_message_t message);
-    gpointer manual_control_worker(gpointer data);
+gint as_request_full_parameters(guint8 target_system, guint8 target_component);
 
-    void enable_offboard_control();
-    void disable_offboard_control();
-    void vehicle_arm(guint8 target_system, guint8 target_autopilot);
-    void vehicle_disarm(guint8 target_system, guint8 target_autopilot);
+//
+// func inside low leval
+mavlink_statustext_t *statustex_queue_pop(guint8 target_system);
+void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
 
-    void do_set_servo(guint8 target_system,
-                      guint8 target_autopilot,
-                      gfloat servo_no, gfloat pwm);
-    void do_set_mode(control_mode_t mode, guint8 target_system);
-    gint request_full_parameters(guint8 target_system, guint8 target_component);
-    void send_param_request_list(guint8 target_system, guint8 target_autopilot);
-    void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
-    void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
-                                   uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
-                                   uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
-    void send_heartbeat(guint8 target_system,
-                        Mavlink_Messages_t *current_messages);
+void send_param_request_list(guint8 target_system, guint8 target_autopilot);
+void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
+void send_heartbeat(guint8 target_system,
+                    Mavlink_Messages_t *current_messages);
+void send_udp_message(guint8 target_system, mavlink_message_t *message);
 
-    gboolean udp_read_callback(GIOChannel *channel,
-                               GIOCondition condition,
-                               gpointer socket_udp_write);
+//
+// callbcak func
+gboolean udp_read_callback(GIOChannel *channel,
+                           GIOCondition condition,
+                           gpointer socket_udp_write);
+gpointer manual_control_worker(gpointer data);
 
-    void send_udp_message(guint8 target_system, mavlink_message_t *message);
-
-    mavlink_statustext_t *statustex_queue_pop(guint8 target_system);
-    void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
+//
+// func need fix
+void do_set_servo(guint8 target_system,
+                  guint8 target_autopilot,
+                  gfloat servo_no, gfloat pwm);
+void do_set_mode(control_mode_t mode, guint8 target_system);
+void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+                               uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+                               uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);

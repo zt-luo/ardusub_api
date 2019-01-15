@@ -2,6 +2,8 @@
 
 void as_api_init(char *p_subnet_address)
 {
+    static gboolean as_init_status;
+
     //! only init once
     if (TRUE != as_init_status)
     {
@@ -141,16 +143,16 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     g_atomic_int_set((volatile gint *)(udp_write_ready + sysid), TRUE);
 }
 
-void as_sys_add(guint8 target_system, guint8 target_autopilot,
-                Mavlink_Messages_t *current_messages,
-                Mavlink_Parameter_t *current_parameter,
-                GSocket *current_target_socket)
+void as_system_init(guint8 target_system, guint8 target_autopilot,
+                    Mavlink_Messages_t *current_messages,
+                    Mavlink_Parameter_t *current_parameter,
+                    GSocket *current_target_socket)
 {
     g_assert(current_messages != NULL);
     g_assert(current_parameter != NULL);
     g_assert(current_target_socket != NULL);
 
-    system_count++;
+    sys_count++;
 
     guint8 *p_sysid = g_new0(guint8, 1);
     *p_sysid = target_system;
@@ -178,11 +180,12 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
 
     statustex_queue[target_system] = g_async_queue_new();
 
-    system_key[target_system] = p_sysid;
+    sys_key[target_system] = p_sysid;
 
-    if (-1 == request_full_parameters(target_system, target_autopilot))
+    if (-1 == as_request_full_parameters(
+                  target_system, target_autopilot))
     {
-        g_error("faild to request full parameters!\n");
+        g_message("faild to request full parameters!\n");
     }
 
     // init manual_control_worker thread
@@ -194,26 +197,22 @@ gpointer manual_control_worker(gpointer data)
     g_assert(NULL != data);
 
     guint8 my_target_system = *(guint8 *)data;
-    gpointer system_key_ = g_atomic_pointer_get(system_key + my_target_system);
+    gpointer system_key_ = g_atomic_pointer_get(sys_key + my_target_system);
     g_assert(NULL != system_key_);
 
     while (TRUE)
     {
-        if (1 == g_atomic_int_get((volatile gint *)&arm_status[my_target_system])) // Atomic Operation
+        if (SYS_ARMED == g_atomic_int_get(vehicle_status + my_target_system)) // Atomic Operation
         {
             g_rw_lock_reader_lock(&manual_control_hash_table_lock);
-
             mavlink_manual_control_t *my_manual_control =
                 g_hash_table_lookup(manual_control_table, system_key_);
-
             g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
             g_mutex_lock(&manual_control_mutex[my_target_system]); // lock
-
             mavlink_manual_control_t *safe_manual_control =
                 g_memdup(my_manual_control, sizeof(mavlink_manual_control_t)); // memdup
-
-            g_mutex_unlock(&manual_control_mutex[my_target_system]); // unlock
+            g_mutex_unlock(&manual_control_mutex[my_target_system]);           // unlock
 
             mavlink_message_t message;
             mavlink_msg_manual_control_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
@@ -243,8 +242,6 @@ gpointer manual_control_worker(gpointer data)
  */
 guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 {
-    // only one as_handle_messages thread is runing
-    // g_mutex_lock(&handle_messages_mutex);
     guint8 target_system;
     guint8 target_autopilot;
 
@@ -272,17 +269,19 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     g_mutex_lock(&message_mutex[target_system]);
 
-    if (NULL == g_atomic_pointer_get(system_key + target_system)) // find new system
+    if (SYS_UN_INIT == g_atomic_int_get(vehicle_status + target_system)) // find new system
     {
+        g_atomic_int_set(vehicle_status + target_system, SYS_INITIATING);
         current_messages = g_new0(Mavlink_Messages_t, 1);
         current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
         GSocket *current_target_socket = g_new0(GSocket, 1);
 
         // add system to hash table if sysid NOT exsit in hash table's key set
-        as_sys_add(target_system, target_autopilot,
-                   current_messages,
-                   current_parameter,
-                   current_target_socket);
+        as_system_init(target_system, target_autopilot,
+                       current_messages,
+                       current_parameter,
+                       current_target_socket);
+        g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
     }
     else
     {
@@ -293,11 +292,11 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         // set current message parameter and target_socket.
         current_messages =
             g_hash_table_lookup(message_hash_table,
-                                system_key[target_system]);
+                                sys_key[target_system]);
 
         current_parameter =
             g_hash_table_lookup(parameter_hash_table,
-                                system_key[target_system]);
+                                sys_key[target_system]);
 
         // unlock the message hash table
         g_rw_lock_reader_unlock(&message_hash_table_lock);
@@ -316,7 +315,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     g_mutex_unlock(&message_mutex[target_system]);
 
-    // g_mutex_unlock(&handle_messages_mutex);
     return message.msgid;
 }
 
@@ -631,7 +629,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 {
     uint8_t sys_id = 1;
 
-    if (system_count > 1)
+    if (sys_count > 1)
     {
         va_list ap;
         va_start(ap, 1);
@@ -640,15 +638,14 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
     }
 
     // arm first
-    // Atomic Operation (crazy brackets)
-    if (0 == g_atomic_int_get((volatile gint *)(arm_status + sys_id)))
+    if (SYS_ARMED != g_atomic_int_get(vehicle_status + sys_id))
     {
         return;
     }
 
     g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, system_key[sys_id]);
+        g_hash_table_lookup(manual_control_table, sys_key[sys_id]);
     g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_mutex_lock(&manual_control_mutex[sys_id]); // lock
@@ -662,7 +659,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 {
-    gpointer system_key_ = g_atomic_pointer_get(system_key + sysid);
+    gpointer system_key_ = g_atomic_pointer_get(sys_key + sysid);
     g_assert(NULL != system_key_);
 
     g_rw_lock_reader_lock(&message_hash_table_lock);
@@ -674,9 +671,10 @@ Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
     return p_message;
 }
 
-int as_api_check_active_sys(uint8_t sysid)
+int as_api_check_vehicle(uint8_t sysid)
 {
-    if (NULL == g_atomic_pointer_get(system_key + sysid))
+    if ((NULL == g_atomic_pointer_get(sys_key + sysid)) ||
+        (SYS_DISARMED != g_atomic_int_get(vehicle_status + sysid)))
     {
         return 0;
     }
@@ -803,7 +801,7 @@ void do_set_mode(control_mode_t mode, guint8 target_system)
     // check the write
 }
 
-gint request_full_parameters(guint8 target_system, guint8 target_component)
+gint as_request_full_parameters(guint8 target_system, guint8 target_component)
 {
     //TODO: request full parameters
     send_param_request_list(target_system, target_component); // no guarantee
@@ -895,7 +893,7 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
 // ------------------------------------------------------------------------------
 //   ARM the vehicle
 // ------------------------------------------------------------------------------
-void vehicle_arm(guint8 target_system, guint8 target_autopilot)
+void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_command_long_t cmd = {0};
 
@@ -909,24 +907,23 @@ void vehicle_arm(guint8 target_system, guint8 target_autopilot)
     mavlink_message_t message;
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
-    // clear manual_control value
-    g_mutex_lock(&manual_control_mutex[target_system]); // lock
-
-    // TODO: need to replaced by table mutex
+    g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, system_key[target_system]);
+        g_hash_table_lookup(manual_control_table, sys_key[target_system]);
+    g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_assert(NULL != p_manual_control);
 
+    g_mutex_lock(&manual_control_mutex[target_system]); // lock
+    // clear manual_control value
     p_manual_control->x = 0;
     p_manual_control->y = 0;
     p_manual_control->z = 500;
     p_manual_control->r = 0;
     p_manual_control->buttons = 0;
     g_mutex_unlock(&manual_control_mutex[target_system]); // unlock
-    //TODO: maybe we should lock the manual_control_mutex untile arm
 
-    g_atomic_int_set((volatile gint *)&arm_status[target_system], 1);
+    g_atomic_int_set(vehicle_status + target_system, SYS_ARMED);
 
     // Send the message
     send_udp_message(target_system, &message);
@@ -935,7 +932,7 @@ void vehicle_arm(guint8 target_system, guint8 target_autopilot)
 // ------------------------------------------------------------------------------
 //   DISARM the vehicle
 // ------------------------------------------------------------------------------
-void vehicle_disarm(guint8 target_system, guint8 target_autopilot)
+void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_command_long_t cmd = {0};
 
@@ -952,15 +949,17 @@ void vehicle_disarm(guint8 target_system, guint8 target_autopilot)
     // Send the message
     send_udp_message(target_system, &message);
 
-    g_atomic_int_set((volatile gint *)&arm_status[target_system], 0);
+    g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
 
-    // clear manual_control value
-    g_mutex_lock(&manual_control_mutex[target_system]); // lock
+    g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, system_key[target_system]);
+        g_hash_table_lookup(manual_control_table, sys_key[target_system]);
+    g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_assert(NULL != p_manual_control);
 
+    g_mutex_lock(&manual_control_mutex[target_system]); // lock
+    // clear manual_control value
     p_manual_control->x = 0;
     p_manual_control->y = 0;
     p_manual_control->z = 500;
@@ -975,7 +974,7 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
-    gpointer system_key_ = g_atomic_pointer_get(system_key + target_system);
+    gpointer system_key_ = g_atomic_pointer_get(sys_key + target_system);
 
     g_assert(NULL != system_key_);
     g_assert(NULL != message);

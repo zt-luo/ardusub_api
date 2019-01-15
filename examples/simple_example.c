@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
     g_print("Checking if system 1 is active...\n");
 
-    while (0 == as_api_check_active_sys(1))
+    while (0 == as_api_check_vehicle(1))
     {
         ;
     }
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     g_print("system 1 is active.\n");
 
     g_print("vehicle arm...\n");
-    vehicle_arm(1, 1);
+    as_api_vehicle_arm(1, 1);
 
     g_usleep(2000000);
 
@@ -86,14 +86,14 @@ int main(int argc, char *argv[])
     g_usleep(2000000);
 
     g_print("vehicle disarm...\n");
-    vehicle_disarm(1, 1);
+    as_api_vehicle_disarm(1, 1);
 
     g_usleep(2000000);
-    vehicle_arm(1, 1);
+    as_api_vehicle_arm(1, 1);
     as_api_manual_control(100, 0, 500, 0, 0);
     g_usleep(2000000);
     g_usleep(2000000);
-    vehicle_disarm(1, 1);
+    as_api_vehicle_disarm(1, 1);
 
     while (1)
         ;
