@@ -135,16 +135,21 @@ void decode_from_json_file()
 
 void decode_from_raw_hex(int argc, char const *argv[])
 {
-    raw_msg_count = argc - 1;
+    raw_msg_count = argc - 2;
 
     g_print("Got %d raw MAVLink message data \nfrom raw hex data...\n", raw_msg_count);
     g_print("------------------------------------------------------\n");
 
     for (int i = 2; i < argc; i++)
     {
-        g_print("%s", argv[i]);
+        g_print("[%d]%s\n", i - 1, argv[i]);
         gsize str_len = cal_str_len(argv[i]);
         gchar str_char[3] = {0};
+
+        if (0 != str_len % 2)
+        {
+            g_print("BROKEN_MESSAGE(#-1) -> !!\n\n");
+        }
 
         for (guint8 j = 0; j < str_len; j++)
         {
@@ -165,6 +170,10 @@ void decode_from_raw_hex(int argc, char const *argv[])
                 // g_print("msg id: %d\n", message.msgid);
                 as_handle_message_id(message);
                 g_print("\n");
+            }
+            else if (j == str_len - 1)
+            {
+                g_print("BROKEN_MESSAGE(#-1) -> !!\n\n");
             }
         }
     }
@@ -262,6 +271,12 @@ void json_iterator(JsonArray *array, guint index_,
 
             as_handle_message_id(message);
             g_print("\n");
+        }
+        else if (i == data_len - 1)
+        {
+            g_print("\n%s", time_str);
+            g_print(" FROM sysid:NO, compid:NO\n");
+            g_print("BROKEN_MESSAGE(#-1) -> !!\n\n");
         }
     }
 
