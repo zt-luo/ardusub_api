@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 
     g_usleep(2000000);
     vehicle_arm(1, 1);
+    as_api_manual_control(100, 0, 500, 0, 0);
     g_usleep(2000000);
     g_usleep(2000000);
     vehicle_disarm(1, 1);

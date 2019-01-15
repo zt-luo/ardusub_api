@@ -45,9 +45,9 @@
         {
             "name": "Win32",
             "includePath": [
-                "${SCOOP}/apps/glib2/current/include/glib-2.0/**",
-                "${SCOOP}/apps/glib2/current/include/json-glib-1.0/**",
-                "${SCOOP}/apps/glib2/current/lib/glib-2.0/include",
+                "${SCOOP}/apps/cutil/current/include/glib-2.0/**",
+                "${SCOOP}/apps/cutil/current/include/json-glib-1.0/**",
+                "${SCOOP}/apps/cutil/current/lib/glib-2.0/include",
                 "${workspaceFolder}/mavlink/v2.0/**",
                 "${workspaceFolder}/**"
             ],
@@ -58,9 +58,9 @@
             "intelliSenseMode": "msvc-x64",
             "browse": {
                 "path": [
-                    "${SCOOP}/apps/glib2/current/include/glib-2.0/**",
-                    "${SCOOP}/apps/glib2/current/include/json-glib-1.0/**",
-                    "${SCOOP}/apps/glib2/current/lib/glib-2.0/include",
+                    "${SCOOP}/apps/cutil/current/include/glib-2.0/**",
+                    "${SCOOP}/apps/cutil/current/include/json-glib-1.0/**",
+                    "${SCOOP}/apps/cutil/current/lib/glib-2.0/include",
                     "${workspaceFolder}/mavlink/v2.0/**",
                     "${workspaceFolder}/**"
                 ],

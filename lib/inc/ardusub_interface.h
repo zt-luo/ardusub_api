@@ -33,6 +33,8 @@
 
 #define SUBNET_ADDRESS ("192.168.2.")
 
+#define MAX_STATUSTEX (512)
+
 // ------------------------------------------------------------------------------
 //   Data Structures
 // ------------------------------------------------------------------------------
@@ -202,6 +204,7 @@ extern "C"
     //TODO: Atomic Operations should apply on this
     static guint8 *system_key[255];
     static volatile guint8 arm_status[255];
+    static guint8 udp_write_ready[255];
 
     GHashTable *message_hash_table;
     GHashTable *parameter_hash_table;
@@ -211,6 +214,7 @@ extern "C"
     //globle mutex
     GMutex handle_messages_mutex;
 
+    //TODO: Atomic Operations needed?
     GMutex message_mutex[255];
     GMutex parameter_mutex[255];
     GMutex manual_control_mutex[255];
@@ -227,7 +231,7 @@ extern "C"
     // ------------------------------------------------------------------------------
     void as_api_init(char *subnet_address);
     void as_api_deinit();
-    void as_api_run();
+    gpointer as_api_run(gpointer data);
     void as_sys_add(guint8 target_system, guint8 target_autopilot,
                     Mavlink_Messages_t *current_messages,
                     Mavlink_Parameter_t *current_parameter,
@@ -248,7 +252,7 @@ extern "C"
                               Mavlink_Messages_t *current_messages,
                               Mavlink_Parameter_t *current_parameter);
     int as_write_message(mavlink_message_t message);
-    void manual_control_worker(gpointer data);
+    gpointer manual_control_worker(gpointer data);
 
     void enable_offboard_control();
     void disable_offboard_control();

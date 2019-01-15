@@ -27,7 +27,7 @@ void as_api_init(char *p_subnet_address)
 
         as_init_status = TRUE;
 
-        g_thread_new("as_api_main", (GThreadFunc)as_api_run, NULL);
+        g_thread_new("as_api_main", &as_api_run, NULL);
     }
 }
 
@@ -36,21 +36,22 @@ void as_api_deinit()
     ;
 }
 
-void as_api_run()
+gpointer as_api_run(gpointer data)
 {
+    g_assert(NULL == data);
+
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
     g_main_loop_unref(loop);
+
+    return NULL;
 }
 
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer data)
 {
-    if (NULL != data)
-    {
-        g_free(data);
-    }
+    g_assert(NULL == data);
 
     // g_print("Received data from client!\n");
 
@@ -62,6 +63,7 @@ gboolean udp_read_callback(GIOChannel *channel,
     {
         return FALSE; /* this channel is done */
     }
+
     g_io_channel_read_chars(channel, msg_tmp, sizeof(msg_tmp), &bytes_read, &error);
 
     /* don't forget to check for errors */
@@ -69,14 +71,10 @@ gboolean udp_read_callback(GIOChannel *channel,
     {
         g_error(error->message);
     }
+
     // g_print("%s", msg_tmp);
 
     as_handle_messages(msg_tmp, bytes_read);
-
-    // if (FALSE != msgid)
-    // {
-    //     g_print("Received message from UDP!\n");
-    // }
 
     return TRUE;
 }
@@ -114,6 +112,8 @@ void as_udp_read_init()
 
 void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
 {
+    g_assert(p_target_socket != NULL);
+
     GError *error = NULL;
     gchar inet_address_string[16] = {0};
 
@@ -137,6 +137,8 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     {
         g_error(error->message);
     }
+
+    g_atomic_int_set((volatile gint *)(udp_write_ready + sysid), TRUE);
 }
 
 void as_sys_add(guint8 target_system, guint8 target_autopilot,
@@ -144,6 +146,10 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
                 Mavlink_Parameter_t *current_parameter,
                 GSocket *current_target_socket)
 {
+    g_assert(current_messages != NULL);
+    g_assert(current_parameter != NULL);
+    g_assert(current_target_socket != NULL);
+
     system_count++;
 
     guint8 *p_sysid = g_new0(guint8, 1);
@@ -180,12 +186,16 @@ void as_sys_add(guint8 target_system, guint8 target_autopilot,
     }
 
     // init manual_control_worker thread
-    g_thread_new("manual_control_worker", (GThreadFunc)manual_control_worker, p_sysid);
+    g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
 }
 
-void manual_control_worker(gpointer data)
+gpointer manual_control_worker(gpointer data)
 {
+    g_assert(NULL != data);
+
     guint8 my_target_system = *(guint8 *)data;
+    gpointer system_key_ = g_atomic_pointer_get(system_key + my_target_system);
+    g_assert(NULL != system_key_);
 
     while (TRUE)
     {
@@ -194,7 +204,7 @@ void manual_control_worker(gpointer data)
             g_mutex_lock(&manual_control_hash_table_mutex);
 
             mavlink_manual_control_t *my_manual_control =
-                g_hash_table_lookup(manual_control_table, system_key[my_target_system]);
+                g_hash_table_lookup(manual_control_table, system_key_);
 
             g_mutex_unlock(&manual_control_hash_table_mutex);
 
@@ -219,6 +229,8 @@ void manual_control_worker(gpointer data)
             g_usleep(100);
         }
     }
+
+    return NULL;
 }
 
 /**
@@ -260,7 +272,7 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
 
     g_mutex_lock(&message_mutex[target_system]);
 
-    if (NULL == system_key[target_system]) // find new system
+    if (NULL == g_atomic_pointer_get(system_key + target_system)) // find new system
     {
         current_messages = g_new0(Mavlink_Messages_t, 1);
         current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
@@ -341,7 +353,7 @@ void as_handle_message_id(mavlink_message_t message,
         g_message("heartbeat msg from system:%d", current_messages->sysid);
 
         // send heartbeat
-        if (NULL != system_key[target_system])
+        if (TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)))
         {
             send_heartbeat(target_system, current_messages);
         }
@@ -650,16 +662,21 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 {
+    gpointer system_key_ = g_atomic_pointer_get(system_key + sysid);
+    g_assert(NULL != system_key_);
+
     g_mutex_lock(&message_hash_table_mutex);
-    Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key[sysid]);
+    Mavlink_Messages_t *p_message = g_hash_table_lookup(message_hash_table, system_key_);
     g_mutex_unlock(&message_hash_table_mutex);
+
+    g_assert(NULL != p_message);
 
     return p_message;
 }
 
 int as_api_check_active_sys(uint8_t sysid)
 {
-    if (NULL == system_key[sysid])
+    if (NULL == g_atomic_pointer_get(system_key + sysid))
     {
         return 0;
     }
@@ -894,14 +911,20 @@ void vehicle_arm(guint8 target_system, guint8 target_autopilot)
 
     // clear manual_control value
     g_mutex_lock(&manual_control_mutex[target_system]); // lock
+
+    // TODO: need to replaced by table mutex
     mavlink_manual_control_t *p_manual_control =
         g_hash_table_lookup(manual_control_table, system_key[target_system]);
+
+    g_assert(NULL != p_manual_control);
+
     p_manual_control->x = 0;
     p_manual_control->y = 0;
     p_manual_control->z = 500;
     p_manual_control->r = 0;
     p_manual_control->buttons = 0;
     g_mutex_unlock(&manual_control_mutex[target_system]); // unlock
+    //TODO: maybe we should lock the manual_control_mutex untile arm
 
     g_atomic_int_set((volatile gint *)&arm_status[target_system], 1);
 
@@ -935,6 +958,9 @@ void vehicle_disarm(guint8 target_system, guint8 target_autopilot)
     g_mutex_lock(&manual_control_mutex[target_system]); // lock
     mavlink_manual_control_t *p_manual_control =
         g_hash_table_lookup(manual_control_table, system_key[target_system]);
+
+    g_assert(NULL != p_manual_control);
+
     p_manual_control->x = 0;
     p_manual_control->y = 0;
     p_manual_control->z = 500;
@@ -949,13 +975,19 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
-    g_assert(NULL != system_key[target_system]);
+    gpointer system_key_ = g_atomic_pointer_get(system_key + target_system);
+
+    g_assert(NULL != system_key_);
     g_assert(NULL != message);
+
+    g_assert(TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)));
 
     g_mutex_lock(&target_socket_hash_table_mutex);
     GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
-                                                 system_key[target_system]);
+                                                 system_key_);
     g_mutex_unlock(&target_socket_hash_table_mutex);
+
+    g_assert(NULL != target_socket);
 
     // Translate message to buffer
     msg_len = mavlink_msg_to_send_buffer((uint8_t *)msg_buf, message);
@@ -1000,12 +1032,21 @@ void statustex_queue_push(guint8 target_system,
                           Mavlink_Messages_t *current_messages)
 {
     // TODO: fix this ??? need fix ???
-    if (g_async_queue_length(statustex_queue[target_system]) > 50)
+    g_assert(NULL != current_messages);
+
+    if (g_async_queue_length(statustex_queue[target_system]) > MAX_STATUSTEX)
     {
         statustex_queue_pop(target_system);
     }
 
-    g_async_queue_push(statustex_queue[target_system],
-                       g_memdup(&current_messages->statustext,
-                                sizeof(mavlink_statustext_t)));
+    gpointer statustex_p = g_memdup(&current_messages->statustext,
+                                    sizeof(mavlink_statustext_t));
+
+    if (NULL == statustex_p)
+    {
+        g_error("Out of memory!");
+    }
+
+    g_async_queue_push(statustex_queue[target_system], // queue
+                       statustex_p);
 }

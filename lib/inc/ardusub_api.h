@@ -48,7 +48,7 @@ extern "C"
 
     extern void as_api_init(char *subnet_address);
     extern void as_api_deinit();
-    extern void as_api_run();
+    extern void* as_api_run(void *data);
 
     extern void vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
     extern void vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);

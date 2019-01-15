@@ -202,11 +202,7 @@ void json_iterator(JsonArray *array, guint index_,
 
     g_assert(NULL != array);
     g_assert(NULL != element_node);
-
-    if (NULL != user_data)
-    {
-        g_free(user_data);
-    }
+    g_assert(NULL == user_data);
 
     // g_print("this is element %d\n", index_);
 
