@@ -180,6 +180,7 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
 
     statustex_queue[target_system] = g_async_queue_new();
     named_val_float_queue[target_system] = g_async_queue_new();
+    message_queue[target_system] = g_async_queue_new();
 
     sys_key[target_system] = p_sysid;
 
@@ -190,6 +191,9 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
 
     // init named_val_float_handle_worker thread
     g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
+
+    // init message_handle_worker thread
+    g_thread_new("message_handle_worker", &message_handle_worker, p_sysid);
 }
 
 gpointer manual_control_worker(gpointer data)
@@ -264,6 +268,44 @@ gpointer named_val_float_handle_worker(gpointer data)
 
         my_named_value_float =
             named_val_float_queue_pop(my_target_system);
+    }
+
+    return NULL;
+}
+
+gpointer message_handle_worker(gpointer data)
+{
+    g_assert(NULL != data);
+
+    guint8 my_target_system = *(guint8 *)data;
+
+    // wait for message_queue ready
+    while (NULL == g_atomic_pointer_get(
+                       message_queue + my_target_system))
+    {
+        g_usleep(100);
+    }
+
+    Mavlink_Messages_t *my_mavlink_message =
+        message_queue_pop(my_target_system);
+
+    while (TRUE)
+    {
+        if (NULL != my_mavlink_message)
+        {
+            //TODO: save this values to somewhere.
+            g_message("roll:%f, pitch:%f, yaw:%f",
+                      my_mavlink_message->attitude.roll,
+                      my_mavlink_message->attitude.pitch,
+                      my_mavlink_message->attitude.yaw);
+        }
+        else
+        {
+            g_usleep(10000);
+        }
+
+        my_mavlink_message =
+            message_queue_pop(my_target_system);
     }
 
     return NULL;
@@ -661,6 +703,9 @@ void as_handle_message_id(mavlink_message_t message,
     }
 
     } // end: switch msgid
+
+    //TODO: push current_message to queu, waite for process...
+    message_queue_push(target_system, current_messages);
 }
 
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
@@ -1203,4 +1248,57 @@ void named_val_float_queue_push(guint8 target_system,
 
     g_async_queue_push(named_val_float_queue_, // queue
                        named_val_float_p);
+}
+
+Mavlink_Messages_t *message_queue_pop(guint8 target_system)
+{
+    static Mavlink_Messages_t *last_mavlink_message_;
+
+    GAsyncQueue *message_queue_ =
+        g_atomic_pointer_get(message_queue + target_system);
+
+    if (NULL == message_queue_)
+    {
+        return NULL;
+    }
+
+    if (NULL != last_mavlink_message_)
+    {
+        // free last statustex after pop
+        g_free(last_mavlink_message_);
+    }
+
+    last_mavlink_message_ = g_async_queue_try_pop(message_queue_);
+
+    return last_mavlink_message_;
+}
+
+void message_queue_push(guint8 target_system,
+                        Mavlink_Messages_t *current_messages)
+{
+    g_assert(NULL != current_messages);
+
+    GAsyncQueue *message_queue_ =
+        g_atomic_pointer_get(message_queue + target_system);
+
+    if (NULL == message_queue_)
+    {
+        return;
+    }
+
+    if (g_async_queue_length(message_queue_) > MAX_MESSAGE)
+    {
+        message_queue_pop(target_system);
+    }
+
+    gpointer mavlink_message_p = g_memdup(current_messages,
+                                          sizeof(Mavlink_Messages_t));
+
+    if (NULL == mavlink_message_p)
+    {
+        g_error("Out of memory!");
+    }
+
+    g_async_queue_push(message_queue_, // queue
+                       mavlink_message_p);
 }

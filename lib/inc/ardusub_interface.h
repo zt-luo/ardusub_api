@@ -35,6 +35,7 @@
 
 #define MAX_STATUSTEX (512)
 #define MAX_NAMED_VALUE_FLOAT (512)
+#define MAX_MESSAGE (512)
 
 // ------------------------------------------------------------------------------
 //   Data Structures
@@ -209,6 +210,7 @@ GRWLock manual_control_hash_table_lock;
 
 GAsyncQueue *statustex_queue[255];
 GAsyncQueue *named_val_float_queue[255];
+GAsyncQueue *message_queue[255];
 
 // ------------------------------------------------------------------------------
 //   Prototypes
@@ -254,6 +256,9 @@ void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_mess
 mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system);
 void named_val_float_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
 
+Mavlink_Messages_t *message_queue_pop(guint8 target_system);
+void message_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
+
 void send_param_request_list(guint8 target_system, guint8 target_autopilot);
 void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
 void send_heartbeat(guint8 target_system,
@@ -271,6 +276,7 @@ gboolean udp_read_callback(GIOChannel *channel,
 gpointer manual_control_worker(gpointer data);
 gpointer parameters_request_worker(gpointer data);
 gpointer named_val_float_handle_worker(gpointer data);
+gpointer message_handle_worker(gpointer data);
 
 //
 // func need fix
