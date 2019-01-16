@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <builddir>cppcheck-build</builddir>
+    <platform>win64</platform>
+    <importproject>build/compile_commands.json</importproject>
+    <analyze-all-vs-configs>true</analyze-all-vs-configs>
+    <suppressions>
+        <suppression>toomanyconfigs</suppression>
+    </suppressions>
+    <addons>
+        <addon>threadsafety</addon>
+    </addons>
+</project>
