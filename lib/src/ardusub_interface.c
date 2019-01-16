@@ -179,6 +179,7 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
     g_rw_lock_writer_unlock(&target_socket_hash_table_lock);
 
     statustex_queue[target_system] = g_async_queue_new();
+    named_val_float_queue[target_system] = g_async_queue_new();
 
     sys_key[target_system] = p_sysid;
 
@@ -186,6 +187,9 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
 
     // init manual_control_worker thread
     g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
+
+    // init named_val_float_handle_worker thread
+    g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
 }
 
 gpointer manual_control_worker(gpointer data)
@@ -223,6 +227,43 @@ gpointer manual_control_worker(gpointer data)
         {
             g_usleep(100);
         }
+    }
+
+    return NULL;
+}
+
+gpointer named_val_float_handle_worker(gpointer data)
+{
+    g_assert(NULL != data);
+
+    guint8 my_target_system = *(guint8 *)data;
+
+    // wait for named_val_float_queue ready
+    while (NULL == g_atomic_pointer_get(
+                       named_val_float_queue + my_target_system))
+    {
+        g_usleep(100);
+    }
+
+    mavlink_named_value_float_t *my_named_value_float =
+        named_val_float_queue_pop(my_target_system);
+
+    while (TRUE)
+    {
+        if (NULL != my_named_value_float)
+        {
+            //TODO: save this values to somewhere.
+            // g_message("%s: %f",
+            //           my_named_value_float->name,
+            //           my_named_value_float->value);
+        }
+        else
+        {
+            g_usleep(10000);
+        }
+
+        my_named_value_float =
+            named_val_float_queue_pop(my_target_system);
     }
 
     return NULL;
@@ -464,6 +505,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.named_value_float = g_get_monotonic_time();
         // printf(current_messages->named_value_float.name);
         // printf(": %f \n", current_messages->named_value_float.value);
+        named_val_float_queue_push(target_system, current_messages);
         break;
     }
     case MAVLINK_MSG_ID_VFR_HUD:
@@ -1061,13 +1103,21 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
 {
     static mavlink_statustext_t *last_statustex;
 
+    GAsyncQueue *statustex_queue_ =
+        g_atomic_pointer_get(statustex_queue + target_system);
+
+    if (NULL == statustex_queue_)
+    {
+        return NULL;
+    }
+
     if (NULL != last_statustex)
     {
         // free last statustex after pop
         g_free(last_statustex);
     }
 
-    last_statustex = g_async_queue_try_pop(statustex_queue[target_system]);
+    last_statustex = g_async_queue_try_pop(statustex_queue_);
 
     return last_statustex;
 }
@@ -1077,7 +1127,15 @@ void statustex_queue_push(guint8 target_system,
 {
     g_assert(NULL != current_messages);
 
-    if (g_async_queue_length(statustex_queue[target_system]) > MAX_STATUSTEX)
+    GAsyncQueue *statustex_queue_ =
+        g_atomic_pointer_get(statustex_queue + target_system);
+
+    if (NULL == statustex_queue_)
+    {
+        return;
+    }
+
+    if (g_async_queue_length(statustex_queue_) > MAX_STATUSTEX)
     {
         statustex_queue_pop(target_system);
     }
@@ -1090,6 +1148,59 @@ void statustex_queue_push(guint8 target_system,
         g_error("Out of memory!");
     }
 
-    g_async_queue_push(statustex_queue[target_system], // queue
+    g_async_queue_push(statustex_queue_, // queue
                        statustex_p);
+}
+
+mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
+{
+    static mavlink_named_value_float_t *last_named_val_float_;
+
+    GAsyncQueue *named_val_float_queue_ =
+        g_atomic_pointer_get(named_val_float_queue + target_system);
+
+    if (NULL == named_val_float_queue_)
+    {
+        return NULL;
+    }
+
+    if (NULL != last_named_val_float_)
+    {
+        // free last statustex after pop
+        g_free(last_named_val_float_);
+    }
+
+    last_named_val_float_ = g_async_queue_try_pop(named_val_float_queue_);
+
+    return last_named_val_float_;
+}
+
+void named_val_float_queue_push(guint8 target_system,
+                                Mavlink_Messages_t *current_messages)
+{
+    g_assert(NULL != current_messages);
+
+    GAsyncQueue *named_val_float_queue_ =
+        g_atomic_pointer_get(named_val_float_queue + target_system);
+
+    if (NULL == named_val_float_queue_)
+    {
+        return;
+    }
+
+    if (g_async_queue_length(named_val_float_queue_) > MAX_NAMED_VALUE_FLOAT)
+    {
+        named_val_float_queue_pop(target_system);
+    }
+
+    gpointer named_val_float_p = g_memdup(&current_messages->named_value_float,
+                                          sizeof(mavlink_statustext_t));
+
+    if (NULL == named_val_float_p)
+    {
+        g_error("Out of memory!");
+    }
+
+    g_async_queue_push(named_val_float_queue_, // queue
+                       named_val_float_p);
 }

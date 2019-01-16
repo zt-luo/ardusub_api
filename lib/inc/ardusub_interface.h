@@ -34,6 +34,7 @@
 #define SUBNET_ADDRESS ("192.168.2.")
 
 #define MAX_STATUSTEX (512)
+#define MAX_NAMED_VALUE_FLOAT (512)
 
 // ------------------------------------------------------------------------------
 //   Data Structures
@@ -207,6 +208,7 @@ GRWLock target_socket_hash_table_lock;
 GRWLock manual_control_hash_table_lock;
 
 GAsyncQueue *statustex_queue[255];
+GAsyncQueue *named_val_float_queue[255];
 
 // ------------------------------------------------------------------------------
 //   Prototypes
@@ -249,6 +251,9 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component);
 mavlink_statustext_t *statustex_queue_pop(guint8 target_system);
 void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
 
+mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system);
+void named_val_float_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
+
 void send_param_request_list(guint8 target_system, guint8 target_autopilot);
 void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index);
 void send_heartbeat(guint8 target_system,
@@ -260,8 +265,12 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message);
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer socket_udp_write);
+
+//
+// thread worker func
 gpointer manual_control_worker(gpointer data);
 gpointer parameters_request_worker(gpointer data);
+gpointer named_val_float_handle_worker(gpointer data);
 
 //
 // func need fix

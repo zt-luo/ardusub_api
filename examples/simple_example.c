@@ -95,9 +95,10 @@ int main(int argc, char *argv[])
     g_usleep(2000000);
     as_api_vehicle_disarm(1, 1);
 
-    while (1)
-        ;
-    scanf("%s", &s);
+    while (TRUE)
+    {
+        g_usleep(1000000);
+    }
 
     return 0;
 }
