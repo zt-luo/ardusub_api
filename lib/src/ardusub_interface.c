@@ -182,11 +182,7 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
 
     sys_key[target_system] = p_sysid;
 
-    if (-1 == as_request_full_parameters(
-                  target_system, target_autopilot))
-    {
-        g_message("faild to request full parameters!\n");
-    }
+    as_request_full_parameters(target_system, target_autopilot);
 
     // init manual_control_worker thread
     g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
@@ -801,17 +797,66 @@ void do_set_mode(control_mode_t mode, guint8 target_system)
     // check the write
 }
 
-gint as_request_full_parameters(guint8 target_system, guint8 target_component)
+void as_request_full_parameters(guint8 target_system, guint8 target_component)
 {
-    //TODO: request full parameters
+    guint16 *target_ = NULL;
+    target_ = g_new0(guint16, 1);
+    g_assert(NULL != target_);
+    *target_ = target_system << 8;
+    *target_ |= target_component;
+
+    g_thread_new("parameters_request_worker", &parameters_request_worker, target_);
+}
+
+gpointer parameters_request_worker(gpointer data)
+{
+    guint16 target_ = 0;
+    target_ = *(guint16 *)data;
+    g_free(data);
+    guint8 target_system = 0, target_component = 0xFF;
+    target_system = target_ >> 8;
+    target_component &= target_;
+
     send_param_request_list(target_system, target_component); // no guarantee
-    g_usleep(100000);
+    g_usleep(3000000);
+
+    g_rw_lock_reader_lock(&parameter_hash_table_lock);
+    Mavlink_Parameter_t *current_parameter =
+        g_hash_table_lookup(parameter_hash_table,
+                            g_atomic_pointer_get(sys_key + target_system));
+    g_rw_lock_reader_unlock(&parameter_hash_table_lock);
+
+    for (gsize j = 0; j < 10; j++)
+    {
+        for (gsize i = 0; i < PARAM_COUNT; i++)
+        {
+            g_mutex_lock(&parameter_mutex[target_system]);
+            gchar param_id_stx = current_parameter[i].param_id[0];
+            g_mutex_unlock(&parameter_mutex[target_system]);
+
+            if (0 == param_id_stx)
+            {
+                send_param_request_read(target_system, target_component, i);
+                g_usleep(100000);
+            }
+        }
+
+        g_usleep(100000);
+    }
 
     g_mutex_lock(&parameter_mutex[target_system]);
-    // creat a new thread to do this
+    for (gsize i = 0; i < PARAM_COUNT; i++)
+    {
+        if (0 == current_parameter[i].param_id[0])
+        {
+            g_message("Fetch all parameter FAILED!");
+        }
+    }
     g_mutex_unlock(&parameter_mutex[target_system]);
 
-    return 0;
+    g_message("Fetch all parameter SUCCEED!");
+
+    return NULL;
 }
 
 void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index)
@@ -1030,7 +1075,6 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
 void statustex_queue_push(guint8 target_system,
                           Mavlink_Messages_t *current_messages)
 {
-    // TODO: fix this ??? need fix ???
     g_assert(NULL != current_messages);
 
     if (g_async_queue_length(statustex_queue[target_system]) > MAX_STATUSTEX)

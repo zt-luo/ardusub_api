@@ -242,7 +242,7 @@ void as_handle_message_id(mavlink_message_t message,
                           Mavlink_Parameter_t *current_parameter);
 int as_write_message(mavlink_message_t message);
 
-gint as_request_full_parameters(guint8 target_system, guint8 target_component);
+void as_request_full_parameters(guint8 target_system, guint8 target_component);
 
 //
 // func inside low leval
@@ -261,6 +261,7 @@ gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer socket_udp_write);
 gpointer manual_control_worker(gpointer data);
+gpointer parameters_request_worker(gpointer data);
 
 //
 // func need fix
