@@ -355,7 +355,7 @@ gpointer vehicle_data_update_worker(gpointer data)
                 my_vehicle_data->current_consumed = bs.current_consumed;
                 my_vehicle_data->energy_consumed = bs.energy_consumed;
                 my_vehicle_data->temperature_bs = bs.temperature;
-                memcmp(my_vehicle_data->voltages, bs.voltages, sizeof(uint16_t) * 10);
+                memcpy(my_vehicle_data->voltages, bs.voltages, sizeof(uint16_t) * 10);
                 my_vehicle_data->current_battery_bs = bs.current_battery;
                 my_vehicle_data->id = bs.id; // multiple battery?
                 my_vehicle_data->battery_function = bs.battery_function;
