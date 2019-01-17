@@ -29,7 +29,7 @@ void as_api_init(char *p_subnet_address)
 
         as_init_status = TRUE;
 
-        g_thread_new("as_api_main", &as_api_run, NULL);
+        g_thread_new("as_api_main", &as_run, NULL);
     }
 }
 
@@ -38,7 +38,7 @@ void as_api_deinit()
     ;
 }
 
-gpointer as_api_run(gpointer data)
+gpointer as_run(gpointer data)
 {
     g_assert(NULL == data);
 

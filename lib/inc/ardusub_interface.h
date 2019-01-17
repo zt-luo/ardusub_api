@@ -226,7 +226,6 @@ GAsyncQueue *message_queue[255];
 // public api
 void as_api_init(char *subnet_address);
 void as_api_deinit();
-void *as_api_run(gpointer data);
 int as_api_check_vehicle(uint8_t sysid);
 void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot);
 void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot);
@@ -237,6 +236,7 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 
 //
 // func inside high leval
+void *as_run(gpointer data);
 void as_system_add(guint8 target_system, guint8 target_autopilot,
                    Mavlink_Messages_t *current_messages,
                    Mavlink_Parameter_t *current_parameter,

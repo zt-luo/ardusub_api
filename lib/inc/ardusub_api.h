@@ -179,7 +179,6 @@ extern "C"
 
     extern void as_api_init(char *subnet_address);
     extern void as_api_deinit();
-    extern void *as_api_run(void *data);
 
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
     extern void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
@@ -189,7 +188,7 @@ extern "C"
     //!
 
     extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
-    
+
     extern int as_api_statustex_cpunt(uint8_t target_system);
 
     extern int as_api_check_vehicle(uint8_t sysid);

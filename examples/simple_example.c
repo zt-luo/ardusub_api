@@ -51,8 +51,6 @@ int main(int argc, char *argv[])
         g_error("invalde input!");
     }
 
-    // as_api_run();
-
     g_print("Checking if system 1 is active...\n");
 
     while (0 == as_api_check_vehicle(1))
