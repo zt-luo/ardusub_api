@@ -574,6 +574,7 @@ void as_handle_message_id(mavlink_message_t message,
 {
     guint8 target_system = current_messages->sysid;
     current_messages->msg_id = message.msgid;
+    gboolean queue_push = FALSE;
 
     // Handle Message ID
     switch (message.msgid)
@@ -606,6 +607,7 @@ void as_handle_message_id(mavlink_message_t message,
         {
             send_heartbeat(target_system, current_messages);
         }
+        queue_push = TRUE;
 
         break;
     }
@@ -617,6 +619,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("SYS_STATUS: erros_comm %d %d \n", current_messages->sys_status.voltage_battery,
         //    current_messages->sys_status.current_battery);
         current_messages->time_stamps.sys_status = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
 
@@ -637,6 +641,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_BATTERY_STATUS\n");
         mavlink_msg_battery_status_decode(&message, &(current_messages->battery_status));
         current_messages->time_stamps.battery_status = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
 
@@ -693,6 +699,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_ATTITUDE\n");
         mavlink_msg_attitude_decode(&message, &(current_messages->attitude));
         current_messages->time_stamps.attitude = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
 
@@ -701,6 +709,8 @@ void as_handle_message_id(mavlink_message_t message,
         //printf("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW\n");
         mavlink_msg_servo_output_raw_decode(&message, &(current_messages->servo_output_raw));
         current_messages->time_stamps.servo_output_raw = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_COMMAND_ACK:
@@ -738,6 +748,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("Vcc(5V rail voltage in mV):%d, Vservo(servo rail voltage in mV):%d, "
         // "power supply status flags:%d.\n", current_messages->power_status.Vcc,
         // current_messages->power_status.Vservo, current_messages->power_status.flags);
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_SYSTEM_TIME:
@@ -745,6 +757,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_SYSTEM_TIME\n");
         mavlink_msg_system_time_decode(&message, &(current_messages->system_time));
         current_messages->time_stamps.system_time = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_MISSION_CURRENT:
@@ -773,6 +787,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_RC_CHANNELS\n");
         mavlink_msg_rc_channels_decode(&message, &(current_messages->rc_channels));
         current_messages->time_stamps.rc_channels = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_VIBRATION:
@@ -787,6 +803,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_RAW_IMU\n");
         mavlink_msg_raw_imu_decode(&message, &(current_messages->raw_imu));
         current_messages->time_stamps.raw_imu = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_SCALED_PRESSURE:
@@ -794,6 +812,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_SCALED_PRESSURE\n");
         mavlink_msg_scaled_pressure_decode(&message, &(current_messages->scaled_pressure));
         current_messages->time_stamps.scaled_pressure = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_SCALED_IMU2:
@@ -808,6 +828,8 @@ void as_handle_message_id(mavlink_message_t message,
         // printf("MAVLINK_MSG_ID_SCALED_PRESSURE2\n");
         mavlink_msg_scaled_pressure2_decode(&message, &(current_messages->scaled_pressure2));
         current_messages->time_stamps.scaled_pressure2 = g_get_monotonic_time();
+        queue_push = TRUE;
+
         break;
     }
     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
@@ -876,8 +898,10 @@ void as_handle_message_id(mavlink_message_t message,
 
     } // end: switch msgid
 
-    //TODO: push current_message to queu, waite for process...
-    message_queue_push(target_system, current_messages);
+    if (TRUE == queue_push)
+    {
+        message_queue_push(target_system, current_messages);
+    }
 }
 
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
