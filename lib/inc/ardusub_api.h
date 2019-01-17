@@ -42,12 +42,6 @@ typedef struct Vehicle_Data_s
     uint16_t errors_count4;                   /*<  Autopilot-specific errors*/
     int8_t battery_remaining;                 /*< [%] Remaining battery energy, -1: autopilot estimate the remaining battery*/
 
-    // Ping
-    uint64_t time_usec;       /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.*/
-    uint32_t seq;             /*<  PING sequence*/
-    uint8_t target_system;    /*<  0: request ping from all receiving systems. If greater than 0: message is a ping response and number is the system id of the requesting system*/
-    uint8_t target_component; /*<  0: request ping from all receiving components. If greater than 0: message is a ping response and number is the component id of the requesting component.*/
-
     // Battery Status
     int32_t current_consumed;    /*< [mAh] Consumed charge, -1: autopilot does not provide consumption estimate*/
     int32_t energy_consumed;     /*< [hJ] Consumed energy, -1: autopilot does not provide energy consumption estimate*/
@@ -123,18 +117,28 @@ typedef struct Vehicle_Data_s
     int16_t ymag;          /*<  Y Magnetic field (raw)*/
     int16_t zmag;          /*<  Z Magnetic field (raw)*/
 
-    // RC channels raw
-    uint32_t time_boot_ms_rcr; /*< [ms] Timestamp (time since system boot).*/
-    uint16_t chan1_raw;        /*< [us] RC channel 1 value.*/
-    uint16_t chan2_raw;        /*< [us] RC channel 2 value.*/
-    uint16_t chan3_raw;        /*< [us] RC channel 3 value.*/
-    uint16_t chan4_raw;        /*< [us] RC channel 4 value.*/
-    uint16_t chan5_raw;        /*< [us] RC channel 5 value.*/
-    uint16_t chan6_raw;        /*< [us] RC channel 6 value.*/
-    uint16_t chan7_raw;        /*< [us] RC channel 7 value.*/
-    uint16_t chan8_raw;        /*< [us] RC channel 8 value.*/
-    uint8_t port_rcr;          /*<  Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows for more than 8 servos.*/
-    uint8_t rssi;              /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
+    // RC channels
+    uint32_t time_boot_ms_rc; /*< [ms] Timestamp (time since system boot).*/
+    uint16_t chan1_raw;    /*< [us] RC channel 1 value.*/
+    uint16_t chan2_raw;    /*< [us] RC channel 2 value.*/
+    uint16_t chan3_raw;    /*< [us] RC channel 3 value.*/
+    uint16_t chan4_raw;    /*< [us] RC channel 4 value.*/
+    uint16_t chan5_raw;    /*< [us] RC channel 5 value.*/
+    uint16_t chan6_raw;    /*< [us] RC channel 6 value.*/
+    uint16_t chan7_raw;    /*< [us] RC channel 7 value.*/
+    uint16_t chan8_raw;    /*< [us] RC channel 8 value.*/
+    uint16_t chan9_raw;    /*< [us] RC channel 9 value.*/
+    uint16_t chan10_raw;   /*< [us] RC channel 10 value.*/
+    uint16_t chan11_raw;   /*< [us] RC channel 11 value.*/
+    uint16_t chan12_raw;   /*< [us] RC channel 12 value.*/
+    uint16_t chan13_raw;   /*< [us] RC channel 13 value.*/
+    uint16_t chan14_raw;   /*< [us] RC channel 14 value.*/
+    uint16_t chan15_raw;   /*< [us] RC channel 15 value.*/
+    uint16_t chan16_raw;   /*< [us] RC channel 16 value.*/
+    uint16_t chan17_raw;   /*< [us] RC channel 17 value.*/
+    uint16_t chan18_raw;   /*< [us] RC channel 18 value.*/
+    uint8_t chancount;     /*<  Total number of RC channels being received. This can be larger than 18, indicating that more channels are available but not given in this message. This value should be 0 when no RC channels are available.*/
+    uint8_t rssi;          /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
 
     // Named value
 } Vehicle_Data_t;

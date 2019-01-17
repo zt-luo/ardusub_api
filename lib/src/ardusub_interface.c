@@ -306,25 +306,154 @@ gpointer vehicle_data_update_worker(gpointer data)
     {
         if (NULL != my_mavlink_message)
         {
+            mavlink_heartbeat_t hb = my_mavlink_message->heartbeat;
+            mavlink_sys_status_t ss = my_mavlink_message->sys_status;
+            mavlink_battery_status_t bs = my_mavlink_message->battery_status;
+            mavlink_power_status_t ps = my_mavlink_message->power_status;
+            mavlink_system_time_t st = my_mavlink_message->system_time;
+            mavlink_attitude_t at = my_mavlink_message->attitude;
+            mavlink_scaled_pressure_t sp = my_mavlink_message->scaled_pressure;
+            mavlink_scaled_pressure2_t sp2 = my_mavlink_message->scaled_pressure2;
+            mavlink_servo_output_raw_t sor = my_mavlink_message->servo_output_raw;
+            mavlink_raw_imu_t ri = my_mavlink_message->raw_imu;
+            mavlink_rc_channels_t rc = my_mavlink_message->rc_channels;
+
             g_mutex_lock(&vehicle_data_mutex[my_target_system]);
             // update vehicle data here
 
             switch (my_mavlink_message->msg_id)
             {
             case MAVLINK_MSG_ID_HEARTBEAT:
-                my_vehicle_data->custom_mode =
-                    my_mavlink_message->heartbeat.custom_mode;
-                my_vehicle_data->type =
-                    my_mavlink_message->heartbeat.type;
-                my_vehicle_data->autopilot =
-                    my_mavlink_message->heartbeat.autopilot;
-                my_vehicle_data->base_mode =
-                    my_mavlink_message->heartbeat.system_status;
-                my_vehicle_data->system_status =
-                    my_mavlink_message->heartbeat.system_status;
-                my_vehicle_data->mavlink_version =
-                    my_mavlink_message->heartbeat.mavlink_version;
-                g_message("heartbeat updated!");
+                my_vehicle_data->custom_mode = hb.custom_mode;
+                my_vehicle_data->type = hb.type;
+                my_vehicle_data->autopilot = hb.autopilot;
+                my_vehicle_data->base_mode = hb.system_status;
+                my_vehicle_data->system_status = hb.system_status;
+                my_vehicle_data->mavlink_version = hb.mavlink_version;
+                break;
+
+            case MAVLINK_MSG_ID_SYS_STATUS:
+                my_vehicle_data->onboard_control_sensors_present =
+                    ss.onboard_control_sensors_present;
+                my_vehicle_data->onboard_control_sensors_enabled =
+                    ss.onboard_control_sensors_enabled;
+                my_vehicle_data->onboard_control_sensors_health =
+                    ss.onboard_control_sensors_health;
+                my_vehicle_data->load = ss.load;
+                my_vehicle_data->voltage_battery = ss.voltage_battery;
+                my_vehicle_data->current_battery = ss.current_battery;
+                my_vehicle_data->drop_rate_comm = ss.drop_rate_comm;
+                my_vehicle_data->errors_comm = ss.errors_comm;
+                my_vehicle_data->errors_count1 = ss.errors_count1;
+                my_vehicle_data->errors_count2 = ss.errors_count2;
+                my_vehicle_data->errors_count3 = ss.errors_count3;
+                my_vehicle_data->errors_count4 = ss.errors_count4;
+                my_vehicle_data->battery_remaining = ss.battery_remaining;
+                break;
+
+            case MAVLINK_MSG_ID_BATTERY_STATUS:
+                my_vehicle_data->current_consumed = bs.current_consumed;
+                my_vehicle_data->energy_consumed = bs.energy_consumed;
+                my_vehicle_data->temperature_bs = bs.temperature;
+                memcmp(my_vehicle_data->voltages, bs.voltages, sizeof(uint16_t) * 10);
+                my_vehicle_data->current_battery_bs = bs.current_battery;
+                my_vehicle_data->id = bs.id; // multiple battery?
+                my_vehicle_data->battery_function = bs.battery_function;
+                my_vehicle_data->type_bs = bs.type;
+                my_vehicle_data->battery_remaining_bs = bs.battery_remaining;
+                my_vehicle_data->time_remaining = bs.time_remaining;
+                my_vehicle_data->charge_state = bs.charge_state;
+                break;
+
+            case MAVLINK_MSG_ID_POWER_STATUS:
+                my_vehicle_data->Vcc = ps.Vcc;
+                my_vehicle_data->Vservo = ps.Vservo;
+                my_vehicle_data->flags = ps.flags;
+                break;
+
+            case MAVLINK_MSG_ID_SYSTEM_TIME:
+                my_vehicle_data->time_unix_usec = st.time_unix_usec;
+                my_vehicle_data->time_boot_ms = st.time_boot_ms;
+                break;
+
+            case MAVLINK_MSG_ID_ATTITUDE:
+                my_vehicle_data->time_boot_ms_at = at.time_boot_ms;
+                my_vehicle_data->roll = at.roll;
+                my_vehicle_data->pitch = at.pitch;
+                my_vehicle_data->yaw = at.yaw;
+                my_vehicle_data->rollspeed = at.rollspeed;
+                my_vehicle_data->pitchspeed = at.pitchspeed;
+                my_vehicle_data->yawspeed = at.yawspeed;
+                break;
+
+            case MAVLINK_MSG_ID_SCALED_PRESSURE:
+                my_vehicle_data->time_boot_ms_sp = sp.time_boot_ms;
+                my_vehicle_data->press_abs = sp.press_abs;
+                my_vehicle_data->press_diff = sp.press_diff;
+                break;
+
+            case MAVLINK_MSG_ID_SCALED_PRESSURE2:
+                my_vehicle_data->time_boot_ms_sp2 = sp2.time_boot_ms;
+                my_vehicle_data->press_abs2 = sp2.press_abs;
+                my_vehicle_data->press_diff2 = sp2.press_diff;
+                break;
+
+            case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+                my_vehicle_data->time_usec_sor = sor.time_usec;
+                my_vehicle_data->servo1_raw = sor.servo1_raw;
+                my_vehicle_data->servo2_raw = sor.servo2_raw;
+                my_vehicle_data->servo3_raw = sor.servo3_raw;
+                my_vehicle_data->servo4_raw = sor.servo4_raw;
+                my_vehicle_data->servo5_raw = sor.servo5_raw;
+                my_vehicle_data->servo6_raw = sor.servo6_raw;
+                my_vehicle_data->servo7_raw = sor.servo7_raw;
+                my_vehicle_data->servo8_raw = sor.servo8_raw;
+                my_vehicle_data->port = sor.port;
+                my_vehicle_data->servo9_raw = sor.servo9_raw;
+                my_vehicle_data->servo10_raw = sor.servo10_raw;
+                my_vehicle_data->servo11_raw = sor.servo11_raw;
+                my_vehicle_data->servo12_raw = sor.servo12_raw;
+                my_vehicle_data->servo13_raw = sor.servo13_raw;
+                my_vehicle_data->servo14_raw = sor.servo14_raw;
+                my_vehicle_data->servo15_raw = sor.servo15_raw;
+                my_vehicle_data->servo16_raw = sor.servo16_raw;
+                break;
+
+            case MAVLINK_MSG_ID_RAW_IMU:
+                my_vehicle_data->time_usec_ri = ri.time_usec;
+                my_vehicle_data->xacc = ri.xacc;
+                my_vehicle_data->yacc = ri.yacc;
+                my_vehicle_data->zacc = ri.zacc;
+                my_vehicle_data->xgyro = ri.xgyro;
+                my_vehicle_data->ygyro = ri.ygyro;
+                my_vehicle_data->zgyro = ri.zgyro;
+                my_vehicle_data->xmag = ri.xmag;
+                my_vehicle_data->ymag = ri.ymag;
+                my_vehicle_data->zmag = ri.zmag;
+                break;
+
+            case MAVLINK_MSG_ID_RC_CHANNELS:
+                my_vehicle_data->time_boot_ms_rc = rc.time_boot_ms;
+                my_vehicle_data->chan1_raw = rc.chan1_raw;
+                my_vehicle_data->chan2_raw = rc.chan2_raw;
+                my_vehicle_data->chan3_raw = rc.chan3_raw;
+                my_vehicle_data->chan4_raw = rc.chan4_raw;
+                my_vehicle_data->chan5_raw = rc.chan5_raw;
+                my_vehicle_data->chan6_raw = rc.chan6_raw;
+                my_vehicle_data->chan7_raw = rc.chan7_raw;
+                my_vehicle_data->chan8_raw = rc.chan8_raw;
+                my_vehicle_data->chan9_raw = rc.chan9_raw;
+                my_vehicle_data->chan10_raw = rc.chan10_raw;
+                my_vehicle_data->chan11_raw = rc.chan11_raw;
+                my_vehicle_data->chan12_raw = rc.chan12_raw;
+                my_vehicle_data->chan13_raw = rc.chan13_raw;
+                my_vehicle_data->chan14_raw = rc.chan14_raw;
+                my_vehicle_data->chan15_raw = rc.chan15_raw;
+                my_vehicle_data->chan16_raw = rc.chan16_raw;
+                my_vehicle_data->chan17_raw = rc.chan17_raw;
+                my_vehicle_data->chan18_raw = rc.chan18_raw;
+                my_vehicle_data->chancount = rc.chancount;
+                my_vehicle_data->rssi = rc.rssi;
                 break;
 
             default:
@@ -395,11 +524,14 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         }
 
         // add system to hash table if sysid NOT exsit in hash table's key set
+        g_message("Found a new system: %d", target_system);
+        g_message("adding...");
         as_system_add(target_system, target_autopilot,
                       current_messages,
                       current_parameter,
                       current_target_socket);
         g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
+        g_message("New system added: %d", target_system);
     }
     else
     {
@@ -467,7 +599,7 @@ void as_handle_message_id(mavlink_message_t message,
         //        current_messages->heartbeat.base_mode, current_messages->heartbeat.custom_mode,
         //        current_messages->heartbeat.system_status, current_messages->heartbeat.mavlink_version);
 
-        g_message("heartbeat msg from system:%d", current_messages->sysid);
+        // g_message("heartbeat msg from system:%d", current_messages->sysid);
 
         // send heartbeat
         if (TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)))
