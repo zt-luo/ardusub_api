@@ -166,10 +166,12 @@ typedef struct messages_set_s
     // Param Value
     mavlink_param_value_t param_value;
 
-    // System Parameters?
+    // System Parameters? not here.
 
     // Time Stamps
     Time_Stamps_t time_stamps;
+
+    guint msg_id;
 
 } Mavlink_Messages_t;
 

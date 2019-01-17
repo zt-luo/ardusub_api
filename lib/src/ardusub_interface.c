@@ -196,6 +196,8 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
     g_thread_new("message_handle_worker", &message_handle_worker, p_sysid);
 }
 
+//TODO: command watch thread
+
 gpointer manual_control_worker(gpointer data)
 {
     g_assert(NULL != data);
@@ -294,10 +296,10 @@ gpointer message_handle_worker(gpointer data)
         if (NULL != my_mavlink_message)
         {
             //TODO: save this values to somewhere.
-            g_message("roll:%f, pitch:%f, yaw:%f",
-                      my_mavlink_message->attitude.roll,
-                      my_mavlink_message->attitude.pitch,
-                      my_mavlink_message->attitude.yaw);
+            // g_message("roll:%f, pitch:%f, yaw:%f",
+            //           my_mavlink_message->attitude.roll,
+            //           my_mavlink_message->attitude.pitch,
+            //           my_mavlink_message->attitude.yaw);
         }
         else
         {
@@ -402,6 +404,7 @@ void as_handle_message_id(mavlink_message_t message,
                           Mavlink_Parameter_t *current_parameter)
 {
     guint8 target_system = current_messages->sysid;
+    current_messages->msg_id = message.msgid;
 
     // Handle Message ID
     switch (message.msgid)
