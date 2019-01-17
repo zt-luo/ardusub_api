@@ -195,15 +195,19 @@ static guint8 *sys_key[255];
 static guint8 udp_write_ready[255];
 static system_status_t vehicle_status[255];
 
+// maybe a hash table is no need, a simple array is enough
 GHashTable *message_hash_table;
 GHashTable *parameter_hash_table;
 GHashTable *target_socket_hash_table;
 GHashTable *manual_control_table;
 
+Vehicle_Data_t *vehicle_data_array[255] = {NULL};
+
 //globle mutex
 GMutex message_mutex[255];
 GMutex parameter_mutex[255];
 GMutex manual_control_mutex[255];
+GMutex vehicle_data_mutex[255];
 
 GRWLock message_hash_table_lock;
 GRWLock parameter_hash_table_lock;
@@ -232,10 +236,10 @@ mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
 //
 // func inside high leval
-void as_system_init(guint8 target_system, guint8 target_autopilot,
-                    Mavlink_Messages_t *current_messages,
-                    Mavlink_Parameter_t *current_parameter,
-                    GSocket *current_target_socket);
+void as_system_add(guint8 target_system, guint8 target_autopilot,
+                   Mavlink_Messages_t *current_messages,
+                   Mavlink_Parameter_t *current_parameter,
+                   GSocket *current_target_socket);
 
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 
@@ -278,7 +282,7 @@ gboolean udp_read_callback(GIOChannel *channel,
 gpointer manual_control_worker(gpointer data);
 gpointer parameters_request_worker(gpointer data);
 gpointer named_val_float_handle_worker(gpointer data);
-gpointer message_handle_worker(gpointer data);
+gpointer vehicle_data_update_worker(gpointer data);
 
 //
 // func need fix

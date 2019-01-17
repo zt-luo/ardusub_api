@@ -143,10 +143,10 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     g_atomic_int_set((volatile gint *)(udp_write_ready + sysid), TRUE);
 }
 
-void as_system_init(guint8 target_system, guint8 target_autopilot,
-                    Mavlink_Messages_t *current_messages,
-                    Mavlink_Parameter_t *current_parameter,
-                    GSocket *current_target_socket)
+void as_system_add(guint8 target_system, guint8 target_autopilot,
+                   Mavlink_Messages_t *current_messages,
+                   Mavlink_Parameter_t *current_parameter,
+                   GSocket *current_target_socket)
 {
     g_assert(current_messages != NULL);
     g_assert(current_parameter != NULL);
@@ -155,6 +155,10 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
     sys_count++;
 
     guint8 *p_sysid = g_new0(guint8, 1);
+    if (NULL == p_sysid)
+    {
+        g_error("Out of memory!");
+    }
     *p_sysid = target_system;
 
     // lock the hash table
@@ -182,6 +186,13 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
     named_val_float_queue[target_system] = g_async_queue_new();
     message_queue[target_system] = g_async_queue_new();
 
+    Vehicle_Data_t *p_vehicle_data = g_new0(Vehicle_Data_t, 1);
+    if (NULL == p_vehicle_data)
+    {
+        g_error("Out of memory!");
+    }
+    g_atomic_pointer_set(vehicle_data_array + target_system, p_vehicle_data);
+
     sys_key[target_system] = p_sysid;
 
     as_request_full_parameters(target_system, target_autopilot);
@@ -192,8 +203,8 @@ void as_system_init(guint8 target_system, guint8 target_autopilot,
     // init named_val_float_handle_worker thread
     g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
 
-    // init message_handle_worker thread
-    g_thread_new("message_handle_worker", &message_handle_worker, p_sysid);
+    // init vehicle_data_update_worker thread
+    g_thread_new("vehicle_data_update_worker", &vehicle_data_update_worker, p_sysid);
 }
 
 //TODO: command watch thread
@@ -275,39 +286,58 @@ gpointer named_val_float_handle_worker(gpointer data)
     return NULL;
 }
 
-gpointer message_handle_worker(gpointer data)
+gpointer vehicle_data_update_worker(gpointer data)
 {
     g_assert(NULL != data);
 
     guint8 my_target_system = *(guint8 *)data;
 
-    // wait for message_queue ready
-    while (NULL == g_atomic_pointer_get(
-                       message_queue + my_target_system))
+    while (NULL == g_atomic_pointer_get(vehicle_data_array + my_target_system))
     {
-        g_usleep(100);
+        g_usleep(10);
     }
 
-    Mavlink_Messages_t *my_mavlink_message =
-        message_queue_pop(my_target_system);
+    Vehicle_Data_t *my_vehicle_data = g_atomic_pointer_get(vehicle_data_array + my_target_system);
+    g_assert(NULL != my_vehicle_data);
+
+    Mavlink_Messages_t *my_mavlink_message = message_queue_pop(my_target_system);
 
     while (TRUE)
     {
         if (NULL != my_mavlink_message)
         {
-            //TODO: save this values to somewhere.
-            // g_message("roll:%f, pitch:%f, yaw:%f",
-            //           my_mavlink_message->attitude.roll,
-            //           my_mavlink_message->attitude.pitch,
-            //           my_mavlink_message->attitude.yaw);
+            g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+            // update vehicle data here
+
+            switch (my_mavlink_message->msg_id)
+            {
+            case MAVLINK_MSG_ID_HEARTBEAT:
+                my_vehicle_data->custom_mode =
+                    my_mavlink_message->heartbeat.custom_mode;
+                my_vehicle_data->type =
+                    my_mavlink_message->heartbeat.type;
+                my_vehicle_data->autopilot =
+                    my_mavlink_message->heartbeat.autopilot;
+                my_vehicle_data->base_mode =
+                    my_mavlink_message->heartbeat.system_status;
+                my_vehicle_data->system_status =
+                    my_mavlink_message->heartbeat.system_status;
+                my_vehicle_data->mavlink_version =
+                    my_mavlink_message->heartbeat.mavlink_version;
+                g_message("heartbeat updated!");
+                break;
+
+            default:
+                break;
+            }
+
+            g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
         }
         else
         {
-            g_usleep(10000);
+            g_usleep(100);
         }
-
-        my_mavlink_message =
-            message_queue_pop(my_target_system);
+        my_mavlink_message = message_queue_pop(my_target_system);
     }
 
     return NULL;
@@ -357,11 +387,18 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
         current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
         GSocket *current_target_socket = g_new0(GSocket, 1);
 
+        if ((NULL == current_messages) ||
+            (NULL == current_parameter) ||
+            (NULL == current_target_socket))
+        {
+            g_error("Out of memory!");
+        }
+
         // add system to hash table if sysid NOT exsit in hash table's key set
-        as_system_init(target_system, target_autopilot,
-                       current_messages,
-                       current_parameter,
-                       current_target_socket);
+        as_system_add(target_system, target_autopilot,
+                      current_messages,
+                      current_parameter,
+                      current_target_socket);
         g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
     }
     else
@@ -1150,6 +1187,11 @@ int as_api_statustex_cpunt(uint8_t target_system)
 mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
 {
     static mavlink_statustext_t *last_statustex;
+    static GMutex my_mutex;
+
+    g_mutex_lock(&my_mutex);
+    // only one thread can reach here,
+    // avoid repeat free of last_statustex
 
     GAsyncQueue *statustex_queue_ =
         g_atomic_pointer_get(statustex_queue + target_system);
@@ -1166,6 +1208,8 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
     }
 
     last_statustex = g_async_queue_try_pop(statustex_queue_);
+
+    g_mutex_unlock(&my_mutex);
 
     return last_statustex;
 }
@@ -1203,6 +1247,11 @@ void statustex_queue_push(guint8 target_system,
 mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
 {
     static mavlink_named_value_float_t *last_named_val_float_;
+    static GMutex my_mutex;
+
+    g_mutex_lock(&my_mutex);
+    // only one thread can reach here,
+    // avoid repeat free of last_named_val_float_
 
     GAsyncQueue *named_val_float_queue_ =
         g_atomic_pointer_get(named_val_float_queue + target_system);
@@ -1214,11 +1263,13 @@ mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
 
     if (NULL != last_named_val_float_)
     {
-        // free last statustex after pop
+        // free last named_val_float after pop
         g_free(last_named_val_float_);
     }
 
     last_named_val_float_ = g_async_queue_try_pop(named_val_float_queue_);
+
+    g_mutex_unlock(&my_mutex);
 
     return last_named_val_float_;
 }
@@ -1256,6 +1307,11 @@ void named_val_float_queue_push(guint8 target_system,
 Mavlink_Messages_t *message_queue_pop(guint8 target_system)
 {
     static Mavlink_Messages_t *last_mavlink_message_;
+    static GMutex my_mutex;
+
+    g_mutex_lock(&my_mutex);
+    // only one thread can reach here,
+    // avoid repeat free of last_mavlink_message_
 
     GAsyncQueue *message_queue_ =
         g_atomic_pointer_get(message_queue + target_system);
@@ -1267,11 +1323,14 @@ Mavlink_Messages_t *message_queue_pop(guint8 target_system)
 
     if (NULL != last_mavlink_message_)
     {
-        // free last statustex after pop
+        // free last mavlink_message after pop
+        g_assert(NULL != last_mavlink_message_);
         g_free(last_mavlink_message_);
     }
 
     last_mavlink_message_ = g_async_queue_try_pop(message_queue_);
+
+    g_mutex_unlock(&my_mutex);
 
     return last_mavlink_message_;
 }
@@ -1291,6 +1350,7 @@ void message_queue_push(guint8 target_system,
 
     if (g_async_queue_length(message_queue_) > MAX_MESSAGE)
     {
+        g_message("MAX_MESSAGE reached!");
         message_queue_pop(target_system);
     }
 
