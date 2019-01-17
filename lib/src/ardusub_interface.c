@@ -780,6 +780,30 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
     g_mutex_unlock(&manual_control_mutex[sys_id]); // unlock
 }
 
+Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
+{
+    static Vehicle_Data_t *last_vehicle_data;
+    static GMutex my_mutex;
+
+    g_mutex_lock(&my_mutex);
+    // only one thread can reach here
+
+    if (NULL != last_vehicle_data)
+    {
+        g_free(last_vehicle_data);
+    }
+
+    g_mutex_lock(&vehicle_data_mutex[target_system]);
+    last_vehicle_data = g_memdup(
+        g_atomic_pointer_get(vehicle_data_array + target_system),
+        sizeof(Mavlink_Messages_t));
+    g_mutex_unlock(&vehicle_data_mutex[target_system]);
+
+    g_mutex_unlock(&my_mutex);
+
+    return last_vehicle_data;
+}
+
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 {
     gpointer system_key_ = g_atomic_pointer_get(sys_key + sysid);

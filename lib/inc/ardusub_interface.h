@@ -233,6 +233,7 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot);
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
 int as_api_statustex_cpunt(uint8_t target_system);
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
+Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 
 //
 // func inside high leval

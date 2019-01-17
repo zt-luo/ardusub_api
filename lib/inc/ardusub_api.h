@@ -49,17 +49,17 @@ typedef struct Vehicle_Data_s
     uint8_t target_component; /*<  0: request ping from all receiving components. If greater than 0: message is a ping response and number is the component id of the requesting component.*/
 
     // Battery Status
-    int32_t current_consumed; /*< [mAh] Consumed charge, -1: autopilot does not provide consumption estimate*/
-    int32_t energy_consumed;  /*< [hJ] Consumed energy, -1: autopilot does not provide energy consumption estimate*/
+    int32_t current_consumed;    /*< [mAh] Consumed charge, -1: autopilot does not provide consumption estimate*/
+    int32_t energy_consumed;     /*< [hJ] Consumed energy, -1: autopilot does not provide energy consumption estimate*/
     int16_t temperature_bs;      /*< [cdegC] Temperature of the battery. INT16_MAX for unknown temperature.*/
-    uint16_t voltages[10];    /*< [mV] Battery voltage of cells. Cells above the valid cell count for this battery should have the UINT16_MAX value.*/
+    uint16_t voltages[10];       /*< [mV] Battery voltage of cells. Cells above the valid cell count for this battery should have the UINT16_MAX value.*/
     int16_t current_battery_bs;  /*< [cA] Battery current, -1: autopilot does not measure the current*/
-    uint8_t id;               /*<  Battery ID*/
-    uint8_t battery_function; /*<  Function of the battery*/
+    uint8_t id;                  /*<  Battery ID*/
+    uint8_t battery_function;    /*<  Function of the battery*/
     uint8_t type_bs;             /*<  Type (chemistry) of the battery*/
     int8_t battery_remaining_bs; /*< [%] Remaining battery energy. Values: [0-100], -1: autopilot does not estimate the remaining battery.*/
-    int32_t time_remaining;   /*< [s] Remaining battery time, 0: autopilot does not provide remaining battery time estimate*/
-    uint8_t charge_state;     /*<  State for extent of discharge, provided by autopilot for warning or external reactions*/
+    int32_t time_remaining;      /*< [s] Remaining battery time, 0: autopilot does not provide remaining battery time estimate*/
+    uint8_t charge_state;        /*<  State for extent of discharge, provided by autopilot for warning or external reactions*/
 
     // Power Status
     uint16_t Vcc;    /*< [mV] 5V rail voltage.*/
@@ -83,7 +83,7 @@ typedef struct Vehicle_Data_s
     uint32_t time_boot_ms_sp; /*< [ms] Timestamp (time since system boot).*/
     float press_abs;          /*< [hPa] Absolute pressure*/
     float press_diff;         /*< [hPa] Differential pressure*/
-    int16_t temperature_sp;      /*< [cdegC] Temperature measurement*/
+    int16_t temperature_sp;   /*< [cdegC] Temperature measurement*/
 
     // Scaled Pressure2 (depth sensor)
     uint32_t time_boot_ms_sp2; /*< [ms] Timestamp (time since system boot).*/
@@ -92,36 +92,36 @@ typedef struct Vehicle_Data_s
     int16_t temperature2;      /*< [cdegC] Temperature measurement*/
 
     // Servo Output Raw
-    uint32_t time_usec_sor;   /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.*/
-    uint16_t servo1_raw;  /*< [us] Servo output 1 value*/
-    uint16_t servo2_raw;  /*< [us] Servo output 2 value*/
-    uint16_t servo3_raw;  /*< [us] Servo output 3 value*/
-    uint16_t servo4_raw;  /*< [us] Servo output 4 value*/
-    uint16_t servo5_raw;  /*< [us] Servo output 5 value*/
-    uint16_t servo6_raw;  /*< [us] Servo output 6 value*/
-    uint16_t servo7_raw;  /*< [us] Servo output 7 value*/
-    uint16_t servo8_raw;  /*< [us] Servo output 8 value*/
-    uint8_t port;         /*<  Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.*/
-    uint16_t servo9_raw;  /*< [us] Servo output 9 value*/
-    uint16_t servo10_raw; /*< [us] Servo output 10 value*/
-    uint16_t servo11_raw; /*< [us] Servo output 11 value*/
-    uint16_t servo12_raw; /*< [us] Servo output 12 value*/
-    uint16_t servo13_raw; /*< [us] Servo output 13 value*/
-    uint16_t servo14_raw; /*< [us] Servo output 14 value*/
-    uint16_t servo15_raw; /*< [us] Servo output 15 value*/
-    uint16_t servo16_raw; /*< [us] Servo output 16 value*/
+    uint32_t time_usec_sor; /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.*/
+    uint16_t servo1_raw;    /*< [us] Servo output 1 value*/
+    uint16_t servo2_raw;    /*< [us] Servo output 2 value*/
+    uint16_t servo3_raw;    /*< [us] Servo output 3 value*/
+    uint16_t servo4_raw;    /*< [us] Servo output 4 value*/
+    uint16_t servo5_raw;    /*< [us] Servo output 5 value*/
+    uint16_t servo6_raw;    /*< [us] Servo output 6 value*/
+    uint16_t servo7_raw;    /*< [us] Servo output 7 value*/
+    uint16_t servo8_raw;    /*< [us] Servo output 8 value*/
+    uint8_t port;           /*<  Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.*/
+    uint16_t servo9_raw;    /*< [us] Servo output 9 value*/
+    uint16_t servo10_raw;   /*< [us] Servo output 10 value*/
+    uint16_t servo11_raw;   /*< [us] Servo output 11 value*/
+    uint16_t servo12_raw;   /*< [us] Servo output 12 value*/
+    uint16_t servo13_raw;   /*< [us] Servo output 13 value*/
+    uint16_t servo14_raw;   /*< [us] Servo output 14 value*/
+    uint16_t servo15_raw;   /*< [us] Servo output 15 value*/
+    uint16_t servo16_raw;   /*< [us] Servo output 16 value*/
 
     // Raw IMU
     uint64_t time_usec_ri; /*< [us] Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude the number.*/
-    int16_t xacc;       /*<  X acceleration (raw)*/
-    int16_t yacc;       /*<  Y acceleration (raw)*/
-    int16_t zacc;       /*<  Z acceleration (raw)*/
-    int16_t xgyro;      /*<  Angular speed around X axis (raw)*/
-    int16_t ygyro;      /*<  Angular speed around Y axis (raw)*/
-    int16_t zgyro;      /*<  Angular speed around Z axis (raw)*/
-    int16_t xmag;       /*<  X Magnetic field (raw)*/
-    int16_t ymag;       /*<  Y Magnetic field (raw)*/
-    int16_t zmag;       /*<  Z Magnetic field (raw)*/
+    int16_t xacc;          /*<  X acceleration (raw)*/
+    int16_t yacc;          /*<  Y acceleration (raw)*/
+    int16_t zacc;          /*<  Z acceleration (raw)*/
+    int16_t xgyro;         /*<  Angular speed around X axis (raw)*/
+    int16_t ygyro;         /*<  Angular speed around Y axis (raw)*/
+    int16_t zgyro;         /*<  Angular speed around Z axis (raw)*/
+    int16_t xmag;          /*<  X Magnetic field (raw)*/
+    int16_t ymag;          /*<  Y Magnetic field (raw)*/
+    int16_t zmag;          /*<  Z Magnetic field (raw)*/
 
     // RC channels raw
     uint32_t time_boot_ms_rcr; /*< [ms] Timestamp (time since system boot).*/
@@ -133,7 +133,7 @@ typedef struct Vehicle_Data_s
     uint16_t chan6_raw;        /*< [us] RC channel 6 value.*/
     uint16_t chan7_raw;        /*< [us] RC channel 7 value.*/
     uint16_t chan8_raw;        /*< [us] RC channel 8 value.*/
-    uint8_t port_rcr;              /*<  Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows for more than 8 servos.*/
+    uint8_t port_rcr;          /*<  Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows for more than 8 servos.*/
     uint8_t rssi;              /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
 
     // Named value
@@ -186,6 +186,10 @@ extern "C"
 
     //! NULL-able return value
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
+    //!
+
+    extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
+    
     extern int as_api_statustex_cpunt(uint8_t target_system);
 
     extern int as_api_check_vehicle(uint8_t sysid);
