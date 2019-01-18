@@ -13,7 +13,7 @@
 
 #include <glib.h>
 
-#include "../lib/inc/ardusub_api.h"
+#include "../api/inc/ardusub_api.h"
 
 gpointer monitoring_thread(gpointer data);
 
