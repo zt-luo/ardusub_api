@@ -18,7 +18,10 @@ endif (DEBUG_WITH_VS MATCHES "yes")
 
 # src list
 set(LIB_SRC_LIST 
-    "src/ardusub_interface.c")
+    "src/ardusub_interface.c"
+    "src/ardusub_io.c"
+    "src/ardusub_thread.c"
+    "src/ardusub_msg.c")
 
 # sqlite
 include_directories("../sqlite")
