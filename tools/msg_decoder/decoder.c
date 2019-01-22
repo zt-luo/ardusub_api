@@ -1,3 +1,14 @@
+/**
+ * @file decoder.c
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 0.1
+ * @date 2019-01-08
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #include <stdlib.h>
 
 #include <glib.h>
