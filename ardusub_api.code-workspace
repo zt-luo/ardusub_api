@@ -9,9 +9,8 @@
 			"**/.vs": true
 		},
 		"files.associations": {
-			"ardusub_interface.h\u0000face.h": "c",
-			"glib-object.h": "c",
-			"json-glib.h": "c"
+			"ardusub_msg.h\u0000_msg.h": "c",
+			"ardusub_io.h\u0000b_io.h": "c"
 		}
 	}
 }

@@ -13,7 +13,9 @@
 
 #include <glib.h>
 
-#include "../lib/inc/ardusub_api.h"
+#include <libserialport.h>
+
+#include "../api/inc/ardusub_api.h"
 
 gpointer monitoring_thread(gpointer data);
 
@@ -26,6 +28,13 @@ gpointer monitoring_thread(gpointer data);
  */
 int main(int argc, char *argv[])
 {
+
+    struct sp_port **serial_port_list;
+    enum sp_return sp_result;
+
+    // Enumerating the serial ports...
+    sp_result = sp_list_ports(&serial_port_list);
+
     char s = 0;
 
     if (argc > 1)
@@ -34,7 +43,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        g_print("input 1 or 2 : ");
+        g_print("input 1 or 2 or 3: ");
         scanf("%c", &s);
     }
 
@@ -47,6 +56,10 @@ int main(int argc, char *argv[])
     else if ('2' == s)
     {
         as_api_init(NULL);
+    }
+    else if ('3' == s)
+    {
+        as_api_init("serial port");
     }
     else
     {
