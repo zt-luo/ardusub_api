@@ -10,11 +10,16 @@
 #include <gio/gio.h>
 #include <gmodule.h>
 
-#include <common/mavlink.h>
+/******* MAVlink *******/
+// max MAVlink channels
+#define MAVLINK_COMM_NUM_BUFFERS (32)
 
-#include <sqlite3.h>
-
 #include <common/mavlink.h>
+/******* MAVlink *******/
+
+#include <libserialport.h>
+
+// #include <sqlite3.h>
 
 #include "ardusub_io.h"
 #include "ardusub_api.h"
@@ -44,6 +49,8 @@
 #define MAX_STATUSTEX (512)
 #define MAX_NAMED_VALUE_FLOAT (512)
 #define MAX_MESSAGE (512)
+
+#define MAX_SERIAL_PORT_WRITE_BUF_COUNT (512)
 
 // ------------------------------------------------------------------------------
 //   Data Structures

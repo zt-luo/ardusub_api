@@ -98,22 +98,25 @@ int main(int argc, char const *argv[])
 
 gsize count_serial_port(struct sp_port **list_ptr)
 {
-    gsize i = 0;
-    while (NULL != list_ptr[i])
+    gsize serial_count = 0;
+    while (NULL != list_ptr[serial_count])
     {
-        i++;
+        serial_count++;
     }
 
-    return i;
+    return serial_count;
 }
 
 gpointer port_read_worker(gpointer data)
 {
     guint8 buf;
+    enum sp_return sp_result;
 
     while (TRUE)
     {
-        sp_blocking_read((struct sp_port *)data, &buf, 1, 0);
+        sp_result = sp_blocking_read((struct sp_port *)data, &buf, 1, 0);
+        sp_result = sp_blocking_write((struct sp_port *)data, &buf, 1, 0);
+
         printf("%02x", buf);
     }
 }

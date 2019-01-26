@@ -9,6 +9,8 @@
 			"**/.vs": true
 		},
 		"files.associations": {
+			"ardusub_msg.h\u0000_msg.h": "c",
+			"ardusub_io.h\u0000b_io.h": "c"
 		}
 	}
 }

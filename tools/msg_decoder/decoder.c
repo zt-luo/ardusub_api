@@ -9,6 +9,10 @@
  * 
  */
 
+/* MAVlink */
+// max MAVlink channels
+#define MAVLINK_COMM_NUM_BUFFERS (1)
+
 #include <stdlib.h>
 
 #include <glib.h>
@@ -170,7 +174,7 @@ void decode_from_raw_hex(int argc, char const *argv[])
             guint8 num = (guint8)strtol(str_char, NULL, 16);
 
             // g_print("%02x", num);
-            gboolean msg_received = mavlink_parse_char(MAVLINK_COMM_1,
+            gboolean msg_received = mavlink_parse_char(MAVLINK_COMM_0,
                                                        num,
                                                        &message,
                                                        &status);
@@ -268,7 +272,7 @@ void json_iterator(JsonArray *array, guint index_,
         g_print("%s", data_member);
 
         guint8 num = (guint8)strtol(data_member, NULL, 16);
-        gboolean msg_received = mavlink_parse_char(MAVLINK_COMM_1,
+        gboolean msg_received = mavlink_parse_char(MAVLINK_COMM_0,
                                                    num, &message,
                                                    &status);
 

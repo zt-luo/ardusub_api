@@ -25,7 +25,7 @@ gpointer manual_control_worker(gpointer data)
             mavlink_message_t message;
             mavlink_msg_manual_control_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
                                               &message, safe_manual_control);
-            send_udp_message(my_target_system, &message);
+            send_mavlink_message(my_target_system, &message);
 
             g_free(safe_manual_control); // free
 

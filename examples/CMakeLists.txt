@@ -9,6 +9,7 @@ else ()
 add_compile_options(-g -O0 
                     # -Wno-unused-parameter
                     -static)
+                    # -shared)
 # TODO: add different compile options for different compiler
 
 endif (DEBUG_WITH_VS MATCHES "yes")
@@ -23,11 +24,6 @@ link_libraries(ardusub_static)
 
 add_executable(simple_example ${SIMPLE_SRC_LIST})
 
-pkg_check_modules(LIBSERIALPORT REQUIRED libserialport)
-pkg_search_module(LIBSERIALPORT REQUIRED libserialport)
-
-include_directories(${LIBSERIALPORT_INCLUDE_DIRS})
-link_libraries(${LIBSERIALPORT_LDFLAGS})
 
 set(SERIAL_SRC_LIST "libserialport_example.c")
 add_executable(libserialport_example ${SERIAL_SRC_LIST})

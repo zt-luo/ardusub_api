@@ -4,28 +4,42 @@ void as_api_init(char *p_subnet_address)
 {
     static gboolean as_init_status;
 
+    static GMutex my_mutex;
+    g_mutex_lock(&my_mutex);
+
     //! only init once
     if (TRUE != as_init_status)
     {
-        // initialize attributes
+        // initialize
 
         if (NULL == p_subnet_address)
         {
             subnet_address = SUBNET_ADDRESS;
+        }
+        else if (0 == g_strcmp0(p_subnet_address, "serial port"))
+        {
+            subnet_address = NULL;
         }
         else
         {
             subnet_address = p_subnet_address;
         }
 
-        // serial_port = serial_port_; // serial port management object
-
         message_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
         parameter_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
-        target_socket_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
         manual_control_table = g_hash_table_new(g_int_hash, g_int_equal);
+        target_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
 
-        as_udp_read_init();
+        if (NULL != subnet_address)
+        {
+            // UDP here
+            as_udp_read_init();
+        }
+        else
+        {
+            // serial port here
+            as_serial_read_init();
+        }
 
         g_thread_new("as_api_main", &as_run, NULL);
 
@@ -34,6 +48,8 @@ void as_api_init(char *p_subnet_address)
 
         as_init_status = TRUE;
     }
+
+    g_mutex_unlock(&my_mutex);
 }
 
 void as_api_deinit()
@@ -55,12 +71,15 @@ gpointer as_run(gpointer data)
 void as_system_add(guint8 target_system, guint8 target_autopilot,
                    Mavlink_Messages_t *current_messages,
                    Mavlink_Parameter_t *current_parameter,
-                   GSocket *current_target_socket)
+                   GSocket *current_target_socket,
+                   guint8 *current_targer_serial_chan)
 {
     g_assert(current_messages != NULL);
     g_assert(current_parameter != NULL);
-    g_assert(current_target_socket != NULL);
+    g_assert((current_target_socket != NULL) ||
+             (current_targer_serial_chan != NULL));
 
+    // TODO: atomic here
     sys_count++;
 
     guint8 *p_sysid = g_new0(guint8, 1);
@@ -73,14 +92,25 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     // lock the hash table
     g_rw_lock_writer_lock(&message_hash_table_lock);
     g_rw_lock_writer_lock(&parameter_hash_table_lock);
-    g_rw_lock_writer_lock(&target_socket_hash_table_lock);
+    g_rw_lock_writer_lock(&target_hash_table_lock);
 
     g_hash_table_insert(message_hash_table, p_sysid, current_messages);
 
     g_hash_table_insert(parameter_hash_table, p_sysid, current_parameter);
 
-    as_udp_write_init(target_system, current_target_socket); // init write socket for new system
-    g_hash_table_insert(target_socket_hash_table, p_sysid, current_target_socket);
+    if (NULL != current_target_socket)
+    {
+        // UDP
+        as_udp_write_init(target_system, current_target_socket);
+        g_hash_table_insert(target_hash_table, p_sysid, current_target_socket);
+    }
+
+    if (NULL != current_targer_serial_chan)
+    {
+        // serial port
+        as_serial_write_init();
+        g_hash_table_insert(target_hash_table, p_sysid, current_targer_serial_chan);
+    }
 
     mavlink_manual_control_t *p_manual_control = g_new0(mavlink_manual_control_t, 1);
     p_manual_control->z = 500; // 500 is z axis zero leval
@@ -89,7 +119,7 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     // unlock the message hash table
     g_rw_lock_writer_unlock(&message_hash_table_lock);
     g_rw_lock_writer_unlock(&parameter_hash_table_lock);
-    g_rw_lock_writer_unlock(&target_socket_hash_table_lock);
+    g_rw_lock_writer_unlock(&target_hash_table_lock);
 
     statustex_queue[target_system] = g_async_queue_new();
     named_val_float_queue[target_system] = g_async_queue_new();
@@ -225,7 +255,7 @@ void do_set_servo(guint8 target_system,
     // --------------------------------------------------------------------------
     //   WRITE
     // --------------------------------------------------------------------------
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 
     // printf("do_set_servo msg wrote!");
 }
@@ -377,7 +407,7 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
     g_atomic_int_set(vehicle_status + target_system, SYS_ARMED);
 
     // Send the message
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 }
 
 // ------------------------------------------------------------------------------
@@ -398,7 +428,7 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd);
 
     // Send the message
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 
     g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
 
@@ -439,10 +469,10 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
     // only one thread can reach here,
     // avoid repeat free of last_statustex
 
-    GAsyncQueue *statustex_queue_ =
+    GAsyncQueue *my_statustex_queue =
         g_atomic_pointer_get(statustex_queue + target_system);
 
-    if (NULL == statustex_queue_)
+    if (NULL == my_statustex_queue)
     {
         return NULL;
     }
@@ -453,7 +483,7 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
         g_free(last_statustex);
     }
 
-    last_statustex = g_async_queue_try_pop(statustex_queue_);
+    last_statustex = g_async_queue_try_pop(my_statustex_queue);
 
     g_mutex_unlock(&my_mutex);
 
@@ -465,15 +495,15 @@ void statustex_queue_push(guint8 target_system,
 {
     g_assert(NULL != current_messages);
 
-    GAsyncQueue *statustex_queue_ =
+    GAsyncQueue *my_statustex_queue =
         g_atomic_pointer_get(statustex_queue + target_system);
 
-    if (NULL == statustex_queue_)
+    if (NULL == my_statustex_queue)
     {
         return;
     }
 
-    if (g_async_queue_length(statustex_queue_) > MAX_STATUSTEX)
+    if (g_async_queue_length(my_statustex_queue) > MAX_STATUSTEX)
     {
         statustex_queue_pop(target_system);
     }
@@ -486,38 +516,38 @@ void statustex_queue_push(guint8 target_system,
         g_error("Out of memory!");
     }
 
-    g_async_queue_push(statustex_queue_, // queue
+    g_async_queue_push(my_statustex_queue, // queue
                        statustex_p);
 }
 
 mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
 {
-    static mavlink_named_value_float_t *last_named_val_float_;
+    static mavlink_named_value_float_t *last_named_val_float;
     static GMutex my_mutex;
 
     g_mutex_lock(&my_mutex);
     // only one thread can reach here,
-    // avoid repeat free of last_named_val_float_
+    // avoid repeat free of last_named_val_float
 
-    GAsyncQueue *named_val_float_queue_ =
+    GAsyncQueue *my_named_val_float_queue =
         g_atomic_pointer_get(named_val_float_queue + target_system);
 
-    if (NULL == named_val_float_queue_)
+    if (NULL == my_named_val_float_queue)
     {
         return NULL;
     }
 
-    if (NULL != last_named_val_float_)
+    if (NULL != last_named_val_float)
     {
         // free last named_val_float after pop
-        g_free(last_named_val_float_);
+        g_free(last_named_val_float);
     }
 
-    last_named_val_float_ = g_async_queue_try_pop(named_val_float_queue_);
+    last_named_val_float = g_async_queue_try_pop(my_named_val_float_queue);
 
     g_mutex_unlock(&my_mutex);
 
-    return last_named_val_float_;
+    return last_named_val_float;
 }
 
 void named_val_float_queue_push(guint8 target_system,
@@ -525,15 +555,15 @@ void named_val_float_queue_push(guint8 target_system,
 {
     g_assert(NULL != current_messages);
 
-    GAsyncQueue *named_val_float_queue_ =
+    GAsyncQueue *my_named_val_float_queue =
         g_atomic_pointer_get(named_val_float_queue + target_system);
 
-    if (NULL == named_val_float_queue_)
+    if (NULL == my_named_val_float_queue)
     {
         return;
     }
 
-    if (g_async_queue_length(named_val_float_queue_) > MAX_NAMED_VALUE_FLOAT)
+    if (g_async_queue_length(my_named_val_float_queue) > MAX_NAMED_VALUE_FLOAT)
     {
         named_val_float_queue_pop(target_system);
     }
@@ -546,39 +576,38 @@ void named_val_float_queue_push(guint8 target_system,
         g_error("Out of memory!");
     }
 
-    g_async_queue_push(named_val_float_queue_, // queue
+    g_async_queue_push(my_named_val_float_queue, // queue
                        named_val_float_p);
 }
 
 Mavlink_Messages_t *message_queue_pop(guint8 target_system)
 {
-    static Mavlink_Messages_t *last_mavlink_message_;
+    static Mavlink_Messages_t *last_mavlink_message;
     static GMutex my_mutex;
 
     g_mutex_lock(&my_mutex);
     // only one thread can reach here,
-    // avoid repeat free of last_mavlink_message_
+    // avoid repeat free of last_mavlink_message
 
-    GAsyncQueue *message_queue_ =
+    GAsyncQueue *my_message_queue =
         g_atomic_pointer_get(message_queue + target_system);
 
-    if (NULL == message_queue_)
+    if (NULL == my_message_queue)
     {
         return NULL;
     }
 
-    if (NULL != last_mavlink_message_)
+    if (NULL != last_mavlink_message)
     {
         // free last mavlink_message after pop
-        g_assert(NULL != last_mavlink_message_);
-        g_free(last_mavlink_message_);
+        g_free(last_mavlink_message);
     }
 
-    last_mavlink_message_ = g_async_queue_try_pop(message_queue_);
+    last_mavlink_message = g_async_queue_try_pop(my_message_queue);
 
     g_mutex_unlock(&my_mutex);
 
-    return last_mavlink_message_;
+    return last_mavlink_message;
 }
 
 void message_queue_push(guint8 target_system,
@@ -586,15 +615,15 @@ void message_queue_push(guint8 target_system,
 {
     g_assert(NULL != current_messages);
 
-    GAsyncQueue *message_queue_ =
+    GAsyncQueue *my_message_queue =
         g_atomic_pointer_get(message_queue + target_system);
 
-    if (NULL == message_queue_)
+    if (NULL == my_message_queue)
     {
         return;
     }
 
-    if (g_async_queue_length(message_queue_) > MAX_MESSAGE)
+    if (g_async_queue_length(my_message_queue) > MAX_MESSAGE)
     {
         g_message("MAX_MESSAGE reached!");
         message_queue_pop(target_system);
@@ -608,6 +637,6 @@ void message_queue_push(guint8 target_system,
         g_error("Out of memory!");
     }
 
-    g_async_queue_push(message_queue_, // queue
+    g_async_queue_push(my_message_queue, // queue
                        mavlink_message_p);
 }

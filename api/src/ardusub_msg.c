@@ -4,11 +4,11 @@
  * @brief Handle Messages, parse msg_tmp, if the msg_tmp parse successful, 
  * then decode the message and pass the value to message_hash_table[$sysid].
  * 
- * @param msg_tmp :buff that contains raw data from UDP 
+ * @param msg_tmp :buff that contains mavlink_message_t msg data from UDP 
  * @param bytes_read :buff lenth
  * @return guint8 :FALSE if never parse successful, msgid if parse successful
  */
-guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
+guint8 as_handle_messages(mavlink_message_t message)
 {
     guint8 target_system;
     guint8 target_autopilot;
@@ -16,70 +16,26 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
     Mavlink_Messages_t *current_messages = NULL;
     Mavlink_Parameter_t *current_parameter = NULL;
 
-    mavlink_message_t message;
-    mavlink_status_t status;
-    gboolean msgReceived = FALSE;
-
-    for (gsize i = 0; i < (bytes_read < MAX_BYTES ? bytes_read : MAX_BYTES) && FALSE == msgReceived; i++)
-    {
-        msgReceived =
-            mavlink_parse_char(MAVLINK_COMM_1, msg_tmp[i], &message, &status);
-    }
-
-    if (FALSE == msgReceived)
-    {
-        return msgReceived;
-    }
-
     // NOTE: this doesn't handle multiple compid for one sysid.
     target_system = message.sysid;
     target_autopilot = message.compid;
 
-    g_mutex_lock(&message_mutex[target_system]);
+    // lock the hash table
+    g_rw_lock_reader_lock(&message_hash_table_lock);
+    g_rw_lock_reader_lock(&parameter_hash_table_lock);
 
-    if (SYS_UN_INIT == g_atomic_int_get(vehicle_status + target_system)) // find new system
-    {
-        g_atomic_int_set(vehicle_status + target_system, SYS_INITIATING);
-        current_messages = g_new0(Mavlink_Messages_t, 1);
-        current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
-        GSocket *current_target_socket = g_new0(GSocket, 1);
+    // set current message parameter and target_socket.
+    current_messages =
+        g_hash_table_lookup(message_hash_table,
+                            sys_key[target_system]);
 
-        if ((NULL == current_messages) ||
-            (NULL == current_parameter) ||
-            (NULL == current_target_socket))
-        {
-            g_error("Out of memory!");
-        }
+    current_parameter =
+        g_hash_table_lookup(parameter_hash_table,
+                            sys_key[target_system]);
 
-        // add system to hash table if sysid NOT exsit in hash table's key set
-        g_message("Found a new system: %d", target_system);
-        g_message("adding...");
-        as_system_add(target_system, target_autopilot,
-                      current_messages,
-                      current_parameter,
-                      current_target_socket);
-        g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
-        g_message("New system added: %d", target_system);
-    }
-    else
-    {
-        // lock the hash table
-        g_rw_lock_reader_lock(&message_hash_table_lock);
-        g_rw_lock_reader_lock(&parameter_hash_table_lock);
-
-        // set current message parameter and target_socket.
-        current_messages =
-            g_hash_table_lookup(message_hash_table,
-                                sys_key[target_system]);
-
-        current_parameter =
-            g_hash_table_lookup(parameter_hash_table,
-                                sys_key[target_system]);
-
-        // unlock the message hash table
-        g_rw_lock_reader_unlock(&message_hash_table_lock);
-        g_rw_lock_reader_unlock(&parameter_hash_table_lock);
-    }
+    // unlock the message hash table
+    g_rw_lock_reader_unlock(&message_hash_table_lock);
+    g_rw_lock_reader_unlock(&parameter_hash_table_lock);
 
     g_assert(current_messages != NULL);
     g_assert(current_parameter != NULL);
@@ -91,8 +47,6 @@ guint8 as_handle_messages(gchar *msg_tmp, gsize bytes_read)
                          current_messages,
                          current_parameter);
 
-    g_mutex_unlock(&message_mutex[target_system]);
-
     return message.msgid;
 }
 
@@ -100,6 +54,8 @@ void as_handle_message_id(mavlink_message_t message,
                           Mavlink_Messages_t *current_messages,
                           Mavlink_Parameter_t *current_parameter)
 {
+    g_mutex_lock(&message_mutex[message.sysid]);
+
     guint8 target_system = current_messages->sysid;
     current_messages->msg_id = message.msgid;
     gboolean queue_push = FALSE;
@@ -131,10 +87,8 @@ void as_handle_message_id(mavlink_message_t message,
         // g_message("heartbeat msg from system:%d", current_messages->sysid);
 
         // send heartbeat
-        if (TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)))
-        {
-            send_heartbeat(target_system);
-        }
+        send_heartbeat(target_system);
+
         queue_push = TRUE;
 
         break;
@@ -234,7 +188,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
     {
-        //printf("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW\n");
+        // printf("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW\n");
         mavlink_msg_servo_output_raw_decode(&message, &(current_messages->servo_output_raw));
         current_messages->time_stamps.servo_output_raw = g_get_monotonic_time();
         queue_push = TRUE;
@@ -425,6 +379,8 @@ void as_handle_message_id(mavlink_message_t message,
     }
 
     } // end: switch msgid
+
+    g_mutex_unlock(&message_mutex[message.sysid]);
 
     if (TRUE == queue_push)
     {

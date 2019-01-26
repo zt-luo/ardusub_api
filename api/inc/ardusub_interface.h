@@ -55,7 +55,8 @@ void *as_run(gpointer data);
 void as_system_add(guint8 target_system, guint8 target_autopilot,
                    Mavlink_Messages_t *current_messages,
                    Mavlink_Parameter_t *current_parameter,
-                   GSocket *current_target_socket);
+                   GSocket *current_target_socket,
+                   guint8 *current_targer_serial_port);
 
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 

@@ -10,6 +10,7 @@ else ()
 add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 
                     -Wshadow -Wunreachable-code -Wpointer-arith -Wcast-qual -Wcast-align 
                     -Wno-varargs 
+                    # -shared)
                     -static)
 # TODO: separate debug options
 
@@ -24,8 +25,8 @@ set(LIB_SRC_LIST
     "src/ardusub_msg.c")
 
 # sqlite
-include_directories("../sqlite")
-link_libraries(sqlite_static)
+# include_directories("../sqlite")
+# link_libraries(sqlite_static)
 # link_libraries(sqlite_shared)
 
 # generate shared library

@@ -27,9 +27,11 @@ pkg_check_modules(GTHREAD REQUIRED gthread-2.0)
 pkg_search_module(GTHREAD REQUIRED gthread-2.0)
 pkg_check_modules(GIO REQUIRED gio-2.0)
 pkg_search_module(GIO REQUIRED gio-2.0)
+pkg_check_modules(LIBSERIALPORT REQUIRED libserialport)
+pkg_search_module(LIBSERIALPORT REQUIRED libserialport)
 
-include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
-link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS})
+include_directories(${GLIB_INCLUDE_DIRS} ${GTHREAD_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS} ${LIBSERIALPORT_INCLUDE_DIRS})
+link_libraries(${GLIB_LDFLAGS} ${GTHREAD_LDFLAGS} ${GIO_LDFLAGS} ${LIBSERIALPORT_LDFLAGS})
 
 endif (DEBUG_WITH_VS MATCHES "yes")
 

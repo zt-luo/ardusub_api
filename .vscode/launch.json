@@ -15,7 +15,9 @@
             "request": "launch",
             // "program": "${fileDirname}/build/${fileBasenameNoExtension}.exe",
             "program": "${workspaceFolder}/build/examples/simple_example.exe",
-            "args": ["1"],
+            "args": [
+                "1"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -36,7 +38,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/tools/msg_decoder/decoder.exe",
-            "args": ["-j 123.json"],
+            "args": [
+                "-j 123.json"
+            ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/build/tools/msg_decoder",
             "environment": [],

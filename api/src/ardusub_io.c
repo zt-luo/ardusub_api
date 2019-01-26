@@ -32,6 +32,70 @@ void as_udp_read_init()
     g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
 }
 
+void as_serial_read_init()
+{
+    // prepare serial_write_buf_queue
+    for (gint i = 0; i < MAVLINK_COMM_NUM_BUFFERS; i++)
+    {
+        serial_write_buf_queue[i] = g_async_queue_new();
+    }
+
+    struct sp_port **serial_port_list;
+    enum sp_return sp_result;
+
+    // Enumerating the serial ports...
+    sp_result = sp_list_ports(&serial_port_list);
+
+    if (SP_OK == sp_result)
+    {
+        // count serial port
+        gsize serial_count = 0;
+        while (NULL != serial_port_list[serial_count])
+        {
+            serial_count++;
+        }
+
+        g_print("ok. got %lld ports.\n", serial_count);
+
+        // check for Pixhawk device
+        gint vid, pid;
+        for (gsize i = 0; i < serial_count; i++)
+        {
+            // check USB serial port adapter
+            if (SP_TRANSPORT_USB != sp_get_port_transport(serial_port_list[i]))
+            {
+                continue;
+            }
+
+            sp_result = sp_get_port_usb_vid_pid(serial_port_list[i], &vid, &pid);
+
+            // Pixhawk device vid == 9900, pid == 17
+            if (vid == 9900 && pid == 17)
+            {
+                g_print("Pixhawk device.\n");
+
+                // open serial port
+                if (SP_OK != sp_open(serial_port_list[i], SP_MODE_READ_WRITE))
+                {
+                    g_error("port open faild!");
+                }
+
+                g_thread_new("serial_port_read_write_worker",
+                             &serial_port_read_write_worker,
+                             serial_port_list[i]);
+            }
+        }
+    }
+
+    // sp_free_port_list(serial_port_list);
+}
+
+void as_serial_write_init()
+{
+    // do nothing
+    ;
+}
+
 void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
 {
     g_assert(p_target_socket != NULL);
@@ -59,13 +123,86 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     {
         g_error(error->message);
     }
-
-    g_atomic_int_set((volatile gint *)(udp_write_ready + sysid), TRUE);
 }
 
-void send_udp_message(guint8 target_system, mavlink_message_t *message)
+gboolean as_find_new_system(mavlink_message_t message, guint8 *targer_serial_chan)
 {
-    guint msg_len;
+    guint8 target_system;
+    guint8 target_autopilot;
+
+    gboolean new_system = FALSE;
+
+    // NOTE: this doesn't handle multiple compid for one sysid.
+    target_system = message.sysid;
+    target_autopilot = message.compid;
+
+    g_mutex_lock(&message_mutex[target_system]);
+
+    if (SYS_UN_INIT == g_atomic_int_get(vehicle_status + target_system)) // find new system
+    {
+        g_atomic_int_set(vehicle_status + target_system, SYS_INITIATING);
+        Mavlink_Messages_t *current_messages = g_new0(Mavlink_Messages_t, 1);
+        Mavlink_Parameter_t *current_parameter = g_new0(Mavlink_Parameter_t, PARAM_COUNT);
+
+        if ((NULL == current_messages) ||
+            (NULL == current_parameter))
+        {
+            g_error("Out of memory!");
+        }
+
+        if (NULL == targer_serial_chan)
+        {
+            // UDP
+            GSocket *current_target_socket = g_new0(GSocket, 1);
+
+            if (NULL == current_target_socket)
+            {
+                g_error("Out of memory!");
+            }
+
+            g_message("Found a new system: %d", target_system);
+            g_message("adding...");
+            as_system_add(target_system, target_autopilot,
+                          current_messages,
+                          current_parameter,
+                          current_target_socket,
+                          NULL);
+            g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
+            g_message("New system added: %d", target_system);
+        }
+        else
+        {
+            // serial port
+            guint8 *current_targer_serial_chan = g_new0(guint8, 1);
+
+            if (NULL == current_targer_serial_chan)
+            {
+                g_error("Out of memory!");
+            }
+
+            g_message("Found a new system: %d", target_system);
+            g_message("adding...");
+            as_system_add(target_system, target_autopilot,
+                          current_messages,
+                          current_parameter,
+                          NULL,
+                          current_targer_serial_chan);
+            g_atomic_int_set(vehicle_status + target_system, SYS_DISARMED);
+            g_message("New system added: %d", target_system);
+        }
+
+        new_system = TRUE; // find new system
+    }
+
+    g_mutex_unlock(&message_mutex[target_system]);
+
+    return new_system; // always return at the last of the Func.
+}
+
+// TODO: add serial port
+void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
+{
+    gsize msg_len;
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
@@ -74,20 +211,33 @@ void send_udp_message(guint8 target_system, mavlink_message_t *message)
     g_assert(NULL != system_key_);
     g_assert(NULL != message);
 
-    g_assert(TRUE == g_atomic_int_get((volatile gint *)(udp_write_ready + target_system)));
+    g_rw_lock_reader_lock(&target_hash_table_lock);
+    gpointer target = g_hash_table_lookup(target_hash_table,
+                                          system_key_);
+    g_rw_lock_reader_unlock(&target_hash_table_lock);
 
-    g_rw_lock_reader_lock(&target_socket_hash_table_lock);
-    GSocket *target_socket = g_hash_table_lookup(target_socket_hash_table,
-                                                 system_key_);
-    g_rw_lock_reader_unlock(&target_socket_hash_table_lock);
-
-    g_assert(NULL != target_socket);
+    g_assert(NULL != target);
 
     // Translate message to buffer
     msg_len = mavlink_msg_to_send_buffer((uint8_t *)msg_buf, message);
 
     // Send
-    g_socket_send(target_socket, msg_buf, msg_len, NULL, &error);
+    if (NULL != subnet_address)
+    {
+        // for UDP "target" is target socket
+        g_socket_send((GSocket *)target, msg_buf, msg_len, NULL, &error);
+
+        /* don't forget to check for errors */
+        if (error != NULL)
+        {
+            g_error(error->message);
+        }
+    }
+    else
+    {
+        // for serial port "target" is target serial chan
+        serial_write_buf_queue_push(*(guint8 *)target, msg_buf, msg_len);
+    }
 
     /* don't forget to check for errors */
     if (error != NULL)
@@ -111,7 +261,7 @@ void send_heartbeat(guint8 target_system)
     // hb.mavlink_version = 3; //not writable by user, added by protocol
     mavlink_msg_heartbeat_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &hb);
 
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 
     // g_print("heart breat sended!\n");
 }
@@ -130,7 +280,7 @@ void send_param_request_list(guint8 target_system, guint8 target_autopilot)
     mavlink_msg_param_request_list_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &param_list);
 
     // Send
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 
     // g_message("param_request_list msg wrote!");
 }
@@ -153,7 +303,7 @@ void send_param_request_read(guint8 target_system, guint8 target_component, gint
 
     mavlink_msg_param_request_read_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &prr);
 
-    send_udp_message(target_system, &message);
+    send_mavlink_message(target_system, &message);
 }
 
 gboolean udp_read_callback(GIOChannel *channel,
@@ -183,7 +333,146 @@ gboolean udp_read_callback(GIOChannel *channel,
 
     // g_print("%s", msg_tmp);
 
-    as_handle_messages(msg_tmp, bytes_read);
+    mavlink_message_t message;
+    mavlink_status_t status;
+    gboolean msg_received = FALSE;
+
+    for (gsize i = 0; i < (bytes_read < MAX_BYTES ? bytes_read : MAX_BYTES) && FALSE == msg_received; i++)
+    {
+        msg_received =
+            mavlink_parse_char(MAVLINK_COMM_1, msg_tmp[i], &message, &status);
+    }
+
+    if (TRUE == msg_received)
+    {
+        as_find_new_system(message, NULL);
+
+        as_handle_messages(message);
+    }
 
     return TRUE;
+}
+
+gpointer serial_port_read_write_worker(gpointer data)
+{
+    struct sp_port *my_serial_port = NULL;
+    my_serial_port = (struct sp_port *)data;
+
+    static guint8 serial_chan;
+
+    guint8 my_chan = g_atomic_int_get((gint *)&serial_chan);
+
+    if (my_chan == MAVLINK_COMM_NUM_BUFFERS - 1)
+    {
+        g_error("MAVLINK_COMM_NUM_BUFFERS reached!");
+    }
+
+    g_atomic_int_inc((gint *)&serial_chan);
+
+    guint8 buf;
+    gboolean msg_received = FALSE;
+    gboolean fin_new_system = FALSE;
+    mavlink_message_t message;
+    mavlink_status_t status;
+
+    enum sp_return sp_rt = SP_OK;
+
+    while (TRUE)
+    {
+        gchar *write_buf = serial_write_buf_queue_pop(my_chan);
+        if (NULL != write_buf)
+        {
+            sp_rt = sp_blocking_write(my_serial_port, write_buf + 1, write_buf[0], 0);
+            if (SP_OK > sp_rt)
+            {
+                g_error("failed in serial port write: %d", sp_rt);
+            }
+        }
+
+        sp_rt = sp_blocking_read(my_serial_port, &buf, 1, 0);
+        if (SP_OK > sp_rt)
+        {
+            g_error("failed in serial port read: %d", sp_rt);
+        }
+
+        msg_received =
+            mavlink_parse_char(my_chan, buf, &message, &status);
+
+        if (TRUE == msg_received)
+        {
+            if (FALSE == fin_new_system)
+            {
+                // find new system
+                fin_new_system = as_find_new_system(message, &my_chan);
+            }
+
+            as_handle_messages(message);
+        }
+    }
+}
+
+gchar *serial_write_buf_queue_pop(guint8 chan)
+{
+    static gchar *last_buf;
+    static GMutex my_mutex;
+
+    g_mutex_lock(&my_mutex);
+    // only one thread can reach here,
+    // avoid repeat free of last_buf
+
+    GAsyncQueue *my_serial_write_buf_queue =
+        g_atomic_pointer_get(serial_write_buf_queue + chan);
+
+    if (NULL == my_serial_write_buf_queue)
+    {
+        return NULL;
+    }
+
+    if (NULL != last_buf)
+    {
+        // free last mavlink_message after pop
+        g_free(last_buf);
+    }
+
+    last_buf = g_async_queue_try_pop(my_serial_write_buf_queue);
+
+    g_mutex_unlock(&my_mutex);
+
+    return last_buf;
+}
+
+void serial_write_buf_queue_push(guint8 chan, gchar *buf, gsize buf_len)
+{
+    g_assert(NULL != buf);
+
+    GAsyncQueue *my_serial_write_buf_queue =
+        g_atomic_pointer_get(serial_write_buf_queue + chan);
+
+    // serial port not ready
+    if (NULL == my_serial_write_buf_queue)
+    {
+        return;
+    }
+
+    if (g_async_queue_length(my_serial_write_buf_queue) >
+        MAX_SERIAL_PORT_WRITE_BUF_COUNT)
+    {
+        g_message("MAX_SERIAL_PORT_WRITE_BUF_COUNT reached!");
+        g_message("dump one msg buf!");
+        serial_write_buf_queue_pop(chan);
+    }
+
+    gchar *serial_write_buf_p = (gchar *)g_new0(gchar, buf_len + 1);
+
+    if (NULL == serial_write_buf_p)
+    {
+        g_error("Out of memory!");
+    }
+
+    serial_write_buf_p[0] = buf_len;
+
+    memcpy(serial_write_buf_p + 1, buf, buf_len);
+
+    g_async_queue_push(my_serial_write_buf_queue,
+                       (gpointer)serial_write_buf_p);
 }
