@@ -2,7 +2,8 @@
 
 #include "ardusub_def.h"
 
-//TODO: command watch thread
+// TODO: command watch thread
+// check command ack msg
 
 //
 // thread worker func

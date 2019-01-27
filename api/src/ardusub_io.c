@@ -267,8 +267,6 @@ void send_heartbeat(guint8 target_system)
     mavlink_message_t message;
     mavlink_heartbeat_t hb;
 
-    // TODO: change this value fix value
-
     hb.type = MAV_TYPE_GCS;
     hb.autopilot = MAV_AUTOPILOT_INVALID;
     hb.base_mode = MAV_MODE_FLAG_SAFETY_ARMED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;

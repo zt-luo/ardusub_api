@@ -8,7 +8,7 @@
 
 guint sys_count;
 
-//TODO: Atomic Operations should apply on this
+// atomic operations should apply on this
 guint8 *sys_key[255];
 system_status_t vehicle_status[255];
 
@@ -19,7 +19,7 @@ GHashTable *manual_control_table;
 
 Vehicle_Data_t *vehicle_data_array[255];
 
-//globle mutex
+// globle mutex
 GMutex message_mutex[255];
 GMutex parameter_mutex[255];
 GMutex manual_control_mutex[255];

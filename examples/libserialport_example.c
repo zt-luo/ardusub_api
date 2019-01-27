@@ -138,6 +138,6 @@ gpointer port_read_worker(gpointer data)
             g_error("error in serial port read or write!");
         }
 
-        printf("%02x", buf);
+        g_print("%02x", buf);
     }
 }

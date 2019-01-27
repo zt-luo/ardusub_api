@@ -27,11 +27,11 @@ guint8 as_handle_messages(mavlink_message_t message)
     // set current message parameter and target_socket.
     current_messages =
         g_hash_table_lookup(message_hash_table,
-                            sys_key[target_system]);
+                            g_atomic_pointer_get(sys_key + target_system));
 
     current_parameter =
         g_hash_table_lookup(parameter_hash_table,
-                            sys_key[target_system]);
+                            g_atomic_pointer_get(sys_key + target_system));
 
     // unlock the message hash table
     g_rw_lock_reader_unlock(&message_hash_table_lock);
@@ -66,7 +66,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_HEARTBEAT:
     {
-        // printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+        // g_print("MAVLINK_MSG_ID_HEARTBEAT\n");
         mavlink_msg_heartbeat_decode(&message, &(current_messages->heartbeat));
 
         /* Queries the system monotonic time. in microseconds (gint64) */
@@ -76,10 +76,10 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.heartbeat = g_get_monotonic_time();
 
         /* MAY THE SOURCE BE WITH YOU */
-        // printf("timestamp:%I64d\n", current_messages->time_stamps.heartbeat);
-        // printf("Received message from sys:%d|comp:%d\n",
+        // g_print("timestamp:%I64d\n", current_messages->time_stamps.heartbeat);
+        // g_print("Received message from sys:%d|comp:%d\n",
         //        current_messages->sysid, current_messages->compid);
-        // printf("type:%d, autopilot:%d, base_mode:%d, custom_mode:%d, system_status:%d, mavlink_version:%d \n",
+        // g_print("type:%d, autopilot:%d, base_mode:%d, custom_mode:%d, system_status:%d, mavlink_version:%d \n",
         //        current_messages->heartbeat.type, current_messages->heartbeat.autopilot,
         //        current_messages->heartbeat.base_mode, current_messages->heartbeat.custom_mode,
         //        current_messages->heartbeat.system_status, current_messages->heartbeat.mavlink_version);
@@ -96,9 +96,9 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_SYS_STATUS:
     {
-        // printf("MAVLINK_MSG_ID_SYS_STATUS\n");
+        // g_print("MAVLINK_MSG_ID_SYS_STATUS\n");
         mavlink_msg_sys_status_decode(&message, &(current_messages->sys_status));
-        // printf("SYS_STATUS: erros_comm %d %d \n", current_messages->sys_status.voltage_battery,
+        // g_print("SYS_STATUS: erros_comm %d %d \n", current_messages->sys_status.voltage_battery,
         //    current_messages->sys_status.current_battery);
         current_messages->time_stamps.sys_status = g_get_monotonic_time();
         queue_push = TRUE;
@@ -108,19 +108,19 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_PING:
     {
-        printf("MAVLINK_MSG_ID_PING\n");
+        g_print("MAVLINK_MSG_ID_PING\n");
         mavlink_msg_ping_decode(&message, &(current_messages->ping));
-        //TODO: fix this
-        printf("PING: time_usec:%I64u, seq:%d, target_system:%d, target_component:%d\n",
-               current_messages->ping.time_usec, current_messages->ping.seq,
-               current_messages->ping.target_system, current_messages->ping.target_component);
+
+        g_print("PING: time_usec:%lld, seq:%d, target_system:%d, target_component:%d\n",
+                current_messages->ping.time_usec, current_messages->ping.seq,
+                current_messages->ping.target_system, current_messages->ping.target_component);
 
         break;
     }
 
     case MAVLINK_MSG_ID_BATTERY_STATUS:
     {
-        // printf("MAVLINK_MSG_ID_BATTERY_STATUS\n");
+        // g_print("MAVLINK_MSG_ID_BATTERY_STATUS\n");
         mavlink_msg_battery_status_decode(&message, &(current_messages->battery_status));
         current_messages->time_stamps.battery_status = g_get_monotonic_time();
         queue_push = TRUE;
@@ -130,7 +130,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_RADIO_STATUS:
     {
-        // printf("MAVLINK_MSG_ID_RADIO_STATUS\n");
+        // g_print("MAVLINK_MSG_ID_RADIO_STATUS\n");
         mavlink_msg_radio_status_decode(&message, &(current_messages->radio_status));
         current_messages->time_stamps.radio_status = g_get_monotonic_time();
         break;
@@ -138,7 +138,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
     {
-        //printf("MAVLINK_MSG_ID_LOCAL_POSITION_NED\n");
+        //g_print("MAVLINK_MSG_ID_LOCAL_POSITION_NED\n");
         mavlink_msg_local_position_ned_decode(&message, &(current_messages->local_position_ned));
         current_messages->time_stamps.local_position_ned = g_get_monotonic_time();
         break;
@@ -146,7 +146,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
     {
-        //printf("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
+        //g_print("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
         mavlink_msg_global_position_int_decode(&message, &(current_messages->global_position_int));
         current_messages->time_stamps.global_position_int = g_get_monotonic_time();
         break;
@@ -154,7 +154,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
     {
-        //printf("MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED\n");
+        //g_print("MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED\n");
         mavlink_msg_position_target_local_ned_decode(&message, &(current_messages->position_target_local_ned));
         current_messages->time_stamps.position_target_local_ned = g_get_monotonic_time();
         break;
@@ -162,7 +162,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT:
     {
-        // printf("MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT\n");
+        // g_print("MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT\n");
         mavlink_msg_position_target_global_int_decode(&message, &(current_messages->position_target_global_int));
         current_messages->time_stamps.position_target_global_int = g_get_monotonic_time();
         break;
@@ -170,7 +170,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_HIGHRES_IMU:
     {
-        // printf("MAVLINK_MSG_ID_HIGHRES_IMU\n");
+        // g_print("MAVLINK_MSG_ID_HIGHRES_IMU\n");
         mavlink_msg_highres_imu_decode(&message, &(current_messages->highres_imu));
         current_messages->time_stamps.highres_imu = g_get_monotonic_time();
         break;
@@ -178,7 +178,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_ATTITUDE:
     {
-        // printf("MAVLINK_MSG_ID_ATTITUDE\n");
+        // g_print("MAVLINK_MSG_ID_ATTITUDE\n");
         mavlink_msg_attitude_decode(&message, &(current_messages->attitude));
         current_messages->time_stamps.attitude = g_get_monotonic_time();
         queue_push = TRUE;
@@ -188,7 +188,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
     {
-        // printf("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW\n");
+        // g_print("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW\n");
         mavlink_msg_servo_output_raw_decode(&message, &(current_messages->servo_output_raw));
         current_messages->time_stamps.servo_output_raw = g_get_monotonic_time();
         queue_push = TRUE;
@@ -197,37 +197,37 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_COMMAND_ACK:
     {
-        // printf("MAVLINK_MSG_ID_COMMAND_ACK\n");
+        // g_print("MAVLINK_MSG_ID_COMMAND_ACK\n");
         mavlink_msg_command_ack_decode(&message, &(current_messages->command_ack));
         current_messages->time_stamps.command_ack = g_get_monotonic_time();
-        // printf("Command_ACK, command:%d, result:%d. \n", current_messages->command_ack.command,
+        // g_print("Command_ACK, command:%d, result:%d. \n", current_messages->command_ack.command,
         //        current_messages->command_ack.result);
         break;
     }
     case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
     {
-        // printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOA\n");
+        // g_print("MAVLINK_MSG_ID_NAMED_VALUE_FLOA\n");
         mavlink_msg_named_value_float_decode(&message, &(current_messages->named_value_float));
         current_messages->time_stamps.named_value_float = g_get_monotonic_time();
-        // printf(current_messages->named_value_float.name);
-        // printf(": %f \n", current_messages->named_value_float.value);
+        // g_print(current_messages->named_value_float.name);
+        // g_print(": %f \n", current_messages->named_value_float.value);
         named_val_float_queue_push(target_system, current_messages);
         break;
     }
     case MAVLINK_MSG_ID_VFR_HUD:
     {
-        // printf("MAVLINK_MSG_ID_VFR_HUD\n");
+        // g_print("MAVLINK_MSG_ID_VFR_HUD\n");
         mavlink_msg_vfr_hud_decode(&message, &(current_messages->vfr_hud));
         current_messages->time_stamps.vfr_hud = g_get_monotonic_time();
-        // printf("heading:%d\n", current_messages->vfr_hud.heading);
+        // g_print("heading:%d\n", current_messages->vfr_hud.heading);
         break;
     }
     case MAVLINK_MSG_ID_POWER_STATUS:
     {
-        // printf("MAVLINK_MSG_ID_POWER_STATUS\n");
+        // g_print("MAVLINK_MSG_ID_POWER_STATUS\n");
         mavlink_msg_power_status_decode(&message, &(current_messages->power_status));
         current_messages->time_stamps.power_status = g_get_monotonic_time();
-        // printf("Vcc(5V rail voltage in mV):%d, Vservo(servo rail voltage in mV):%d, "
+        // g_print("Vcc(5V rail voltage in mV):%d, Vservo(servo rail voltage in mV):%d, "
         // "power supply status flags:%d.\n", current_messages->power_status.Vcc,
         // current_messages->power_status.Vservo, current_messages->power_status.flags);
         queue_push = TRUE;
@@ -236,7 +236,7 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_SYSTEM_TIME:
     {
-        // printf("MAVLINK_MSG_ID_SYSTEM_TIME\n");
+        // g_print("MAVLINK_MSG_ID_SYSTEM_TIME\n");
         mavlink_msg_system_time_decode(&message, &(current_messages->system_time));
         current_messages->time_stamps.system_time = g_get_monotonic_time();
         queue_push = TRUE;
@@ -245,28 +245,28 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_MISSION_CURRENT:
     {
-        // printf("MAVLINK_MSG_ID_MISSION_CURRENT\n");
+        // g_print("MAVLINK_MSG_ID_MISSION_CURRENT\n");
         mavlink_msg_mission_current_decode(&message, &(current_messages->mission_current));
         current_messages->time_stamps.mission_current = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_GPS_RAW_INT:
     {
-        // printf("MAVLINK_MSG_ID_GPS_RAW_INT\n");
+        // g_print("MAVLINK_MSG_ID_GPS_RAW_INT\n");
         mavlink_msg_gps_raw_int_decode(&message, &(current_messages->gps_raw_int));
         current_messages->time_stamps.gps_raw_int = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
     {
-        // printf("MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT\n");
+        // g_print("MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT\n");
         mavlink_msg_nav_controller_output_decode(&message, &(current_messages->nav_controller_output));
         current_messages->time_stamps.nav_controller_output = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_RC_CHANNELS:
     {
-        // printf("MAVLINK_MSG_ID_RC_CHANNELS\n");
+        // g_print("MAVLINK_MSG_ID_RC_CHANNELS\n");
         mavlink_msg_rc_channels_decode(&message, &(current_messages->rc_channels));
         current_messages->time_stamps.rc_channels = g_get_monotonic_time();
         queue_push = TRUE;
@@ -275,14 +275,14 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_VIBRATION:
     {
-        // printf("MAVLINK_MSG_ID_VIBRATION\n");
+        // g_print("MAVLINK_MSG_ID_VIBRATION\n");
         mavlink_msg_vibration_decode(&message, &(current_messages->vibration));
         current_messages->time_stamps.vibration = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_RAW_IMU:
     {
-        // printf("MAVLINK_MSG_ID_RAW_IMU\n");
+        // g_print("MAVLINK_MSG_ID_RAW_IMU\n");
         mavlink_msg_raw_imu_decode(&message, &(current_messages->raw_imu));
         current_messages->time_stamps.raw_imu = g_get_monotonic_time();
         queue_push = TRUE;
@@ -291,7 +291,7 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_SCALED_PRESSURE:
     {
-        // printf("MAVLINK_MSG_ID_SCALED_PRESSURE\n");
+        // g_print("MAVLINK_MSG_ID_SCALED_PRESSURE\n");
         mavlink_msg_scaled_pressure_decode(&message, &(current_messages->scaled_pressure));
         current_messages->time_stamps.scaled_pressure = g_get_monotonic_time();
         queue_push = TRUE;
@@ -300,14 +300,14 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_SCALED_IMU2:
     {
-        // printf("MAVLINK_MSG_ID_SCALED_IMU2\n");
+        // g_print("MAVLINK_MSG_ID_SCALED_IMU2\n");
         mavlink_msg_scaled_imu2_decode(&message, &(current_messages->scaled_imu2));
         current_messages->time_stamps.scaled_imu2 = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_SCALED_PRESSURE2:
     {
-        // printf("MAVLINK_MSG_ID_SCALED_PRESSURE2\n");
+        // g_print("MAVLINK_MSG_ID_SCALED_PRESSURE2\n");
         mavlink_msg_scaled_pressure2_decode(&message, &(current_messages->scaled_pressure2));
         current_messages->time_stamps.scaled_pressure2 = g_get_monotonic_time();
         queue_push = TRUE;
@@ -316,25 +316,25 @@ void as_handle_message_id(mavlink_message_t message,
     }
     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
     {
-        // printf("MAVLINK_MSG_ID_RC_CHANNELS_RAW\n");
+        // g_print("MAVLINK_MSG_ID_RC_CHANNELS_RAW\n");
         mavlink_msg_rc_channels_raw_decode(&message, &(current_messages->rc_channels_raw));
         current_messages->time_stamps.rc_channels_raw = g_get_monotonic_time();
         break;
     }
     case MAVLINK_MSG_ID_STATUSTEXT:
     {
-        // printf("MAVLINK_MSG_ID_STATUSTEXT\n");
+        // g_print("MAVLINK_MSG_ID_STATUSTEXT\n");
         mavlink_msg_statustext_decode(&message, &(current_messages->statustext));
         current_messages->time_stamps.statustext = g_get_monotonic_time();
         statustex_queue_push(target_system, current_messages);
-        // printf("severity: %d, statustext: ", current_messages->statustext.severity);
-        // printf(current_messages->statustext.text);
-        // printf("\n");
+        // g_print("severity: %d, statustext: ", current_messages->statustext.severity);
+        // g_print(current_messages->statustext.text);
+        // g_print("\n");
         break;
     }
     case MAVLINK_MSG_ID_PARAM_VALUE:
     {
-        // printf("MAVLINK_MSG_ID_PARAM_VALUE\n");
+        // g_print("MAVLINK_MSG_ID_PARAM_VALUE\n");
         mavlink_msg_param_value_decode(&message, &(current_messages->param_value));
         current_messages->time_stamps.param_value = g_get_monotonic_time();
 
@@ -365,7 +365,7 @@ void as_handle_message_id(mavlink_message_t message,
             g_mutex_unlock(&parameter_mutex[target_system]);
         }
 
-        // printf("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
+        // g_print("param_id:%s, param_value:%d, param_type:%d, param_count:%d, param_index:%d\n",
         //        current_messages->param_value.param_id, current_messages->param_value.param_value,
         //        current_messages->param_value.param_type, current_messages->param_value.param_count,
         //        current_messages->param_value.param_index);
