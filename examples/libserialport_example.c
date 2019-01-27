@@ -27,6 +27,9 @@ gpointer port_read_worker(gpointer data);
  */
 int main(int argc, char const *argv[])
 {
+    g_assert(0 == argc);
+    g_assert(NULL == argv);
+
     struct sp_port **port_list;
     struct sp_port *port_pix = NULL;
     enum sp_return sp_result;
@@ -96,6 +99,13 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
+/**
+ * @brief count the serial port according to the list_ptr 
+ * given by sp_list_ports.
+ * 
+ * @param list_ptr 
+ * @return gsize 
+ */
 gsize count_serial_port(struct sp_port **list_ptr)
 {
     gsize serial_count = 0;
@@ -107,6 +117,12 @@ gsize count_serial_port(struct sp_port **list_ptr)
     return serial_count;
 }
 
+/**
+ * @brief read one byte and print it 
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer port_read_worker(gpointer data)
 {
     guint8 buf;
@@ -117,6 +133,11 @@ gpointer port_read_worker(gpointer data)
         sp_result = sp_blocking_read((struct sp_port *)data, &buf, 1, 0);
         sp_result = sp_blocking_write((struct sp_port *)data, &buf, 1, 0);
 
-        printf("%02x", buf);
+        if (SP_OK!=sp_result)
+        {
+            g_error("error in serial port read or write!");
+        }
+
+        g_print("%02x", buf);
     }
 }

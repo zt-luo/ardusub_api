@@ -28,13 +28,6 @@ gpointer monitoring_thread(gpointer data);
  */
 int main(int argc, char *argv[])
 {
-
-    struct sp_port **serial_port_list;
-    enum sp_return sp_result;
-
-    // Enumerating the serial ports...
-    sp_result = sp_list_ports(&serial_port_list);
-
     char s = 0;
 
     if (argc > 1)
@@ -130,6 +123,12 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/**
+ * @brief get and print vehicle data.
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer monitoring_thread(gpointer data)
 {
     g_assert(NULL == data);

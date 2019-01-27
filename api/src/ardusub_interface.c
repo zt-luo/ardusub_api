@@ -79,8 +79,7 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     g_assert((current_target_socket != NULL) ||
              (current_targer_serial_chan != NULL));
 
-    // TODO: atomic here
-    sys_count++;
+    g_atomic_int_inc(&sys_count);
 
     guint8 *p_sysid = g_new0(guint8, 1);
     if (NULL == p_sysid)
@@ -132,7 +131,7 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     }
     g_atomic_pointer_set(vehicle_data_array + target_system, p_vehicle_data);
 
-    sys_key[target_system] = p_sysid;
+    g_atomic_pointer_set(sys_key + target_system, p_sysid);
 
     as_request_full_parameters(target_system, target_autopilot);
 
@@ -166,7 +165,8 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
     g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, sys_key[sys_id]);
+        g_hash_table_lookup(manual_control_table,
+                            g_atomic_pointer_get(sys_key + sys_id));
     g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_mutex_lock(&manual_control_mutex[sys_id]); // lock
@@ -257,7 +257,7 @@ void do_set_servo(guint8 target_system,
     // --------------------------------------------------------------------------
     send_mavlink_message(target_system, &message);
 
-    // printf("do_set_servo msg wrote!");
+    // g_print("do_set_servo msg wrote!");
 }
 
 void do_motor_test(guint8 target_system,
@@ -293,7 +293,7 @@ void do_motor_test(guint8 target_system,
 
     // do the write
     // int len = write_message(message);
-    printf("do_motor_test msg wrote!");
+    g_print("do_motor_test msg wrote!");
     // check the write
 }
 
@@ -320,7 +320,7 @@ void do_set_mode(control_mode_t mode, guint8 target_system)
 
     // do the write
     // int len = write_message(message);
-    printf("do_set_mode msg wrote!");
+    g_print("do_set_mode msg wrote!");
     // check the write
 }
 
@@ -367,7 +367,7 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
 
     // do the write
     // int len = write_message(message);
-    printf("send_rc_channels_override msg wrote!");
+    g_print("send_rc_channels_override msg wrote!");
     // check the write
 }
 
@@ -390,7 +390,8 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 
     g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, sys_key[target_system]);
+        g_hash_table_lookup(manual_control_table,
+                            g_atomic_pointer_get(sys_key + target_system));
     g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_assert(NULL != p_manual_control);
@@ -434,7 +435,8 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 
     g_rw_lock_reader_lock(&manual_control_hash_table_lock);
     mavlink_manual_control_t *p_manual_control =
-        g_hash_table_lookup(manual_control_table, sys_key[target_system]);
+        g_hash_table_lookup(manual_control_table,
+                            g_atomic_pointer_get(sys_key + target_system));
     g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_assert(NULL != p_manual_control);
