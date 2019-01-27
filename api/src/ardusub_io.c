@@ -199,21 +199,41 @@ gboolean as_find_new_system(mavlink_message_t message, guint8 *targer_serial_cha
     return new_system; // always return at the last of the Func.
 }
 
-// TODO: add serial port
 void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
 {
     gsize msg_len;
     gchar msg_buf[MAX_BYTES];
     GError *error = NULL;
 
-    gpointer system_key_ = g_atomic_pointer_get(sys_key + target_system);
+    static GMutex my_mutex;
+    static gint64 last_monotonic_time; //
 
-    g_assert(NULL != system_key_);
+    // only one write thread
+    g_mutex_lock(&my_mutex);
+
+    // make sure msg write interval more than MIN_MSG_INTERVAL
+    while (g_get_monotonic_time() - last_monotonic_time < MIN_MSG_INTERVAL)
+    {
+        // g_get_monotonic_time() could return negative value
+        // this will fix it.
+        if (g_get_monotonic_time() - last_monotonic_time < 0)
+        {
+            g_usleep(MIN_MSG_INTERVAL);
+            break;
+        }
+
+        g_usleep(100);
+    }
+    last_monotonic_time = g_get_monotonic_time();
+
+    gpointer my_system_key = g_atomic_pointer_get(sys_key + target_system);
+
+    g_assert(NULL != my_system_key);
     g_assert(NULL != message);
 
     g_rw_lock_reader_lock(&target_hash_table_lock);
     gpointer target = g_hash_table_lookup(target_hash_table,
-                                          system_key_);
+                                          my_system_key);
     g_rw_lock_reader_unlock(&target_hash_table_lock);
 
     g_assert(NULL != target);
@@ -239,11 +259,7 @@ void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
         serial_write_buf_queue_push(*(guint8 *)target, msg_buf, msg_len);
     }
 
-    /* don't forget to check for errors */
-    if (error != NULL)
-    {
-        g_error(error->message);
-    }
+    g_mutex_unlock(&my_mutex);
 }
 
 void send_heartbeat(guint8 target_system)
