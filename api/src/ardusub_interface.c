@@ -79,8 +79,7 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     g_assert((current_target_socket != NULL) ||
              (current_targer_serial_chan != NULL));
 
-    // TODO: atomic here
-    sys_count++;
+    g_atomic_int_inc(&sys_count);
 
     guint8 *p_sysid = g_new0(guint8, 1);
     if (NULL == p_sysid)
