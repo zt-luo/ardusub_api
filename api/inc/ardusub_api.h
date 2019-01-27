@@ -195,7 +195,7 @@ extern "C"
 
     extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 
-    extern int as_api_statustex_cpunt(uint8_t target_system);
+    extern int as_api_statustex_count(uint8_t target_system);
 
     extern int as_api_check_vehicle(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);

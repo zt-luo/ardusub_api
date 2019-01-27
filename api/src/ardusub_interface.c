@@ -157,6 +157,12 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
         va_end(ap);
     }
 
+    if (0 == as_api_check_vehicle(sys_id))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  sys_id, __FILE__, __FUNCTION__, __LINE__);
+    }
+
     // arm first
     if (SYS_ARMED != g_atomic_int_get(vehicle_status + sys_id))
     {
@@ -180,6 +186,12 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
 Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
 {
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
     static Vehicle_Data_t *last_vehicle_data;
     static GMutex my_mutex;
 
@@ -376,6 +388,12 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
 // ------------------------------------------------------------------------------
 void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 {
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
     mavlink_command_long_t cmd = {0};
 
     cmd.target_system = target_system;
@@ -416,6 +434,12 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 // ------------------------------------------------------------------------------
 void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 {
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
     mavlink_command_long_t cmd = {0};
 
     cmd.target_system = target_system;
@@ -454,11 +478,27 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 //! NULL-able return value
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system)
 {
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+
+        return NULL;
+    }
+
     return statustex_queue_pop(target_system);
 }
 
-int as_api_statustex_cpunt(uint8_t target_system)
+int as_api_statustex_count(uint8_t target_system)
 {
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+
+        return 0;
+    }
+
     return g_async_queue_length(statustex_queue[target_system]);
 }
 

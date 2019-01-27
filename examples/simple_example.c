@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     mavlink_statustext_t *statustxt;
 
     g_print("\nstatustex count:%d\n",
-            as_api_statustex_cpunt(1));
+            as_api_statustex_count(1));
     statustxt = as_api_statustex_queue_pop(1);
     for (gint i = 0; i < 50 && statustxt != NULL; i++)
     {
