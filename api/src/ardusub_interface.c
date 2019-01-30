@@ -231,7 +231,7 @@ Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 int as_api_check_vehicle(uint8_t sysid)
 {
     if ((NULL == g_atomic_pointer_get(sys_key + sysid)) ||
-        (SYS_UN_INIT == g_atomic_int_get(vehicle_status + sysid))||
+        (SYS_UN_INIT == g_atomic_int_get(vehicle_status + sysid)) ||
         (SYS_INITIATING == g_atomic_int_get(vehicle_status + sysid)))
     {
         return 0;
