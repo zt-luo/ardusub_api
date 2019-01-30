@@ -22,7 +22,9 @@ set(LIB_SRC_LIST
     "src/ardusub_interface.c"
     "src/ardusub_io.c"
     "src/ardusub_thread.c"
-    "src/ardusub_msg.c")
+    "src/ardusub_msg.c"
+    "src/ardusub_sqlite.c"
+    )
 
 # sqlite
 # include_directories("../sqlite")

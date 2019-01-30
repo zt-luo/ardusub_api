@@ -1,4 +1,4 @@
-#include "ardusub_sqlite.h"
+#include "../inc/ardusub_sqlite.h"
 
 /** sql str definition **/
 static gchar *sql_creat_table = "CREATE TABLE ";
