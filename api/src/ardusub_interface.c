@@ -43,8 +43,7 @@ void as_api_init(char *p_subnet_address)
 
         g_thread_new("as_api_main", &as_run, NULL);
 
-        // sqlite3 *my_db;
-        // sqlite3_open("test.db", &my_db);
+        as_sql_open_db();
 
         as_init_status = TRUE;
     }
@@ -143,6 +142,9 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
 
     // init vehicle_data_update_worker thread
     g_thread_new("vehicle_data_update_worker", &vehicle_data_update_worker, p_sysid);
+
+    // init db_update_worker thread
+    g_thread_new("db_update_worker", &db_update_worker, p_sysid);
 }
 
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)

@@ -27,8 +27,8 @@ set(LIB_SRC_LIST
     )
 
 # sqlite
-# include_directories("../sqlite")
-# link_libraries(sqlite_static)
+include_directories("../sqlite")
+link_libraries(sqlite_static)
 # link_libraries(sqlite_shared)
 
 # generate shared library

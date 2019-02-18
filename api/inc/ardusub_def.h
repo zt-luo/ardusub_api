@@ -19,11 +19,10 @@
 
 #include <libserialport.h>
 
-// #include <sqlite3.h>
-
 #include "ardusub_io.h"
 #include "ardusub_api.h"
 #include "ardusub_thread.h"
+#include "ardusub_sqlite.h"
 
 // ------------------------------------------------------------------------------
 //   Defines
@@ -52,7 +51,7 @@
 
 #define MAX_SERIAL_PORT_WRITE_BUF_COUNT (512)
 
-#define MIN_MSG_INTERVAL (1000)  // in microseconds
+#define MIN_MSG_INTERVAL (1000) // in microseconds
 
 // ------------------------------------------------------------------------------
 //   Data Structures

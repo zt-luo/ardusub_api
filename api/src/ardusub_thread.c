@@ -199,7 +199,7 @@ gpointer vehicle_data_update_worker(gpointer data)
                 my_vehicle_data->temperature_bs = bs.temperature;
                 memcpy(my_vehicle_data->voltages, bs.voltages, sizeof(uint16_t) * 10);
                 my_vehicle_data->current_battery_bs = bs.current_battery;
-                my_vehicle_data->id = bs.id; // multiple battery?
+                my_vehicle_data->battery_id = bs.id; //! multiple battery?
                 my_vehicle_data->battery_function = bs.battery_function;
                 my_vehicle_data->type_bs = bs.type;
                 my_vehicle_data->battery_remaining_bs = bs.battery_remaining;
@@ -208,9 +208,9 @@ gpointer vehicle_data_update_worker(gpointer data)
                 break;
 
             case MAVLINK_MSG_ID_POWER_STATUS:
-                my_vehicle_data->Vcc = ps.Vcc;
-                my_vehicle_data->Vservo = ps.Vservo;
-                my_vehicle_data->flags = ps.flags;
+                my_vehicle_data->Vcc_ps = ps.Vcc;
+                my_vehicle_data->Vservo_ps = ps.Vservo;
+                my_vehicle_data->flags_ps = ps.flags;
                 break;
 
             case MAVLINK_MSG_ID_SYSTEM_TIME:
@@ -309,6 +309,31 @@ gpointer vehicle_data_update_worker(gpointer data)
             g_usleep(100);
         }
         my_mavlink_message = message_queue_pop(my_target_system);
+    }
+
+    return NULL;
+}
+
+gpointer db_update_worker(gpointer data)
+{
+    g_assert(NULL != data);
+
+    guint8 my_target_system = *(guint8 *)data;
+
+    as_sql_check_vechle_table(my_target_system);
+
+    Vehicle_Data_t *my_vehicle_data = g_atomic_pointer_get(vehicle_data_array + my_target_system);
+    g_assert(NULL != my_vehicle_data);
+
+    while (TRUE)
+    {
+        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+
+        as_sql_insert_vechle_table(my_target_system, my_vehicle_data);
+
+        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
+
+        g_usleep(10000);
     }
 
     return NULL;

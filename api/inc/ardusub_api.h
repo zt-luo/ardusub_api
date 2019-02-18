@@ -22,17 +22,14 @@ typedef struct __mavlink_statustext_t
 typedef struct Vehicle_Data_s
 {
     // Heartbeat
-    uint32_t custom_mode;    /*<  A bitfield for use for autopilot-specific flags*/
     uint8_t type;            /*<  Type of the system (quadrotor, helicopter, etc.). Components use the same type as their associated system.*/
     uint8_t autopilot;       /*<  Autopilot type / class.*/
     uint8_t base_mode;       /*<  System mode bitmap.*/
+    uint32_t custom_mode;    /*<  A bitfield for use for autopilot-specific flags*/
     uint8_t system_status;   /*<  System status flag.*/
     uint8_t mavlink_version; /*<  MAVLink version, not writable by user, gets added by protocol because of magic data type: uint8_t_mavlink_version*/
 
     // System Status
-    uint32_t onboard_control_sensors_present; /*<  Bitmap showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present.*/
-    uint32_t onboard_control_sensors_enabled; /*<  Bitmap showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled.*/
-    uint32_t onboard_control_sensors_health;  /*<  Bitmap showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled.*/
     uint16_t load;                            /*< [d%] Maximum usage in percent of the mainloop time. Values: [0-1000] - should always be below 1000*/
     uint16_t voltage_battery;                 /*< [mV] Battery voltage*/
     int16_t current_battery;                  /*< [cA] Battery current, -1: autopilot does not measure the current*/
@@ -43,6 +40,9 @@ typedef struct Vehicle_Data_s
     uint16_t errors_count3;                   /*<  Autopilot-specific errors*/
     uint16_t errors_count4;                   /*<  Autopilot-specific errors*/
     int8_t battery_remaining;                 /*< [%] Remaining battery energy, -1: autopilot estimate the remaining battery*/
+    uint32_t onboard_control_sensors_present; /*<  Bitmap showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present.*/
+    uint32_t onboard_control_sensors_enabled; /*<  Bitmap showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled.*/
+    uint32_t onboard_control_sensors_health;  /*<  Bitmap showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled.*/
 
     // Battery Status
     int32_t current_consumed;    /*< [mAh] Consumed charge, -1: autopilot does not provide consumption estimate*/
@@ -50,7 +50,7 @@ typedef struct Vehicle_Data_s
     int16_t temperature_bs;      /*< [cdegC] Temperature of the battery. INT16_MAX for unknown temperature.*/
     uint16_t voltages[10];       /*< [mV] Battery voltage of cells. Cells above the valid cell count for this battery should have the UINT16_MAX value.*/
     int16_t current_battery_bs;  /*< [cA] Battery current, -1: autopilot does not measure the current*/
-    uint8_t id;                  /*<  Battery ID*/
+    uint8_t battery_id;                  /*<  Battery ID*/
     uint8_t battery_function;    /*<  Function of the battery*/
     uint8_t type_bs;             /*<  Type (chemistry) of the battery*/
     int8_t battery_remaining_bs; /*< [%] Remaining battery energy. Values: [0-100], -1: autopilot does not estimate the remaining battery.*/
@@ -58,9 +58,9 @@ typedef struct Vehicle_Data_s
     uint8_t charge_state;        /*<  State for extent of discharge, provided by autopilot for warning or external reactions*/
 
     // Power Status
-    uint16_t Vcc;    /*< [mV] 5V rail voltage.*/
-    uint16_t Vservo; /*< [mV] Servo rail voltage.*/
-    uint16_t flags;  /*<  Bitmap of power supply status flags.*/
+    uint16_t Vcc_ps;    /*< [mV] 5V rail voltage.*/
+    uint16_t Vservo_ps; /*< [mV] Servo rail voltage.*/
+    uint16_t flags_ps;  /*<  Bitmap of power supply status flags.*/
 
     // System Time
     uint64_t time_unix_usec; /*< [us] Timestamp (UNIX epoch time).*/
@@ -121,26 +121,26 @@ typedef struct Vehicle_Data_s
 
     // RC channels
     uint32_t time_boot_ms_rc; /*< [ms] Timestamp (time since system boot).*/
-    uint16_t chan1_raw;    /*< [us] RC channel 1 value.*/
-    uint16_t chan2_raw;    /*< [us] RC channel 2 value.*/
-    uint16_t chan3_raw;    /*< [us] RC channel 3 value.*/
-    uint16_t chan4_raw;    /*< [us] RC channel 4 value.*/
-    uint16_t chan5_raw;    /*< [us] RC channel 5 value.*/
-    uint16_t chan6_raw;    /*< [us] RC channel 6 value.*/
-    uint16_t chan7_raw;    /*< [us] RC channel 7 value.*/
-    uint16_t chan8_raw;    /*< [us] RC channel 8 value.*/
-    uint16_t chan9_raw;    /*< [us] RC channel 9 value.*/
-    uint16_t chan10_raw;   /*< [us] RC channel 10 value.*/
-    uint16_t chan11_raw;   /*< [us] RC channel 11 value.*/
-    uint16_t chan12_raw;   /*< [us] RC channel 12 value.*/
-    uint16_t chan13_raw;   /*< [us] RC channel 13 value.*/
-    uint16_t chan14_raw;   /*< [us] RC channel 14 value.*/
-    uint16_t chan15_raw;   /*< [us] RC channel 15 value.*/
-    uint16_t chan16_raw;   /*< [us] RC channel 16 value.*/
-    uint16_t chan17_raw;   /*< [us] RC channel 17 value.*/
-    uint16_t chan18_raw;   /*< [us] RC channel 18 value.*/
-    uint8_t chancount;     /*<  Total number of RC channels being received. This can be larger than 18, indicating that more channels are available but not given in this message. This value should be 0 when no RC channels are available.*/
-    uint8_t rssi;          /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
+    uint16_t chan1_raw;       /*< [us] RC channel 1 value.*/
+    uint16_t chan2_raw;       /*< [us] RC channel 2 value.*/
+    uint16_t chan3_raw;       /*< [us] RC channel 3 value.*/
+    uint16_t chan4_raw;       /*< [us] RC channel 4 value.*/
+    uint16_t chan5_raw;       /*< [us] RC channel 5 value.*/
+    uint16_t chan6_raw;       /*< [us] RC channel 6 value.*/
+    uint16_t chan7_raw;       /*< [us] RC channel 7 value.*/
+    uint16_t chan8_raw;       /*< [us] RC channel 8 value.*/
+    uint16_t chan9_raw;       /*< [us] RC channel 9 value.*/
+    uint16_t chan10_raw;      /*< [us] RC channel 10 value.*/
+    uint16_t chan11_raw;      /*< [us] RC channel 11 value.*/
+    uint16_t chan12_raw;      /*< [us] RC channel 12 value.*/
+    uint16_t chan13_raw;      /*< [us] RC channel 13 value.*/
+    uint16_t chan14_raw;      /*< [us] RC channel 14 value.*/
+    uint16_t chan15_raw;      /*< [us] RC channel 15 value.*/
+    uint16_t chan16_raw;      /*< [us] RC channel 16 value.*/
+    uint16_t chan17_raw;      /*< [us] RC channel 17 value.*/
+    uint16_t chan18_raw;      /*< [us] RC channel 18 value.*/
+    uint8_t chancount;        /*<  Total number of RC channels being received. This can be larger than 18, indicating that more channels are available but not given in this message. This value should be 0 when no RC channels are available.*/
+    uint8_t rssi;             /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
 
     // Named value
 } Vehicle_Data_t;
