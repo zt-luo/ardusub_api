@@ -1,3 +1,5 @@
+#define	G_LOG_DOMAIN "ardusub_io"
+
 #include "../inc/ardusub_io.h"
 #include "../inc/ardusub_msg.h"
 
@@ -55,7 +57,7 @@ void as_serial_read_init()
             serial_count++;
         }
 
-        g_print("ok. got %lld ports.\n", serial_count);
+        g_message("got %lld ports.", serial_count);
 
         // check for Pixhawk device
         gint vid, pid;

@@ -1,3 +1,5 @@
+#define	G_LOG_DOMAIN "ardusub_interface"
+
 #include "../inc/ardusub_interface.h"
 
 void as_api_init(char *p_subnet_address)
@@ -30,6 +32,9 @@ void as_api_init(char *p_subnet_address)
         manual_control_table = g_hash_table_new(g_int_hash, g_int_equal);
         target_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
 
+        as_set_log_handler();
+        as_sql_open_db();
+
         if (NULL != subnet_address)
         {
             // UDP here
@@ -42,8 +47,6 @@ void as_api_init(char *p_subnet_address)
         }
 
         g_thread_new("as_api_main", &as_run, NULL);
-
-        as_sql_open_db();
 
         as_init_status = TRUE;
     }

@@ -1,3 +1,5 @@
+#define	G_LOG_DOMAIN "ardusub_sqlite"
+
 #include "../inc/ardusub_sqlite.h"
 
 static sqlite3 *sql_db;
@@ -126,12 +128,14 @@ void as_sql_open_db()
 
     if (SQLITE_OK != rc)
     {
-        g_error("Can't open database: %s\n", sqlite3_errmsg(sql_db));
+        g_error("Can't open database: %s", sqlite3_errmsg(sql_db));
     }
     else
     {
-        g_message("Opened database successfully\n");
+        g_message("Opened database successfully!");
     }
+
+    g_critical("g_critical test");
 }
 
 void as_sql_close_db()
@@ -294,6 +298,7 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
             vehicle_data->chancount,
             vehicle_data->rssi);
 
+    g_date_time_unref(data_time);
     g_free(date_str);
     g_free(time_str);
 

@@ -16,7 +16,7 @@
             // "program": "${fileDirname}/build/${fileBasenameNoExtension}.exe",
             "program": "${workspaceFolder}/build/examples/simple_example.exe",
             "args": [
-                "1"
+                "3"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",

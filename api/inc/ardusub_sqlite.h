@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ardusub_def.h"
 
 #include "../../sqlite/sqlite3.h"

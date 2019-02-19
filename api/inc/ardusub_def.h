@@ -23,6 +23,7 @@
 #include "ardusub_api.h"
 #include "ardusub_thread.h"
 #include "ardusub_sqlite.h"
+#include "ardusub_log.h"
 
 // ------------------------------------------------------------------------------
 //   Defines

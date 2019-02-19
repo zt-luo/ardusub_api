@@ -9,6 +9,8 @@
  * 
  */
 
+#define	G_LOG_DOMAIN "simple_example"
+
 #include <stdio.h>
 
 #include <glib.h>
@@ -40,18 +42,19 @@ int main(int argc, char *argv[])
         scanf("%c", &s);
     }
 
-    g_message("subnet address 192.168.%c.*", s);
-
     if ('1' == s)
     {
+        g_message("subnet address 192.168.%c.*", s);
         as_api_init("192.168.1.");
     }
     else if ('2' == s)
     {
+        g_message("subnet address 192.168.%c.*", s);
         as_api_init(NULL);
     }
     else if ('3' == s)
     {
+        g_message("connecting to serial port.");
         as_api_init("serial port");
     }
     else

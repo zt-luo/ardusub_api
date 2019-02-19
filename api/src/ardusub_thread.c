@@ -1,3 +1,5 @@
+#define	G_LOG_DOMAIN "ardusub_thread"
+
 #include "../inc/ardusub_interface.h"
 
 gpointer manual_control_worker(gpointer data)
