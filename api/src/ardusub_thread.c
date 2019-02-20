@@ -1,4 +1,4 @@
-#define	G_LOG_DOMAIN "[ardusub thread    ]"
+#define G_LOG_DOMAIN "[ardusub thread    ]"
 
 #include "../inc/ardusub_interface.h"
 
@@ -337,6 +337,35 @@ gpointer db_update_worker(gpointer data)
 
         g_usleep(10000);
     }
+
+    return NULL;
+}
+
+gpointer log_str_write_worker(gpointer data)
+{
+    GError *error = NULL;
+    gsize bytes_written;
+    GIOChannel *api_log_file_ch = g_io_channel_new_file("ardusub_api_log.txt", "a", &error);
+
+
+    gchar *log_str = pop_log_str();
+
+    while (TRUE)
+    {
+        if (NULL != log_str)
+        {
+            g_io_channel_write_chars(api_log_file_ch, log_str, -1, &bytes_written, &error);
+            g_io_channel_flush(api_log_file_ch, &error);
+        }
+        else
+        {
+            g_usleep(10000);
+        }
+
+        log_str = pop_log_str();
+    }
+
+    g_io_channel_unref(api_log_file_ch);
 
     return NULL;
 }

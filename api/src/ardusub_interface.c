@@ -1,4 +1,4 @@
-#define	G_LOG_DOMAIN "[ardusub interface ]"
+#define G_LOG_DOMAIN "[ardusub interface ]"
 
 #include "../inc/ardusub_interface.h"
 
@@ -553,6 +553,7 @@ void statustex_queue_push(guint8 target_system,
 
     if (g_async_queue_length(my_statustex_queue) > MAX_STATUSTEX)
     {
+        g_critical("MAX_STATUSTEX reached!");
         statustex_queue_pop(target_system);
     }
 
@@ -613,6 +614,7 @@ void named_val_float_queue_push(guint8 target_system,
 
     if (g_async_queue_length(my_named_val_float_queue) > MAX_NAMED_VALUE_FLOAT)
     {
+        g_critical("MAX_NAMED_VALUE_FLOAT reached!");
         named_val_float_queue_pop(target_system);
     }
 
@@ -673,7 +675,7 @@ void message_queue_push(guint8 target_system,
 
     if (g_async_queue_length(my_message_queue) > MAX_MESSAGE)
     {
-        g_message("MAX_MESSAGE reached!");
+        g_critical("MAX_MESSAGE reached!");
         message_queue_pop(target_system);
     }
 
