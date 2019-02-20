@@ -9,7 +9,7 @@
  * 
  */
 
-#define	G_LOG_DOMAIN "simple_example"
+#define	G_LOG_DOMAIN "[simple_example    ]"
 
 #include <stdio.h>
 

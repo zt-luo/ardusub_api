@@ -1,4 +1,4 @@
-#define	G_LOG_DOMAIN "ardusub_sqlite"
+#define	G_LOG_DOMAIN "[ardusub sqlite    ]"
 
 #include "../inc/ardusub_sqlite.h"
 
@@ -136,6 +136,9 @@ void as_sql_open_db()
     }
 
     g_critical("g_critical test");
+    g_warning("g_warning test");
+    g_info("g_info test");
+    g_debug("g_debug test");
 }
 
 void as_sql_close_db()

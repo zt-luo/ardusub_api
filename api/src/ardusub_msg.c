@@ -1,4 +1,4 @@
-#define	G_LOG_DOMAIN "ardusub_msg"
+#define	G_LOG_DOMAIN "[ardusub msg       ]"
 
 #include "../inc/ardusub_msg.h"
 

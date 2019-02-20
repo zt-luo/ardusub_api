@@ -1,4 +1,4 @@
-#define	G_LOG_DOMAIN "ardusub_thread"
+#define	G_LOG_DOMAIN "[ardusub thread    ]"
 
 #include "../inc/ardusub_interface.h"
 

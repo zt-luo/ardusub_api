@@ -1,4 +1,4 @@
-#define G_LOG_DOMAIN "ardusub_log"
+#define G_LOG_DOMAIN "[ardusub log       ]"
 
 #include "../inc/ardusub_log.h"
 
@@ -18,38 +18,38 @@ void my_log_handler(const gchar *log_domain,
     {
 
     case G_LOG_LEVEL_ERROR:
-        log_level_str = "Error:   ";
+        log_level_str = "[Error   ";
         break;
 
     case G_LOG_LEVEL_CRITICAL:
-        log_level_str = "Critical:";
+        log_level_str = "[Critical]";
         break;
 
     case G_LOG_LEVEL_WARNING:
-        log_level_str = "Warning: ";
+        log_level_str = "[Warning ]";
         break;
 
     case G_LOG_LEVEL_MESSAGE:
-        log_level_str = "Message: ";
+        log_level_str = "[Message ]";
         break;
 
     case G_LOG_LEVEL_INFO:
-        log_level_str = "Info:    ";
+        log_level_str = "[Info    ]";
         break;
 
     case G_LOG_LEVEL_DEBUG:
-        log_level_str = "Debug:   ";
+        log_level_str = "[Debug   ]";
         break;
 
     default:
-        log_level_str = "Error:   ";
+        log_level_str = "[Error   ]";
         break;
     }
 
     gchar *log_str = g_new0(gchar, 512);
     g_snprintf(log_str,
                512,
-               "** %s %s %s:%d -> %s\n",
+               "** %s %s %s:%06d -> %s\n",
                log_domain,
                log_level_str,
                data_time_str,
