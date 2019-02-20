@@ -173,6 +173,8 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
 
     as_request_full_parameters(target_system, target_autopilot);
 
+    as_reauest_data_stream(target_system, target_autopilot);
+
     // init manual_control_worker thread
     g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
 
@@ -493,6 +495,51 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
     // int len = write_message(message);
     g_print("send_rc_channels_override msg wrote!");
     // check the write
+}
+
+/**
+ * @brief send REQUEST_DATA_STREAM ( #66 )
+ * 
+ * @param target_system 
+ * @param target_component 
+ * @param req_stream_id 
+ * @param req_message_rate 
+ * @param start_stop 
+ */
+void as_send_request_data_stream(guint8 target_system, guint8 target_component,
+                                 guint8 req_stream_id, guint16 req_message_rate,
+                                 guint8 start_stop)
+{
+    mavlink_request_data_stream_t rds;
+    rds.target_system = target_system;
+    rds.target_component = target_component;
+    rds.req_stream_id = req_stream_id;
+    rds.req_message_rate = req_message_rate;
+    rds.start_stop = start_stop;
+
+    mavlink_message_t message;
+    mavlink_msg_request_data_stream_encode(STATION_SYSYEM_ID,
+                                           STATION_COMPONENT_ID,
+                                           &message, &rds);
+
+    send_mavlink_message(target_system, &message);
+}
+
+/**
+ * @brief as_reauest_data_stream
+ * 
+ * @param target_system 
+ * @param target_component 
+ */
+void as_reauest_data_stream(guint8 target_system, guint8 target_component)
+{
+    guint16 *target_ = NULL;
+    target_ = g_new0(guint16, 1);
+    g_assert(NULL != target_);
+    *target_ = target_system << 8;
+    *target_ |= target_component;
+
+    g_thread_new("request_data_stream_worker", &request_data_stream_worker, target_);
 }
 
 /**

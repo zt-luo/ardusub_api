@@ -117,6 +117,50 @@ gpointer parameters_request_worker(gpointer data)
 }
 
 /**
+ * @brief request_data_stream_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
+gpointer request_data_stream_worker(gpointer data)
+{
+    guint16 target_ = 0;
+    target_ = *(guint16 *)data;
+    g_free(data);
+    guint8 target_system = 0, target_component = 0xFF;
+    target_system = target_ >> 8;
+    target_component &= target_;
+
+    g_message("start request_data_stream.");
+
+    as_send_request_data_stream(target_system, target_component,
+                                1, 2, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                2, 2, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                3, 2, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                6, 3, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                10, 20, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                11, 10, 1);
+    g_usleep(500000);
+    as_send_request_data_stream(target_system, target_component,
+                                12, 3, 1);
+    g_usleep(500000);
+
+    g_message("finish request_data_stream.");
+
+    return NULL;
+}
+
+/**
  * @brief named_val_float_handle_worker
  * 
  * @param data 
@@ -395,7 +439,6 @@ gpointer log_str_write_worker(gpointer data)
     GError *error = NULL;
     gsize bytes_written;
     GIOChannel *api_log_file_ch = g_io_channel_new_file("ardusub_api_log.txt", "a", &error);
-
 
     gchar *log_str = pop_log_str();
 

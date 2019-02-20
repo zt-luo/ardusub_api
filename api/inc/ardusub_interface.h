@@ -75,6 +75,11 @@ Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
 
 void as_request_full_parameters(guint8 target_system, guint8 target_component);
 
+void as_send_request_data_stream(guint8 target_system, guint8 target_component,
+                                 guint8 req_stream_id, guint16 req_message_rate,
+                                 guint8 start_stop);
+void as_reauest_data_stream(guint8 target_system, guint8 target_component);
+
 //
 // func inside low leval
 
