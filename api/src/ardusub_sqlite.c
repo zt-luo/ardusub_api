@@ -62,19 +62,19 @@ static gchar *sql_str_creat_vechle_table = "( \
     `time_unix_usec` INTEGER,\
     `time_boot_ms` INTEGER,\
     `time_boot_ms_at` INTEGER,\
-    `roll` INTEGER,\
-    `pitch` INTEGER,\
-    `yaw` INTEGER,\
-    `rollspeed` INTEGER,\
-    `pitchspeed` INTEGER,\
-    `yawspeed` INTEGER,\
+    `roll` REAL,\
+    `pitch` REAL,\
+    `yaw` REAL,\
+    `rollspeed` REAL,\
+    `pitchspeed` REAL,\
+    `yawspeed` REAL,\
     `time_boot_ms_sp` INTEGER,\
-    `press_abs` INTEGER,\
-    `press_diff` INTEGER,\
+    `press_abs` REAL,\
+    `press_diff` REAL,\
     `temperature_sp` INTEGER,\
     `time_boot_ms_sp2` INTEGER,\
-    `press_abs2` INTEGER,\
-    `press_diff2` INTEGER,\
+    `press_abs2` REAL,\
+    `press_diff2` REAL,\
     `temperature2` INTEGER,\
     `time_usec_sor` INTEGER,\
     `servo1_raw` INTEGER,\
@@ -130,7 +130,7 @@ static gchar *sql_str_creat_vechle_table = "( \
 static gchar *sql_str_insert_vechle_table =
     "INSERT INTO `vehicle_%d` "
     "(date, time, monotonic_time, test_id, type, autopilot, base_mode, custom_mode, system_status, mavlink_version, load, voltage_battery, current_battery, drop_rate_comm, errors_comm, errors_count1, errors_count2, errors_count3, errors_count4, battery_remaining, onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, current_consumed, energy_consumed, temperature_bs, current_battery_bs, battery_id, battery_function, type_bs, battery_remaining_bs, time_remaining, charge_state, Vcc_ps, Vservo_ps, flags_ps, time_unix_usec, time_boot_ms, time_boot_ms_at, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, time_boot_ms_sp, press_abs, press_diff, temperature_sp, time_boot_ms_sp2, press_abs2, press_diff2, temperature2, time_usec_sor, servo1_raw, servo2_raw, servo3_raw, servo4_raw, servo5_raw, servo6_raw, servo7_raw, servo8_raw, port, servo9_raw, servo10_raw, servo11_raw, servo12_raw, servo13_raw, servo14_raw, servo15_raw, servo16_raw, time_usec_ri, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag, time_boot_ms_rc, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw, chancount, rssi)"
-    "VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);";
+    "VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %f, %d, %d, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);";
 
 /**
  * @brief as_sql_open_db
