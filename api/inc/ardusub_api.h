@@ -210,6 +210,9 @@ extern "C"
     extern int as_api_check_vehicle(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
 
+    extern void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
+                                 gfloat servo_no, gfloat pwm);
+
 #ifdef __cplusplus
 }
 #endif

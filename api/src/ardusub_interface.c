@@ -353,20 +353,17 @@ void do_set_servo(guint8 target_system,
 }
 
 /**
- * @brief 
+ * @brief as_api_set_servo
  * 
  * @param target_system 
  * @param target_autopilot 
  * @param motor_no 
  * @param pwm 
  */
-void do_motor_test(guint8 target_system,
-                   guint8 target_autopilot,
-                   gfloat motor_no, gfloat pwm)
+void as_api_set_servo(guint8 target_system,
+                      guint8 target_autopilot,
+                      gfloat motor_no, gfloat pwm)
 {
-    // --------------------------------------------------------------------------
-    //   PACK PAYLOAD
-    // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
     cmd_long.target_system = target_system;
@@ -380,21 +377,10 @@ void do_motor_test(guint8 target_system,
     cmd_long.param5 = 8;
     cmd_long.param6 = MOTOR_TEST_ORDER_DEFAULT;
 
-    // --------------------------------------------------------------------------
-    //   ENCODE
-    // --------------------------------------------------------------------------
-
     mavlink_message_t message;
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd_long);
 
-    // --------------------------------------------------------------------------
-    //   WRITE
-    // --------------------------------------------------------------------------
-
-    // do the write
-    // int len = write_message(message);
-    g_print("do_motor_test msg wrote!");
-    // check the write
+    send_mavlink_message(target_system, &message);
 }
 
 /**

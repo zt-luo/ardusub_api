@@ -61,6 +61,8 @@ int as_api_statustex_count(uint8_t target_system);
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 void as_api_set_mode(guint8 target_system, control_mode_t mode);
+void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
+                      gfloat servo_no, gfloat pwm);
 
 //
 // func inside high leval
@@ -96,9 +98,6 @@ void message_queue_push(guint8 target_system, Mavlink_Messages_t *current_messag
 //
 // func need fix
 
-void do_set_servo(guint8 target_system,
-                  guint8 target_autopilot,
-                  gfloat servo_no, gfloat pwm);
 void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
                                uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
