@@ -398,36 +398,23 @@ void do_motor_test(guint8 target_system,
 }
 
 /**
- * @brief 
+ * @brief set vehicle mode
  * 
- * @param mode 
  * @param target_system 
+ * @param mode 
  */
-void do_set_mode(control_mode_t mode, guint8 target_system)
+void as_api_set_mode(guint8 target_system, control_mode_t mode)
 {
-    // --------------------------------------------------------------------------
-    //   PACK PAYLOAD
-    // --------------------------------------------------------------------------
-
+    // TODO: need check
     mavlink_set_mode_t set_mode;
     set_mode.target_system = target_system;
     set_mode.base_mode = 209; //81
     set_mode.custom_mode = mode;
 
-    // --------------------------------------------------------------------------
-    //   ENCODE
-    // --------------------------------------------------------------------------
-
     mavlink_message_t message;
     mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &set_mode);
-    // --------------------------------------------------------------------------
-    //   WRITE
-    // --------------------------------------------------------------------------
 
-    // do the write
-    // int len = write_message(message);
-    g_print("do_set_mode msg wrote!");
-    // check the write
+    send_mavlink_message(target_system, &message);
 }
 
 /**

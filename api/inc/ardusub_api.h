@@ -199,6 +199,7 @@ extern "C"
 
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
     extern void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
+    extern void as_api_set_mode(guint8 target_system, control_mode_t mode);
 
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
