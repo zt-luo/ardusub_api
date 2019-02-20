@@ -1,4 +1,3 @@
-**Still in unstable state.**
 
 # 环境配置
 
