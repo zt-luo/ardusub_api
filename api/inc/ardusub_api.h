@@ -213,6 +213,9 @@ extern "C"
     extern void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
                                  gfloat servo_no, gfloat pwm);
 
+    extern void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
+                                  gfloat motor_no, gfloat pwm);
+
 #ifdef __cplusplus
 }
 #endif

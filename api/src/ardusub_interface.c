@@ -316,18 +316,15 @@ int as_api_check_vehicle(uint8_t sysid)
 /**
  * @brief 
  * 
- * @param target_system 
+ * @param as_api_set_servo 
  * @param target_autopilot 
  * @param servo_no 
  * @param pwm 
  */
-void do_set_servo(guint8 target_system,
-                  guint8 target_autopilot,
-                  gfloat servo_no, gfloat pwm)
+void as_api_set_servo(guint8 target_system,
+                      guint8 target_autopilot,
+                      gfloat servo_no, gfloat pwm)
 {
-    // --------------------------------------------------------------------------
-    //   PACK PAYLOAD
-    // --------------------------------------------------------------------------
 
     mavlink_command_long_t cmd_long;
     cmd_long.target_system = target_system;
@@ -337,32 +334,23 @@ void do_set_servo(guint8 target_system,
     cmd_long.param1 = servo_no;
     cmd_long.param2 = pwm;
 
-    // --------------------------------------------------------------------------
-    //   ENCODE
-    // --------------------------------------------------------------------------
-
     mavlink_message_t message;
     mavlink_msg_command_long_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &cmd_long);
 
-    // --------------------------------------------------------------------------
-    //   WRITE
-    // --------------------------------------------------------------------------
     send_mavlink_message(target_system, &message);
-
-    // g_print("do_set_servo msg wrote!");
 }
 
 /**
- * @brief as_api_set_servo
+ * @brief as_api_motor_test
  * 
  * @param target_system 
  * @param target_autopilot 
  * @param motor_no 
  * @param pwm 
  */
-void as_api_set_servo(guint8 target_system,
-                      guint8 target_autopilot,
-                      gfloat motor_no, gfloat pwm)
+void as_api_motor_test(guint8 target_system,
+                       guint8 target_autopilot,
+                       gfloat motor_no, gfloat pwm)
 {
 
     mavlink_command_long_t cmd_long;

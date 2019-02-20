@@ -63,6 +63,8 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 void as_api_set_mode(guint8 target_system, control_mode_t mode);
 void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
                       gfloat servo_no, gfloat pwm);
+void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
+                       gfloat motor_no, gfloat pwm);
 
 //
 // func inside high leval
