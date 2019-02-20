@@ -343,6 +343,8 @@ gpointer db_update_worker(gpointer data)
 
 gpointer log_str_write_worker(gpointer data)
 {
+    g_assert(NULL == data);
+
     GError *error = NULL;
     gsize bytes_written;
     GIOChannel *api_log_file_ch = g_io_channel_new_file("ardusub_api_log.txt", "a", &error);

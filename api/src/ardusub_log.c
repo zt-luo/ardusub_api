@@ -2,6 +2,8 @@
 
 #include "../inc/ardusub_log.h"
 
+static GAsyncQueue *log_str_queue;
+
 void my_log_handler(const gchar *log_domain,
                     GLogLevelFlags log_level,
                     const gchar *message,
