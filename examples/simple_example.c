@@ -163,7 +163,7 @@ gpointer monitoring_thread(gpointer data)
         g_print("Pitch speed: %f\n", vehicle_data->pitchspeed);
         g_print("Yaw speed: %f\n", vehicle_data->yawspeed);
         g_print("------------------------------------\n");
-        g_print("Depth senson:\n %f(abs), %f(diff)\n", vehicle_data->press_abs2, vehicle_data->press_diff2);
+        g_print("Depth sensor:\n %f(abs), %f(diff)\n", vehicle_data->press_abs2, vehicle_data->press_diff2);
         g_print("------------------------------------\n");
         g_print("Servo output raw:\n");
         g_print("servo1_raw: %d\n", vehicle_data->servo1_raw);
