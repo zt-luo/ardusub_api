@@ -1,8 +1,23 @@
-#define	G_LOG_DOMAIN "[ardusub io        ]"
+/**
+ * @file ardusub_io.c
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
+#define G_LOG_DOMAIN "[ardusub io        ]"
 
 #include "../inc/ardusub_io.h"
 #include "../inc/ardusub_msg.h"
 
+/**
+ * @brief udp read init
+ * 
+ */
 void as_udp_read_init()
 {
     GSocket *socket_udp_read;
@@ -34,6 +49,10 @@ void as_udp_read_init()
     g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
 }
 
+/**
+ * @brief serial read init
+ * 
+ */
 void as_serial_read_init()
 {
     // prepare serial_write_buf_queue
@@ -92,12 +111,22 @@ void as_serial_read_init()
     // sp_free_port_list(serial_port_list);
 }
 
+/**
+ * @brief serial write init
+ * 
+ */
 void as_serial_write_init()
 {
     // do nothing
     ;
 }
 
+/**
+ * @brief udp write init
+ * 
+ * @param sysid 
+ * @param p_target_socket 
+ */
 void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
 {
     g_assert(p_target_socket != NULL);
@@ -127,6 +156,13 @@ void as_udp_write_init(guint8 sysid, GSocket *p_target_socket)
     }
 }
 
+/**
+ * @brief find new system
+ * 
+ * @param message 
+ * @param targer_serial_chan 
+ * @return gboolean 
+ */
 gboolean as_find_new_system(mavlink_message_t message, guint8 *targer_serial_chan)
 {
     guint8 target_system;
@@ -201,6 +237,12 @@ gboolean as_find_new_system(mavlink_message_t message, guint8 *targer_serial_cha
     return new_system; // always return at the last of the Func.
 }
 
+/**
+ * @brief send mavlink message
+ * 
+ * @param target_system 
+ * @param message 
+ */
 void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
 {
     gsize msg_len;
@@ -264,6 +306,11 @@ void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
     g_mutex_unlock(&my_mutex);
 }
 
+/**
+ * @brief send_heartbeat
+ * 
+ * @param target_system 
+ */
 void send_heartbeat(guint8 target_system)
 {
     mavlink_message_t message;
@@ -282,6 +329,12 @@ void send_heartbeat(guint8 target_system)
     // g_print("heart breat sended!\n");
 }
 
+/**
+ * @brief param_request_list
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ */
 void send_param_request_list(guint8 target_system, guint8 target_autopilot)
 {
     mavlink_param_request_list_t param_list = {0};
@@ -301,6 +354,13 @@ void send_param_request_list(guint8 target_system, guint8 target_autopilot)
     // g_message("param_request_list msg wrote!");
 }
 
+/**
+ * @brief param_request_read
+ * 
+ * @param target_system 
+ * @param target_component 
+ * @param param_index 
+ */
 void send_param_request_read(guint8 target_system, guint8 target_component, gint16 param_index)
 {
     if (-1 == param_index)
@@ -322,6 +382,14 @@ void send_param_request_read(guint8 target_system, guint8 target_component, gint
     send_mavlink_message(target_system, &message);
 }
 
+/**
+ * @brief udp_read_callback
+ * 
+ * @param channel 
+ * @param condition 
+ * @param data 
+ * @return gboolean 
+ */
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer data)
@@ -369,6 +437,12 @@ gboolean udp_read_callback(GIOChannel *channel,
     return TRUE;
 }
 
+/**
+ * @brief serial_port_read_write_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer serial_port_read_write_worker(gpointer data)
 {
     struct sp_port *my_serial_port = NULL;
@@ -427,6 +501,12 @@ gpointer serial_port_read_write_worker(gpointer data)
     }
 }
 
+/**
+ * @brief serial_write_buf_queue_pop
+ * 
+ * @param chan 
+ * @return gchar* 
+ */
 gchar *serial_write_buf_queue_pop(guint8 chan)
 {
     static gchar *last_buf;
@@ -457,6 +537,13 @@ gchar *serial_write_buf_queue_pop(guint8 chan)
     return last_buf;
 }
 
+/**
+ * @brief serial_write_buf_queue_push
+ * 
+ * @param chan 
+ * @param buf 
+ * @param buf_len 
+ */
 void serial_write_buf_queue_push(guint8 chan, gchar *buf, gsize buf_len)
 {
     g_assert(NULL != buf);

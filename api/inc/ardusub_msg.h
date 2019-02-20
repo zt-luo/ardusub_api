@@ -1,3 +1,14 @@
+/**
+ * @file ardusub_msg.h
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #pragma once
 
 #include "ardusub_def.h"

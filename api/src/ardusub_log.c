@@ -1,9 +1,28 @@
+/**
+ * @file ardusub_log.c
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #define G_LOG_DOMAIN "[ardusub log       ]"
 
 #include "../inc/ardusub_log.h"
 
 static GAsyncQueue *log_str_queue;
 
+/**
+ * @brief my_log_handler
+ * 
+ * @param log_domain 
+ * @param log_level 
+ * @param message 
+ * @param unused_data 
+ */
 void my_log_handler(const gchar *log_domain,
                     GLogLevelFlags log_level,
                     const gchar *message,
@@ -65,6 +84,10 @@ void my_log_handler(const gchar *log_domain,
     g_free(log_str);
 }
 
+/**
+ * @brief as_set_log_handler
+ * 
+ */
 void as_set_log_handler()
 {
     log_str_queue = g_async_queue_new();
@@ -74,6 +97,11 @@ void as_set_log_handler()
     g_thread_new("log_str_write_worker", &log_str_write_worker, NULL);
 }
 
+/**
+ * @brief pop_log_str
+ * 
+ * @return gchar* 
+ */
 gchar *pop_log_str()
 {
     static gchar *last_log_str;
@@ -95,6 +123,11 @@ gchar *pop_log_str()
     return last_log_str;
 }
 
+/**
+ * @brief push_log_str
+ * 
+ * @param log_str 
+ */
 void push_log_str(gchar *log_str)
 {
     g_assert(NULL != log_str);

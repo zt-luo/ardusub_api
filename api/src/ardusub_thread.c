@@ -1,7 +1,24 @@
+/**
+ * @file ardusub_thread.c
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #define G_LOG_DOMAIN "[ardusub thread    ]"
 
 #include "../inc/ardusub_interface.h"
 
+/**
+ * @brief manual_control_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer manual_control_worker(gpointer data)
 {
     g_assert(NULL != data);
@@ -42,6 +59,12 @@ gpointer manual_control_worker(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief parameters_request_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer parameters_request_worker(gpointer data)
 {
     guint16 target_ = 0;
@@ -93,6 +116,12 @@ gpointer parameters_request_worker(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief named_val_float_handle_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer named_val_float_handle_worker(gpointer data)
 {
     g_assert(NULL != data);
@@ -130,6 +159,12 @@ gpointer named_val_float_handle_worker(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief vehicle_data_update_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer vehicle_data_update_worker(gpointer data)
 {
     g_assert(NULL != data);
@@ -316,6 +351,12 @@ gpointer vehicle_data_update_worker(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief db_update_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer db_update_worker(gpointer data)
 {
     g_assert(NULL != data);
@@ -341,6 +382,12 @@ gpointer db_update_worker(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief log_str_write_worker
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer log_str_write_worker(gpointer data)
 {
     g_assert(NULL == data);

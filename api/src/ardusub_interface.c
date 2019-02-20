@@ -1,7 +1,23 @@
+/**
+ * @file ardusub_interface.c
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief interface
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #define G_LOG_DOMAIN "[ardusub interface ]"
 
 #include "../inc/ardusub_interface.h"
 
+/**
+ * @brief init api before use.
+ * 
+ * @param p_subnet_address ["serial port" for serial port]
+ */
 void as_api_init(char *p_subnet_address)
 {
     static gboolean as_init_status;
@@ -54,11 +70,21 @@ void as_api_init(char *p_subnet_address)
     g_mutex_unlock(&my_mutex);
 }
 
+/**
+ * @brief deinit api.
+ * 
+ */
 void as_api_deinit()
 {
     ;
 }
 
+/**
+ * @brief api main loop GLib thread.
+ * 
+ * @param data 
+ * @return gpointer 
+ */
 gpointer as_run(gpointer data)
 {
     g_assert(NULL == data);
@@ -70,6 +96,16 @@ gpointer as_run(gpointer data)
     return NULL;
 }
 
+/**
+ * @brief add system.
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ * @param current_messages 
+ * @param current_parameter 
+ * @param current_target_socket 
+ * @param current_targer_serial_chan 
+ */
 void as_system_add(guint8 target_system, guint8 target_autopilot,
                    Mavlink_Messages_t *current_messages,
                    Mavlink_Parameter_t *current_parameter,
@@ -150,6 +186,16 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     g_thread_new("db_update_worker", &db_update_worker, p_sysid);
 }
 
+/**
+ * @brief set manual control value.
+ * 
+ * @param x 
+ * @param y 
+ * @param z 
+ * @param r 
+ * @param buttons 
+ * @param ... sys_id for multiple system 
+ */
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...)
 {
     uint8_t sys_id = 1;
@@ -189,6 +235,12 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
     g_mutex_unlock(&manual_control_mutex[sys_id]); // unlock
 }
 
+/**
+ * @brief get vechicle data.
+ * 
+ * @param target_system 
+ * @return Vehicle_Data_t* 
+ */
 Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
@@ -219,6 +271,12 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
     return last_vehicle_data;
 }
 
+/**
+ * @brief get meaasge
+ * 
+ * @param sysid 
+ * @return Mavlink_Messages_t* 
+ */
 Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
 {
     gpointer system_key_ = g_atomic_pointer_get(sys_key + sysid);
@@ -233,6 +291,12 @@ Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
     return p_message;
 }
 
+/**
+ * @brief check if vehicle is ready.
+ * 
+ * @param sysid 
+ * @return int 0 for not ready.
+ */
 int as_api_check_vehicle(uint8_t sysid)
 {
     if ((NULL == g_atomic_pointer_get(sys_key + sysid)) ||
@@ -247,6 +311,14 @@ int as_api_check_vehicle(uint8_t sysid)
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ * @param servo_no 
+ * @param pwm 
+ */
 void do_set_servo(guint8 target_system,
                   guint8 target_autopilot,
                   gfloat servo_no, gfloat pwm)
@@ -278,6 +350,14 @@ void do_set_servo(guint8 target_system,
     // g_print("do_set_servo msg wrote!");
 }
 
+/**
+ * @brief 
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ * @param motor_no 
+ * @param pwm 
+ */
 void do_motor_test(guint8 target_system,
                    guint8 target_autopilot,
                    gfloat motor_no, gfloat pwm)
@@ -315,6 +395,12 @@ void do_motor_test(guint8 target_system,
     // check the write
 }
 
+/**
+ * @brief 
+ * 
+ * @param mode 
+ * @param target_system 
+ */
 void do_set_mode(control_mode_t mode, guint8 target_system)
 {
     // --------------------------------------------------------------------------
@@ -342,6 +428,12 @@ void do_set_mode(control_mode_t mode, guint8 target_system)
     // check the write
 }
 
+/**
+ * @brief request full parameters
+ * 
+ * @param target_system 
+ * @param target_component 
+ */
 void as_request_full_parameters(guint8 target_system, guint8 target_component)
 {
     guint16 *target_ = NULL;
@@ -353,6 +445,20 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component)
     g_thread_new("parameters_request_worker", &parameters_request_worker, target_);
 }
 
+/**
+ * @brief 
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ * @param ch1 
+ * @param ch2 
+ * @param ch3 
+ * @param ch4 
+ * @param ch5 
+ * @param ch6 
+ * @param ch7 
+ * @param ch8 
+ */
 void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
                                uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
@@ -389,9 +495,12 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
     // check the write
 }
 
-// ------------------------------------------------------------------------------
-//   ARM the vehicle
-// ------------------------------------------------------------------------------
+/**
+ * @brief vehicle arm
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ */
 void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
@@ -435,9 +544,12 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
     send_mavlink_message(target_system, &message);
 }
 
-// ------------------------------------------------------------------------------
-//   DISARM the vehicle
-// ------------------------------------------------------------------------------
+/**
+ * @brief vehicle disarm
+ * 
+ * @param target_system 
+ * @param target_autopilot 
+ */
 void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
@@ -481,7 +593,14 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
     g_mutex_unlock(&manual_control_mutex[target_system]); // unlock
 }
 
-//! NULL-able return value
+/**
+ * @brief pop statustex.
+ * 
+ * ! NULL-able return value
+ * 
+ * @param target_system 
+ * @return mavlink_statustext_t* 
+ */
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
@@ -495,6 +614,12 @@ mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system)
     return statustex_queue_pop(target_system);
 }
 
+/**
+ * @brief statustex count
+ * 
+ * @param target_system 
+ * @return int 
+ */
 int as_api_statustex_count(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
@@ -508,6 +633,12 @@ int as_api_statustex_count(uint8_t target_system)
     return g_async_queue_length(statustex_queue[target_system]);
 }
 
+/**
+ * @brief pop statustex 
+ * 
+ * @param target_system 
+ * @return mavlink_statustext_t* 
+ */
 mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
 {
     static mavlink_statustext_t *last_statustex;
@@ -538,6 +669,12 @@ mavlink_statustext_t *statustex_queue_pop(guint8 target_system)
     return last_statustex;
 }
 
+/**
+ * @brief push statustex 
+ * 
+ * @param target_system 
+ * @param current_messages 
+ */
 void statustex_queue_push(guint8 target_system,
                           Mavlink_Messages_t *current_messages)
 {
@@ -569,6 +706,12 @@ void statustex_queue_push(guint8 target_system,
                        statustex_p);
 }
 
+/**
+ * @brief pop named_val_float 
+ * 
+ * @param target_system 
+ * @return mavlink_named_value_float_t* 
+ */
 mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
 {
     static mavlink_named_value_float_t *last_named_val_float;
@@ -599,6 +742,12 @@ mavlink_named_value_float_t *named_val_float_queue_pop(guint8 target_system)
     return last_named_val_float;
 }
 
+/**
+ * @brief named_val_float push 
+ * 
+ * @param target_system 
+ * @param current_messages 
+ */
 void named_val_float_queue_push(guint8 target_system,
                                 Mavlink_Messages_t *current_messages)
 {
@@ -630,6 +779,12 @@ void named_val_float_queue_push(guint8 target_system,
                        named_val_float_p);
 }
 
+/**
+ * @brief message pop 
+ * 
+ * @param target_system 
+ * @return Mavlink_Messages_t* 
+ */
 Mavlink_Messages_t *message_queue_pop(guint8 target_system)
 {
     static Mavlink_Messages_t *last_mavlink_message;
@@ -660,6 +815,12 @@ Mavlink_Messages_t *message_queue_pop(guint8 target_system)
     return last_mavlink_message;
 }
 
+/**
+ * @brief message push 
+ * 
+ * @param target_system 
+ * @param current_messages 
+ */
 void message_queue_push(guint8 target_system,
                         Mavlink_Messages_t *current_messages)
 {

@@ -1,3 +1,14 @@
+/**
+ * @file ardusub_api.h
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #pragma once
 
 #include <stdint.h>
@@ -50,7 +61,7 @@ typedef struct Vehicle_Data_s
     int16_t temperature_bs;      /*< [cdegC] Temperature of the battery. INT16_MAX for unknown temperature.*/
     uint16_t voltages[10];       /*< [mV] Battery voltage of cells. Cells above the valid cell count for this battery should have the UINT16_MAX value.*/
     int16_t current_battery_bs;  /*< [cA] Battery current, -1: autopilot does not measure the current*/
-    uint8_t battery_id;                  /*<  Battery ID*/
+    uint8_t battery_id;          /*<  Battery ID*/
     uint8_t battery_function;    /*<  Function of the battery*/
     uint8_t type_bs;             /*<  Type (chemistry) of the battery*/
     int8_t battery_remaining_bs; /*< [%] Remaining battery energy. Values: [0-100], -1: autopilot does not estimate the remaining battery.*/
@@ -189,9 +200,7 @@ extern "C"
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
     extern void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
 
-    //! NULL-able return value
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
-    //!
 
     extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 

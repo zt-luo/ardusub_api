@@ -1,3 +1,14 @@
+/**
+ * @file ardusub_interface.h
+ * @author Zongtong Luo (luozongtong123@163.com)
+ * @brief 
+ * @version 
+ * @date 2019-02-20
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #pragma once
 
 #include "ardusub_def.h"
@@ -39,6 +50,7 @@ GAsyncQueue *message_queue[255];
 
 //
 // public api
+
 void as_api_init(char *subnet_address);
 void as_api_deinit();
 int as_api_check_vehicle(uint8_t sysid);
@@ -51,6 +63,7 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
 
 //
 // func inside high leval
+
 void *as_run(gpointer data);
 void as_system_add(guint8 target_system, guint8 target_autopilot,
                    Mavlink_Messages_t *current_messages,
@@ -64,6 +77,7 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component);
 
 //
 // func inside low leval
+
 mavlink_statustext_t *statustex_queue_pop(guint8 target_system);
 void statustex_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
 
@@ -75,6 +89,7 @@ void message_queue_push(guint8 target_system, Mavlink_Messages_t *current_messag
 
 //
 // func need fix
+
 void do_set_servo(guint8 target_system,
                   guint8 target_autopilot,
                   gfloat servo_no, gfloat pwm);
