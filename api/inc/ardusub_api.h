@@ -216,6 +216,10 @@ extern "C"
     extern void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
                                   gfloat motor_no, gfloat pwm);
 
+    extern void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+                                                 uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+                                                 uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
+
 #ifdef __cplusplus
 }
 #endif

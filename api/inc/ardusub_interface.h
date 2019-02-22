@@ -65,6 +65,9 @@ void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
                       gfloat servo_no, gfloat pwm);
 void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
                        gfloat motor_no, gfloat pwm);
+void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+                                      uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+                                      uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 
 //
 // func inside high leval
@@ -97,9 +100,3 @@ void named_val_float_queue_push(guint8 target_system, Mavlink_Messages_t *curren
 Mavlink_Messages_t *message_queue_pop(guint8 target_system);
 void message_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
 
-//
-// func need fix
-
-void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
-                               uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
-                               uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);

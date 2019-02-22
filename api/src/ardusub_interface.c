@@ -422,13 +422,10 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component)
  * @param ch7 
  * @param ch8 
  */
-void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
                                uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
 {
-    // --------------------------------------------------------------------------
-    //   PACK PAYLOAD
-    // --------------------------------------------------------------------------
     mavlink_rc_channels_override_t rc_channels_override;
     rc_channels_override.target_system = target_system;
     rc_channels_override.target_component = target_autopilot;
@@ -440,22 +437,12 @@ void send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
     rc_channels_override.chan6_raw = ch6;
     rc_channels_override.chan7_raw = ch7;
     rc_channels_override.chan8_raw = ch8;
-    // --------------------------------------------------------------------------
-    //   ENCODE
-    // --------------------------------------------------------------------------
 
     mavlink_message_t message;
     mavlink_msg_rc_channels_override_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
                                             &rc_channels_override);
 
-    // --------------------------------------------------------------------------
-    //   WRITE
-    // --------------------------------------------------------------------------
-
-    // do the write
-    // int len = write_message(message);
-    g_print("send_rc_channels_override msg wrote!");
-    // check the write
+    send_mavlink_message(target_system, &message);
 }
 
 /**
