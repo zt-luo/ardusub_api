@@ -9,7 +9,7 @@
  * 
  */
 
-#define	G_LOG_DOMAIN "[ardusub msg       ]"
+#define G_LOG_DOMAIN "[ardusub msg       ]"
 
 #include "../inc/ardusub_msg.h"
 
@@ -392,9 +392,16 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+    case MAVLINK_MSG_ID_TIMESYNC:
+    {
+        // g_print("MAVLINK_MSG_ID_TIMESYNC\n");
+        mavlink_msg_timesync_decode(&message, &(current_messages->timesync));
+        current_messages->time_stamps.timesync = g_get_monotonic_time();
+        break;
+    }
     default:
     {
-        g_message("Warning, did not handle message id %i\n", message.msgid);
+        g_warning("Warning, did not handle message id %i.", message.msgid);
         break;
     }
 

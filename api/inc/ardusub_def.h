@@ -99,6 +99,7 @@ typedef struct Time_Stamps_s
     uint64_t rc_channels_raw;
     uint64_t statustext;
     uint64_t param_value;
+    uint64_t timesync;
 } Time_Stamps_t;
 
 typedef struct messages_set_s
@@ -193,6 +194,9 @@ typedef struct messages_set_s
 
     // Param Value
     mavlink_param_value_t param_value;
+
+    // Timesync
+    mavlink_timesync_t timesync;
 
     // System Parameters? not here.
 
