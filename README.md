@@ -1,5 +1,5 @@
 
-# 环境配置
+## 环境配置
 
 1. 需要安装 [Scoop](https://scoop.sh/)
 2. Scoop 安装使用参见 [链接](https://luozongtong123.github.io/tags/scoop/)
@@ -9,3 +9,11 @@
 6. 项目使用了 [CMake](https://cmake.org/) 可直接使用 Scoop 安装 `scoop install cmake`
 7. 安装编译器 `scoop install gcc`
 
+## Build  
+
+``` shell
+mkdir build
+cd build
+cmake .. -GNinja
+ninja
+```
