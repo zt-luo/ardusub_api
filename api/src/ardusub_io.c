@@ -44,7 +44,12 @@ void as_udp_read_init()
 
     gint fd = g_socket_get_fd(socket_udp_read);
 
+    #ifdef _WIN32
     GIOChannel *channel = g_io_channel_win32_new_socket(fd);
+    #else
+    GIOChannel *channel = g_io_channel_unix_new(fd);
+    #endif
+
     g_io_channel_set_encoding(channel, NULL, &error);
     g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
 }
@@ -76,7 +81,7 @@ void as_serial_read_init()
             serial_count++;
         }
 
-        g_message("got %lld ports.", serial_count);
+        g_message("got %lu ports.", serial_count);
 
         // check for Pixhawk device
         gint vid, pid;
@@ -104,6 +109,40 @@ void as_serial_read_init()
                 g_thread_new("serial_port_read_write_worker",
                              &serial_port_read_write_worker,
                              serial_port_list[i]);
+            }
+            // ArduPilot Pixhawk1 device vid == 483, pid == 5740
+            else if (vid == 1155 && pid == 22336)
+            {
+                g_message("ArduPilot Pixhawk1 device vid == %d, pid == %d", vid, pid);
+                // g_message("pass ArduPilot Pixhawk1 device.");
+                // continue;
+                // open serial port
+                if (SP_OK != sp_open(serial_port_list[i], SP_MODE_READ_WRITE))
+                {
+                    g_error("port open faild!");
+                }
+
+                g_thread_new("serial_port_read_write_worker",
+                             &serial_port_read_write_worker,
+                             serial_port_list[i]);
+            }
+            // Silicon Labs CP210x USB to UART Bridge vid == 4292, pid == 60000
+            else if (vid == 4292 && pid == 60000)
+            {
+                g_message("Silicon Labs CP210x USB to UART Bridge vid == %d, pid == %d", vid, pid);
+                // open serial port
+                if (SP_OK != sp_open(serial_port_list[i], SP_MODE_READ_WRITE))
+                {
+                    g_error("port open faild!");
+                }
+
+                g_thread_new("serial_port_read_write_worker",
+                             &serial_port_read_write_worker,
+                             serial_port_list[i]);
+            }
+            else
+            {
+                g_message("UNKOWN USB to UART Bridge vid == %d, pid == %d", vid, pid);
             }
         }
     }
