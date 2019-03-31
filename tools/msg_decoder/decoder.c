@@ -39,12 +39,12 @@ gsize cal_str_len(const gchar *str);
 void as_handle_message_id(mavlink_message_t message);
 
 void decode_from_json_file();
-void decode_from_raw_hex(int argc, char const *argv[]);
+void decode_from_raw_hex(int argc, char *argv[]);
 
 void json_iterator(JsonArray *array, guint index_,
                    JsonNode *element_node, gpointer user_data);
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     GError *error = NULL;
 
@@ -148,7 +148,7 @@ void decode_from_json_file()
             decoded_msg_count, json_file);
 }
 
-void decode_from_raw_hex(int argc, char const *argv[])
+void decode_from_raw_hex(int argc, char *argv[])
 {
     raw_msg_count = argc - 2;
 
@@ -333,7 +333,7 @@ void as_handle_message_id(mavlink_message_t message)
         mavlink_msg_system_time_decode(&message, &st);
 
         g_print("SYSTEM_TIME(#2) -> ");
-        g_print("time_unix_usec:%llu, time_boot_ms:%d \n",
+        g_print("time_unix_usec:%lu, time_boot_ms:%d \n",
                 st.time_unix_usec, st.time_boot_ms);
 
         break;
@@ -412,12 +412,9 @@ void as_handle_message_id(mavlink_message_t message)
 
         mavlink_msg_manual_control_decode(&message, &mc);
 
-        gchar buttons_str[17] = {0};
-        itoa(mc.buttons, buttons_str, 2);
-
         g_print("MANUAL_CONTROL(#69) -> ");
-        g_print("target:%d, x:%d, y:%d, z:%d, r:%d, buttons:%s \n",
-                mc.target, mc.x, mc.y, mc.z, mc.r, buttons_str);
+        g_print("target:%d, x:%d, y:%d, z:%d, r:%d, buttons:%d \n",
+                mc.target, mc.x, mc.y, mc.z, mc.r, mc.buttons);
 
         break;
     }

@@ -27,8 +27,8 @@ gpointer port_read_worker(gpointer data);
  */
 int main(int argc, char const *argv[])
 {
-    g_assert(0 == argc);
-    g_assert(NULL == argv);
+    g_assert(0 != argc);
+    g_assert(NULL != argv);
 
     struct sp_port **port_list;
     struct sp_port *port_pix = NULL;
@@ -43,7 +43,7 @@ int main(int argc, char const *argv[])
         gsize sp_count = 0;
         gint vid = 0, pid = 0;
         sp_count = count_serial_port(port_list);
-        g_print("ok. got %lld ports.\n", sp_count);
+        g_print("ok. got %lu ports.\n", sp_count);
 
         for (gsize i = 0; i < sp_count; i++)
         {
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[])
             pid = 0;
             sp_result = sp_get_port_usb_vid_pid(port_list[i], &vid, &pid);
 
-            g_print("port%lld description:%s, vid:%d, pid:%d. ",
+            g_print("port%lu description:%s, vid:%d, pid:%d. ",
                     i,
                     sp_get_port_description(port_list[i]),
                     vid,

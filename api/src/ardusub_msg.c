@@ -131,7 +131,7 @@ void as_handle_message_id(mavlink_message_t message,
         g_print("MAVLINK_MSG_ID_PING\n");
         mavlink_msg_ping_decode(&message, &(current_messages->ping));
 
-        g_print("PING: time_usec:%lld, seq:%d, target_system:%d, target_component:%d\n",
+        g_print("PING: time_usec:%lu, seq:%d, target_system:%d, target_component:%d\n",
                 current_messages->ping.time_usec, current_messages->ping.seq,
                 current_messages->ping.target_system, current_messages->ping.target_component);
 

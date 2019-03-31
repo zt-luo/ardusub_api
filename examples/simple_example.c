@@ -149,7 +149,7 @@ gpointer monitoring_thread(gpointer data)
         g_print("\n===================================\n");
         g_print("System ID: %d\n", 1);
         g_print("System status: %d\n", vehicle_data->system_status);
-        g_print("Time unix: %lld\n", vehicle_data->time_unix_usec);
+        g_print("Time unix: %lu\n", vehicle_data->time_unix_usec);
         g_print("Mode: %d\n", vehicle_data->base_mode);
         g_print("MAVLink version: %d\n", vehicle_data->mavlink_version);
         g_print("------------------------------------\n");
