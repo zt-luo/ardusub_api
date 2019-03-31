@@ -28,9 +28,17 @@ set(LIB_SRC_LIST
     )
 
 # sqlite
+IF (CMAKE_SYSTEM_NAME MATCHES "Windows")
 include_directories("../sqlite")
 link_libraries(sqlite_static)
 # link_libraries(sqlite_shared)
+ELSE ()
+pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+pkg_search_module(SQLITE3 REQUIRED sqlite3)
+include_directories(${SQLITE3_INCLUDE_DIRS})
+link_libraries(${SQLITE3_LDFLAGS})
+ENDIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
+
 
 # generate shared library
 add_library(ardusub_shared SHARED ${LIB_SRC_LIST})
@@ -45,11 +53,14 @@ if (DEBUG_WITH_VS MATCHES "yes")
 
 else ()
 
+IF (CMAKE_SYSTEM_NAME MATCHES "Windows")
 # run post build
 set(Library_Manager_PARTH 
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\bin\\Hostx64\\x64\\lib.exe")
 add_custom_command(TARGET ardusub_shared POST_BUILD 
     COMMAND pexports -v libardusub.dll > libardusub.def
     COMMAND ${Library_Manager_PARTH} /def:libardusub.def /MACHINE:X64 > NUL)
+
+ENDIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
 
 endif (DEBUG_WITH_VS MATCHES "yes")

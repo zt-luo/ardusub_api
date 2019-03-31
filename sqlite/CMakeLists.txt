@@ -8,6 +8,7 @@ add_compile_options(-g -O0
 
 set(SQLITE_SRC_LIST "sqlite3.c")
 
+IF (CMAKE_SYSTEM_NAME MATCHES "Windows")
 # generate shared library
 add_library(sqlite_shared SHARED ${SQLITE_SRC_LIST})
 set_target_properties(sqlite_shared PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
@@ -15,3 +16,4 @@ set_target_properties(sqlite_shared PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
 # generate static library
 add_library(sqlite_static STATIC ${SQLITE_SRC_LIST})
 set_target_properties(sqlite_static PROPERTIES OUTPUT_NAME  ${PROJECT_NAME})
+ENDIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
