@@ -43,7 +43,7 @@
 
 /* get more information about Parameter */
 /* https://www.ardusub.com/operators-manual/full-parameter-list.html */
-#define PARAM_COUNT (689)
+#define PARAM_COUNT (911)
 
 #define MAX_ARDUSUB_TARGET_COUNT (253)
 
