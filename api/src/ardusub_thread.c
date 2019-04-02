@@ -131,7 +131,7 @@ gpointer request_data_stream_worker(gpointer data)
     target_system = target_ >> 8;
     target_component &= target_;
 
-    g_message("start request_data_stream.");
+    // g_message("start request_data_stream.");
 
     as_send_request_data_stream(target_system, target_component,
                                 1, 2, 1);
@@ -155,7 +155,7 @@ gpointer request_data_stream_worker(gpointer data)
                                 12, 3, 1);
     g_usleep(500000);
 
-    g_message("finish request_data_stream.");
+    // g_message("finish request_data_stream.");
 
     return NULL;
 }

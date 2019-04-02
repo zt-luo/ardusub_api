@@ -201,7 +201,7 @@ void as_sql_check_vechle_table(guint8 sys_id)
     }
     else
     {
-        g_message("TABLE `vehicle_%d` exist.", sys_id);
+        g_message("TABLE `vehicle_%d` exist, skip table creat.", sys_id);
     }
     g_free(sql);
 }

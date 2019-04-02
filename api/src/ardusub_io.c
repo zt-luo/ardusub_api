@@ -44,11 +44,11 @@ void as_udp_read_init()
 
     gint fd = g_socket_get_fd(socket_udp_read);
 
-    #ifdef _WIN32
+#ifdef _WIN32
     GIOChannel *channel = g_io_channel_win32_new_socket(fd);
-    #else
+#else
     GIOChannel *channel = g_io_channel_unix_new(fd);
-    #endif
+#endif
 
     g_io_channel_set_encoding(channel, NULL, &error);
     g_io_add_watch(channel, G_IO_IN, (GIOFunc)udp_read_callback, NULL);
@@ -238,7 +238,7 @@ gboolean as_find_new_system(mavlink_message_t message, guint8 *targer_serial_cha
             }
 
             g_message("Found a new system: %d", target_system);
-            g_message("adding...");
+            g_message("Adding new system: %d", target_system);
             as_system_add(target_system, target_autopilot,
                           current_messages,
                           current_parameter,
