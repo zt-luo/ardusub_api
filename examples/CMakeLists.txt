@@ -14,7 +14,7 @@ add_compile_options(-g -O0
 
 endif (DEBUG_WITH_VS MATCHES "yes")
 
-set(ARDUSUB_API_LIB_INC_DIR "../lib/inc")
+set(ARDUSUB_API_LIB_INC_DIR "../api/inc")
 
 set(SIMPLE_SRC_LIST "simple_example.c")
 
@@ -24,6 +24,7 @@ link_libraries(ardusub_static)
 
 add_executable(simple_example ${SIMPLE_SRC_LIST})
 
+add_executable(depth_pid "depth_pid.c")
 
 set(SERIAL_SRC_LIST "libserialport_example.c")
 add_executable(libserialport_example ${SERIAL_SRC_LIST})

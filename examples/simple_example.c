@@ -15,8 +15,6 @@
 
 #include <glib.h>
 
-#include <libserialport.h>
-
 #include "../api/inc/ardusub_api.h"
 
 gpointer monitoring_thread(gpointer data);
