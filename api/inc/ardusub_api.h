@@ -167,7 +167,8 @@ typedef enum control_mode_enum
     CIRCLE = 7,    // not implemented in sub // automatic circular flight with automatic throttle
     SURFACE = 9,   // automatically return to surface, pilot maintains horizontal control
     POSHOLD = 16,  // automatic position hold with manual override, with automatic throttle
-    MANUAL = 19    // Pass-through input with no stabilization
+    MANUAL = 19,   // Pass-through input with no stabilization
+    LAB = 20       // lab mode
 } control_mode_t;
 
 // indicate the status controled from this api
