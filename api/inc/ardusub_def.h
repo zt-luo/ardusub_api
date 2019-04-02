@@ -35,6 +35,7 @@
 #include "ardusub_thread.h"
 #include "ardusub_sqlite.h"
 #include "ardusub_log.h"
+#include "ardusub_ini.h"
 
 // ------------------------------------------------------------------------------
 //   Defines

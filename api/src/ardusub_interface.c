@@ -48,7 +48,13 @@ void as_api_init(char *p_subnet_address)
         manual_control_table = g_hash_table_new(g_int_hash, g_int_equal);
         target_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
 
+        // load ini config file
+        as_read_ini_file();
+
+        // set log handler
         as_set_log_handler();
+
+        // init database
         as_sql_open_db();
 
         if (NULL != subnet_address)
@@ -423,8 +429,8 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component)
  * @param ch8 
  */
 void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
-                               uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
-                               uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
+                                      uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
+                                      uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
 {
     mavlink_rc_channels_override_t rc_channels_override;
     rc_channels_override.target_system = target_system;

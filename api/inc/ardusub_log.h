@@ -24,3 +24,12 @@ void as_set_log_handler();
 
 gchar *pop_log_str();
 void push_log_str(gchar *log_str);
+
+void log_to_file(const gchar *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar *message,
+                 gpointer unused_data);
+void log_to_stdout(const gchar *log_domain,
+                   GLogLevelFlags log_level,
+                   const gchar *message,
+                   gpointer unused_data);

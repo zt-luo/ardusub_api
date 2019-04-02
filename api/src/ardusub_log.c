@@ -28,60 +28,23 @@ void my_log_handler(const gchar *log_domain,
                     const gchar *message,
                     gpointer unused_data)
 {
-
     g_assert(NULL == unused_data);
 
-    gchar *log_level_str;
-    GDateTime *data_time = g_date_time_new_now_local();
-    gchar *data_time_str = g_date_time_format(data_time, "%F %T");
-
-    switch (log_level)
+    if (TRUE == as_config_log_file)
     {
-
-    case G_LOG_LEVEL_ERROR:
-        log_level_str = "[Error   ";
-        break;
-
-    case G_LOG_LEVEL_CRITICAL:
-        log_level_str = "[Critical]";
-        break;
-
-    case G_LOG_LEVEL_WARNING:
-        log_level_str = "[Warning ]";
-        break;
-
-    case G_LOG_LEVEL_MESSAGE:
-        log_level_str = "[Message ]";
-        break;
-
-    case G_LOG_LEVEL_INFO:
-        log_level_str = "[Info    ]";
-        break;
-
-    case G_LOG_LEVEL_DEBUG:
-        log_level_str = "[Debug   ]";
-        break;
-
-    default:
-        log_level_str = "[Error   ]";
-        break;
+        log_to_file(log_domain,
+                    log_level,
+                    message,
+                    unused_data);
     }
 
-    gchar *log_str = g_new0(gchar, 512);
-    g_snprintf(log_str,
-               512,
-               "** %s %s %s:%06d -> %s\n",
-               log_domain,
-               log_level_str,
-               data_time_str,
-               g_date_time_get_microsecond(data_time),
-               message);
-
-    push_log_str(log_str);
-
-    g_date_time_unref(data_time);
-    g_free(data_time_str);
-    g_free(log_str);
+    if (TRUE == as_config_log_stdout)
+    {
+        log_to_stdout(log_domain,
+                      log_level,
+                      message,
+                      unused_data);
+    }
 }
 
 /**
@@ -145,4 +108,93 @@ void push_log_str(gchar *log_str)
     }
 
     g_async_queue_push(log_str_queue, log_str_p);
+}
+
+/**
+ * @brief 
+ * 
+ * @param log_domain 
+ * @param log_level 
+ * @param message 
+ * @param unused_data 
+ */
+void log_to_file(const gchar *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar *message,
+                 gpointer unused_data)
+{
+    g_assert(NULL == unused_data);
+
+    gchar *log_level_str;
+    GDateTime *data_time = g_date_time_new_now_local();
+    gchar *data_time_str = g_date_time_format(data_time, "%F %T");
+
+    switch (log_level)
+    {
+
+    case G_LOG_LEVEL_ERROR:
+        log_level_str = "[Error   ";
+        break;
+
+    case G_LOG_LEVEL_CRITICAL:
+        log_level_str = "[Critical]";
+        break;
+
+    case G_LOG_LEVEL_WARNING:
+        log_level_str = "[Warning ]";
+        break;
+
+    case G_LOG_LEVEL_MESSAGE:
+        log_level_str = "[Message ]";
+        break;
+
+    case G_LOG_LEVEL_INFO:
+        log_level_str = "[Info    ]";
+        break;
+
+    case G_LOG_LEVEL_DEBUG:
+        log_level_str = "[Debug   ]";
+        break;
+
+    default:
+        log_level_str = "[Error   ]";
+        break;
+    }
+
+    gchar *log_str = g_new0(gchar, 512);
+    g_snprintf(log_str,
+               512,
+               "** %s %s %s:%06d -> %s\n",
+               log_domain,
+               log_level_str,
+               data_time_str,
+               g_date_time_get_microsecond(data_time),
+               message);
+
+    push_log_str(log_str);
+
+    g_date_time_unref(data_time);
+    g_free(data_time_str);
+    g_free(log_str);
+}
+
+/**
+ * @brief 
+ * 
+ * @param log_domain 
+ * @param log_level 
+ * @param message 
+ * @param unused_data 
+ */
+void log_to_stdout(const gchar *log_domain,
+                   GLogLevelFlags log_level,
+                   const gchar *message,
+                   gpointer unused_data)
+{
+    g_assert(NULL == unused_data);
+
+    g_log_default_handler(log_domain,
+                          log_level,
+                          message,
+                          unused_data);
 }

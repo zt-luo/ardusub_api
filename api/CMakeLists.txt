@@ -25,6 +25,7 @@ set(LIB_SRC_LIST
     "src/ardusub_msg.c"
     "src/ardusub_sqlite.c"
     "src/ardusub_log.c"
+    "src/ardusub_ini.c"
     )
 
 # sqlite
