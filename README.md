@@ -1,3 +1,5 @@
+[![HitCount](http://hits.dwyl.io/zt-luo/ardusub_api.svg)](http://hits.dwyl.io/zt-luo/ardusub_api)
+
 
 ## build requirement 
 
