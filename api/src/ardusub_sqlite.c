@@ -12,6 +12,7 @@
 #define G_LOG_DOMAIN "[ardusub sqlite    ]"
 
 #include "../inc/ardusub_sqlite.h"
+#include "../inc/ardusub_interface.h"
 
 static sqlite3 *sql_db;
 static gchar *sql_db_name = "ardusub_api.db";
@@ -222,6 +223,8 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
     gchar *date_str = g_date_time_format(data_time, "%F");
     gchar *time_str = g_date_time_format(data_time, "%T");
 
+    g_mutex_lock(&vehicle_data_mutex[sys_id]);
+
     sprintf(sql, sql_str_insert_vechle_table, sys_id,
             date_str,
             time_str,
@@ -325,6 +328,8 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
             vehicle_data->chan18_raw,
             vehicle_data->chancount,
             vehicle_data->rssi);
+
+    g_mutex_unlock(&vehicle_data_mutex[sys_id]);
 
     g_date_time_unref(data_time);
     g_free(date_str);

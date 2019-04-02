@@ -414,11 +414,7 @@ gpointer db_update_worker(gpointer data)
 
     while (TRUE)
     {
-        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
-
         as_sql_insert_vechle_table(my_target_system, my_vehicle_data);
-
-        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
 
         g_usleep(10000);
     }
