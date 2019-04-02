@@ -363,11 +363,9 @@ void as_handle_message_id(mavlink_message_t message,
         if (_param_index > PARAM_COUNT - 1)
         {
             // param_index out of range!
-            // g_warning("param_index out of range! param_index:%s, param_index:%d, PARAM_COUNT:%d\n",
-            //           current_messages->param_value.param_id,
-            //           _param_index, PARAM_COUNT);
-
-            break;
+            g_warning("param_index out of range! param_index:%s, param_index:%d, PARAM_COUNT:%d\n",
+                      current_messages->param_value.param_id,
+                      _param_index, PARAM_COUNT);
         }
         else
         {
