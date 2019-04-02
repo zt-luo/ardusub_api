@@ -31,7 +31,7 @@
                 "/usr/include/linux",
                 "/usr/include/glib-2.0",
                 "/usr/lib/glib-2.0/include/",
-                "${workspaceFolder}"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
