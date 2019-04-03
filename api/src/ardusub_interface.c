@@ -20,8 +20,6 @@
  */
 void as_api_init(char *p_subnet_address)
 {
-    static gboolean as_init_status;
-
     static GMutex my_mutex;
     g_mutex_lock(&my_mutex);
 
@@ -42,6 +40,8 @@ void as_api_init(char *p_subnet_address)
         {
             subnet_address = p_subnet_address;
         }
+
+        as_thread_init_ptr_flag();
 
         message_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
         parameter_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
@@ -68,7 +68,8 @@ void as_api_init(char *p_subnet_address)
             as_serial_read_init();
         }
 
-        g_thread_new("as_api_main", &as_run, NULL);
+        as_api_main_thread =
+            g_thread_new("as_api_main", &as_run, NULL);
 
         as_init_status = TRUE;
     }
@@ -82,7 +83,18 @@ void as_api_init(char *p_subnet_address)
  */
 void as_api_deinit()
 {
-    ;
+    gint wait_count;
+    while (TRUE != as_init_status)
+    {
+        g_usleep(100000);
+        wait_count++;
+        if (wait_count++ > 100)
+        {
+            return;
+        }
+    }
+
+    as_thread_stop_all_join();
 }
 
 /**
@@ -95,9 +107,9 @@ gpointer as_run(gpointer data)
 {
     g_assert(NULL == data);
 
-    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
-    g_main_loop_run(loop);
-    g_main_loop_unref(loop);
+    as_main_loop = g_main_loop_new(NULL, FALSE);
+    g_main_loop_run(as_main_loop);
+    // g_main_loop_unref(as_main_loop);
 
     return NULL;
 }
@@ -182,16 +194,20 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     as_reauest_data_stream(target_system, target_autopilot);
 
     // init manual_control_worker thread
-    g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
+    manual_control_thread[target_system] =
+        g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
 
     // init named_val_float_handle_worker thread
-    g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
+    named_val_float_handle_thread[target_system] =
+        g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
 
     // init vehicle_data_update_worker thread
-    g_thread_new("vehicle_data_update_worker", &vehicle_data_update_worker, p_sysid);
+    vehicle_data_update_thread[target_system] =
+        g_thread_new("vehicle_data_update_worker", &vehicle_data_update_worker, p_sysid);
 
     // init db_update_worker thread
-    g_thread_new("db_update_worker", &db_update_worker, p_sysid);
+    db_update_thread[target_system] =
+        g_thread_new("db_update_worker", &db_update_worker, p_sysid);
 }
 
 /**
@@ -411,7 +427,8 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component)
     *target_ = target_system << 8;
     *target_ |= target_component;
 
-    g_thread_new("parameters_request_worker", &parameters_request_worker, target_);
+    parameters_request_thread =
+        g_thread_new("parameters_request_worker", &parameters_request_worker, target_);
 }
 
 /**
@@ -493,7 +510,8 @@ void as_reauest_data_stream(guint8 target_system, guint8 target_component)
     *target_ = target_system << 8;
     *target_ |= target_component;
 
-    g_thread_new("request_data_stream_worker", &request_data_stream_worker, target_);
+    request_data_stream_thread =
+        g_thread_new("request_data_stream_worker", &request_data_stream_worker, target_);
 }
 
 /**

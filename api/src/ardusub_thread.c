@@ -11,7 +11,137 @@
 
 #define G_LOG_DOMAIN "[ardusub thread    ]"
 
+#include "../inc/ardusub_thread.h"
 #include "../inc/ardusub_interface.h"
+
+/**
+ * @brief init thread prt and running flag
+ * 
+ */
+void as_thread_init_ptr_flag()
+{
+    //
+    // thread ptr
+    for (gsize i = 0; i < 255; i++)
+    {
+        manual_control_thread[i] = NULL;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        named_val_float_handle_thread[i] = NULL;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        vehicle_data_update_thread[i] = NULL;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        db_update_thread[i] = NULL;
+    }
+
+    parameters_request_thread = NULL;
+    request_data_stream_thread = NULL;
+    log_str_write_thread = NULL;
+
+    //
+    // thread running flag
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        manual_control_worker_run[i] = 1;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        named_val_float_handle_worker_run[i] = 1;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        vehicle_data_update_worker_run[i] = 1;
+    }
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        db_update_worker_run[i] = 1;
+    }
+
+    log_str_write_worker_run = 1;
+}
+
+/**
+ * @brief stop all thread and join 
+ * 
+ */
+void as_thread_stop_all_join()
+{
+    // exit main loop
+    if (g_main_loop_is_running(as_main_loop))
+    {
+        g_main_loop_quit(as_main_loop);
+    }
+    g_thread_join(as_api_main_thread);
+    g_message("exit main loop.");
+
+    for (gsize i = 0; i < 255; i++)
+    {
+        if (SYS_UN_INIT != g_atomic_int_get(vehicle_status + i))
+        {
+            // send stop signal
+            g_atomic_int_set(manual_control_worker_run + i, 0);
+            g_atomic_int_set(named_val_float_handle_worker_run + i, 0);
+            g_atomic_int_set(vehicle_data_update_worker_run + i, 0);
+            g_atomic_int_set(db_update_worker_run + i, 0);
+
+            // join
+            GThread *this_thread;
+            this_thread = manual_control_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+            this_thread = named_val_float_handle_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+            this_thread = vehicle_data_update_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+            this_thread = db_update_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+        }
+    }
+
+    // send stop signal
+    g_atomic_int_set(&log_str_write_worker_run, 0);
+
+    // join
+    if (NULL != log_str_write_thread)
+    {
+        g_thread_join(log_str_write_thread);
+    }
+
+    if (NULL != parameters_request_thread)
+    {
+        g_thread_join(parameters_request_thread);
+    }
+    if (NULL != request_data_stream_thread)
+    {
+        g_thread_join(request_data_stream_thread);
+    }
+
+    // close database
+    as_sql_close_db();
+}
 
 /**
  * @brief manual_control_worker
@@ -27,7 +157,7 @@ gpointer manual_control_worker(gpointer data)
     gpointer system_key_ = g_atomic_pointer_get(sys_key + my_target_system);
     g_assert(NULL != system_key_);
 
-    while (TRUE)
+    while (1 == g_atomic_int_get(manual_control_worker_run + my_target_system))
     {
         if (SYS_ARMED == g_atomic_int_get(vehicle_status + my_target_system)) // Atomic Operation
         {
@@ -55,6 +185,8 @@ gpointer manual_control_worker(gpointer data)
             g_usleep(100);
         }
     }
+
+    g_message("exit manual_control_worker, sysid: %d.", my_target_system);
 
     return NULL;
 }
@@ -182,7 +314,7 @@ gpointer named_val_float_handle_worker(gpointer data)
     mavlink_named_value_float_t *my_named_value_float =
         named_val_float_queue_pop(my_target_system);
 
-    while (TRUE)
+    while (1 == g_atomic_int_get(named_val_float_handle_worker_run + my_target_system))
     {
         if (NULL != my_named_value_float)
         {
@@ -199,6 +331,8 @@ gpointer named_val_float_handle_worker(gpointer data)
         my_named_value_float =
             named_val_float_queue_pop(my_target_system);
     }
+
+    g_message("exit named_val_float_handle_worker, sysid: %d.", my_target_system);
 
     return NULL;
 }
@@ -225,7 +359,7 @@ gpointer vehicle_data_update_worker(gpointer data)
 
     Mavlink_Messages_t *my_mavlink_message = message_queue_pop(my_target_system);
 
-    while (TRUE)
+    while (1 == g_atomic_int_get(vehicle_data_update_worker_run + my_target_system))
     {
         if (NULL != my_mavlink_message)
         {
@@ -392,6 +526,8 @@ gpointer vehicle_data_update_worker(gpointer data)
         my_mavlink_message = message_queue_pop(my_target_system);
     }
 
+    g_message("exit vehicle_data_update_worker, sysid: %d.", my_target_system);
+
     return NULL;
 }
 
@@ -412,12 +548,14 @@ gpointer db_update_worker(gpointer data)
     Vehicle_Data_t *my_vehicle_data = g_atomic_pointer_get(vehicle_data_array + my_target_system);
     g_assert(NULL != my_vehicle_data);
 
-    while (TRUE)
+    while (1 == g_atomic_int_get(db_update_worker_run + my_target_system))
     {
         as_sql_insert_vechle_table(my_target_system, my_vehicle_data);
 
         g_usleep(10000);
     }
+
+    g_message("exit db_update_worker, sysid: %d.", my_target_system);
 
     return NULL;
 }
@@ -438,7 +576,7 @@ gpointer log_str_write_worker(gpointer data)
 
     gchar *log_str = pop_log_str();
 
-    while (TRUE)
+    while (1 == g_atomic_int_get(&log_str_write_worker_run))
     {
         if (NULL != log_str)
         {
@@ -454,6 +592,8 @@ gpointer log_str_write_worker(gpointer data)
     }
 
     g_io_channel_unref(api_log_file_ch);
+
+    g_message("exit log_str_write_worker.");
 
     return NULL;
 }

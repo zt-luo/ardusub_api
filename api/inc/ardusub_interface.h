@@ -18,6 +18,7 @@
 // ------------------------------------------------------------------------------
 
 guint sys_count;
+gboolean as_init_status;
 
 // atomic operations should apply on this
 guint8 *sys_key[255];
@@ -99,4 +100,3 @@ void named_val_float_queue_push(guint8 target_system, Mavlink_Messages_t *curren
 
 Mavlink_Messages_t *message_queue_pop(guint8 target_system);
 void message_queue_push(guint8 target_system, Mavlink_Messages_t *current_messages);
-

@@ -57,7 +57,8 @@ void as_set_log_handler()
 
     g_log_set_default_handler(my_log_handler, NULL);
 
-    g_thread_new("log_str_write_worker", &log_str_write_worker, NULL);
+    log_str_write_thread =
+        g_thread_new("log_str_write_worker", &log_str_write_worker, NULL);
 }
 
 /**
