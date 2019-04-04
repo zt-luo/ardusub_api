@@ -555,6 +555,9 @@ gpointer db_update_worker(gpointer data)
         g_usleep(10000);
     }
 
+    // stop test
+    as_sql_test_stop();
+
     g_message("exit db_update_worker, sysid: %d.", my_target_system);
 
     return NULL;

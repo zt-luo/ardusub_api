@@ -221,6 +221,9 @@ extern "C"
                                                  uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                                  uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 
+    extern void as_api_test_start(gchar *test_info, gchar *test_note);
+    extern void as_api_test_stop();
+
 #ifdef __cplusplus
 }
 #endif

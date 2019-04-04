@@ -22,7 +22,8 @@ static gint test_id = 0;
 /** sql str definition **/
 
 // usage: "CREATE TABLE " + "`" +"vechle_" + sysid + "`" + sql_str_creat_vechle_table
-static gchar *sql_str_creat_vechle_table = "( \
+static gchar *sql_str_creat_vechle_table =
+    "( \
     `id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \
     `date`	TEXT, \
     `time`	TEXT, \
@@ -149,6 +150,7 @@ void as_sql_open_db()
     else
     {
         g_message("Opened database successfully!");
+        as_sql_check_test_info_table();
     }
 }
 
@@ -229,7 +231,7 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
             date_str,
             time_str,
             g_get_monotonic_time(),
-            test_id,
+            g_atomic_int_get(&test_id),
             vehicle_data->type,
             vehicle_data->autopilot,
             vehicle_data->base_mode,
@@ -344,4 +346,177 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
     }
 
     g_free(sql);
+}
+
+static gchar *sql_str_creat_test_info_table =
+    "CREATE TABLE `test_info` \
+    (\
+    `test_id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \
+    `date`	TEXT, \
+    `time`	TEXT, \
+    `monotonic_time`	INTEGER, \
+    `info`	TEXT, \
+    `note`	TEXT, \
+    `reserved`	TEXT)";
+
+static gchar *sql_str_insert_test_info_table =
+    "INSERT INTO `test_info` "
+    "(date, time, monotonic_time, info, note, reserved)"
+    "VALUES "
+    "('%s', '%s', %d, '%s', '%s', '%s');";
+
+static int sql_count_rows_callback(void *unused, int count,
+                                   char **data, char **columns);
+
+/**
+ * @brief check test_info_table, ino exist creat one.
+ * 
+ */
+void as_sql_check_test_info_table()
+{
+    // sql statement
+    gchar *sql;
+    sql = g_new0(gchar, 3000);
+
+    sprintf(sql, "select * from `test_info`;");
+
+    gint rc;
+    rc = sqlite3_exec(sql_db, sql, NULL, 0, NULL);
+
+    if (SQLITE_OK != rc)
+    {
+        gchar *errmsg;
+        errmsg = g_new0(gchar, 100);
+        rc = sqlite3_exec(sql_db, sql_str_creat_test_info_table, NULL, 0, &errmsg);
+
+        if (SQLITE_OK != rc)
+        {
+            g_error(errmsg);
+        }
+        else
+        {
+            g_message("CREATE TABLE `test_info`.");
+        }
+        g_free(errmsg);
+    }
+    else
+    {
+        g_message("TABLE `test_info` exist, skip table creat.");
+    }
+    g_free(sql);
+}
+
+static gint rows_count = 0;
+static gchar *str_test_info_ptr = "";
+static gchar *str_test_note_ptr = "";
+
+/**
+ * @brief insert test_info
+ * 
+ */
+void as_sql_insert_test_info()
+{
+    // sql statement
+    gchar *sql;
+    sql = g_new0(gchar, 3000);
+
+    GDateTime *data_time = g_date_time_new_now_local();
+    gchar *date_str = g_date_time_format(data_time, "%F");
+    gchar *time_str = g_date_time_format(data_time, "%T");
+
+    sprintf(sql, sql_str_insert_test_info_table,
+            date_str,
+            time_str,
+            g_get_monotonic_time(),
+            str_test_info_ptr,
+            str_test_note_ptr,
+            "");
+
+    g_date_time_unref(data_time);
+    g_free(date_str);
+    g_free(time_str);
+
+    gint rc;
+    rc = sqlite3_exec(sql_db, sql, NULL, 0, NULL);
+
+    if (SQLITE_OK != rc)
+    {
+        g_error(sqlite3_errmsg(sql_db));
+    }
+
+    g_free(sql);
+}
+
+/**
+ * @brief test start
+ * 
+ * @param test_info must not NULL
+ * @param test_note nullable
+ */
+void as_sql_test_start(gchar *test_info, gchar *test_note)
+{
+    g_assert(NULL != test_info);
+
+    str_test_info_ptr = test_info;
+    if (NULL != test_note)
+    {
+        str_test_note_ptr = test_note;
+    }
+
+    as_sql_insert_test_info();
+
+    // sql statement
+    gchar *sql;
+    sql = g_new0(gchar, 3000);
+
+    sprintf(sql, "select * from `test_info`;");
+
+    gint rc;
+    rc = sqlite3_exec(sql_db, sql, sql_count_rows_callback, 0, NULL);
+
+    if (SQLITE_OK != rc)
+    {
+        gchar *errmsg;
+        errmsg = g_new0(gchar, 100);
+        g_error(errmsg);
+        g_free(errmsg);
+    }
+
+    g_free(sql);
+
+    // set test_id
+    g_atomic_int_set(&test_id, rows_count);
+
+    rows_count = 0;
+}
+
+/**
+ * @brief test stop
+ * 
+ */
+void as_sql_test_stop()
+{
+    g_atomic_int_set(&test_id, 0);
+}
+
+/**
+ * @brief sqlite exec callback
+ * 
+ * @param unused 
+ * @param count 
+ * @param data 
+ * @param columns 
+ * @return int 
+ */
+static int sql_count_rows_callback(void *unused, int count,
+                                   char **data, char **columns)
+{
+    g_assert(NULL == unused);
+    g_assert(0 != count);
+    g_assert(NULL != data);
+    g_assert(NULL != columns);
+
+    rows_count++;
+
+    return 0;
 }

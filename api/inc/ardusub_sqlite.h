@@ -19,3 +19,7 @@ void as_sql_open_db();
 void as_sql_close_db();
 void as_sql_check_vechle_table(guint8 sys_id);
 void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data);
+void as_sql_check_test_info_table();
+void as_sql_insert_test_info();
+void as_sql_test_start(gchar *test_info, gchar *test_note);
+void as_sql_test_stop();

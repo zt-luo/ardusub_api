@@ -870,3 +870,23 @@ void message_queue_push(guint8 target_system,
     g_async_queue_push(my_message_queue, // queue
                        mavlink_message_p);
 }
+
+/**
+ * @brief as_sql_test_start wrapper 
+ * 
+ * @param test_info 
+ * @param test_note 
+ */
+void as_api_test_start(gchar *test_info, gchar *test_note)
+{
+    as_sql_test_start(test_info, test_note);
+}
+
+/**
+ * @brief as_sql_test_stop wrapper 
+ * 
+ */
+void as_api_test_stop()
+{
+    as_sql_test_stop();
+}
