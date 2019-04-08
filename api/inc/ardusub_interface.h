@@ -69,6 +69,8 @@ void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
 void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
                                       uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                       uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
+void as_api_send_named_value_float(uint8_t target_system, char* name, float value);
+void as_api_send_named_value_int(uint8_t target_system, char* name, int value);
 void as_api_test_start(gchar *test_info, gchar *test_note);
 void as_api_test_stop();
 

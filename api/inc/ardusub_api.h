@@ -221,6 +221,9 @@ extern "C"
                                                  uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                                  uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 
+    extern void as_api_send_named_value_float(uint8_t target_system, char *name, float value);
+    extern void as_api_send_named_value_int(uint8_t target_system, char *name, int value);
+
     extern void as_api_test_start(gchar *test_info, gchar *test_note);
     extern void as_api_test_stop();
 

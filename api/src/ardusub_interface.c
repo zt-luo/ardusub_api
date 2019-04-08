@@ -469,6 +469,45 @@ void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopi
 }
 
 /**
+ * @brief send NAMED_VALUE_FLOAT ( #251 )
+ * 
+ * @param name 
+ * @param value 
+ */
+void as_api_send_named_value_float(uint8_t target_system, char* name, float value)
+{
+    mavlink_named_value_float_t nvf;
+    nvf.time_boot_ms = 0;
+    nvf.value =  value;
+    strcpy(nvf.name, name);
+
+    mavlink_message_t message;
+    mavlink_msg_named_value_float_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
+                                        &nvf);
+    send_mavlink_message(target_system, &message);
+}
+
+/**
+ * @brief send NAMED_VALUE_INT ( #252 )
+ * 
+ * @param name 
+ * @param value 
+ */
+void as_api_send_named_value_int(uint8_t target_system, char* name, int value)
+{
+    mavlink_named_value_int_t nvi;
+    nvi.time_boot_ms = 0;
+    nvi.value =  value;
+    strcpy(nvi.name, name);
+
+    mavlink_message_t message;
+    mavlink_msg_named_value_int_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
+                                        &nvi);
+    send_mavlink_message(target_system, &message);
+}
+
+
+/**
  * @brief send REQUEST_DATA_STREAM ( #66 )
  * 
  * @param target_system 
