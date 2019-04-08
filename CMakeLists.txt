@@ -37,7 +37,7 @@ endif (DEBUG_WITH_VS MATCHES "yes")
 
 
 # add mavlink include dir
-set(MAVLINK_V2_0_INC_DIR "mavlink/v2.0")
+set(MAVLINK_V2_0_INC_DIR "mavlink_c_library_v2")
 include_directories(${MAVLINK_V2_0_INC_DIR})
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
