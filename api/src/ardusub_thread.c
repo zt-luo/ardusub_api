@@ -221,7 +221,7 @@ gpointer parameters_request_worker(gpointer data)
     target_component &= target_;
 
     send_param_request_list(target_system, target_component); // no guarantee
-    g_usleep(3000000);
+    as_thread_msleep(3000);
 
     g_rw_lock_reader_lock(&parameter_hash_table_lock);
     Mavlink_Parameter_t *current_parameter =
@@ -231,8 +231,18 @@ gpointer parameters_request_worker(gpointer data)
 
     for (gsize j = 0; j < 10; j++)
     {
+        if (FALSE == g_main_loop_is_running(as_main_loop))
+        {
+            break;
+        }
+
         for (gsize i = 0; i < PARAM_COUNT; i++)
         {
+            if (FALSE == g_main_loop_is_running(as_main_loop))
+            {
+                break;
+            }
+
             g_mutex_lock(&parameter_mutex[target_system]);
             gchar param_id_stx = current_parameter[i].param_id[0];
             g_mutex_unlock(&parameter_mutex[target_system]);
@@ -240,19 +250,30 @@ gpointer parameters_request_worker(gpointer data)
             if (0 == param_id_stx)
             {
                 send_param_request_read(target_system, target_component, i);
-                g_usleep(100000);
+                as_thread_msleep(100);
             }
         }
 
-        g_usleep(100000);
+        as_thread_msleep(100);
     }
 
     g_mutex_lock(&parameter_mutex[target_system]);
     for (gsize i = 0; i < PARAM_COUNT; i++)
     {
+        if (FALSE == g_main_loop_is_running(as_main_loop))
+        {
+            break;
+        }
+
         if (0 == current_parameter[i].param_id[0])
         {
+            if (FALSE == g_main_loop_is_running(as_main_loop))
+            {
+                break;
+            }
+
             g_message("Fetch all parameter FAILED!");
+            return NULL;
         }
     }
     g_mutex_unlock(&parameter_mutex[target_system]);
@@ -281,25 +302,25 @@ gpointer request_data_stream_worker(gpointer data)
 
     as_send_request_data_stream(target_system, target_component,
                                 1, 2, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 2, 2, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 3, 2, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 6, 3, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 10, 20, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 11, 10, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 12, 3, 1);
-    g_usleep(500000);
+    as_thread_msleep(500);
 
     // g_message("finish request_data_stream.");
 
@@ -744,4 +765,19 @@ gpointer serial_port_read_write_worker(gpointer data)
     g_atomic_int_dec_and_test(&serial_port_thread_count);
 
     return NULL;
+}
+
+void as_thread_msleep(gint ms)
+{
+    for (gint i = 0; i < ms; i++)
+    {
+        if (TRUE == g_main_loop_is_running(as_main_loop))
+        {
+            g_usleep(1000);
+        }
+        else
+        {
+            break;
+        }
+    }
 }

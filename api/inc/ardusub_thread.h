@@ -38,6 +38,7 @@ volatile gint log_str_write_worker_run;
 
 void as_thread_init_ptr_flag();
 void as_thread_stop_all_join();
+void as_thread_msleep(gint ms);
 
 //
 // thread worker func
