@@ -15,6 +15,8 @@
 #include "../inc/ardusub_thread.h"
 #include "../inc/ardusub_interface.h"
 
+gint serial_port_thread_count = 0;
+
 /**
  * @brief init thread prt and running flag
  * 
@@ -85,6 +87,17 @@ void as_thread_stop_all_join()
         g_main_loop_quit(as_main_loop);
     }
     g_thread_join(as_api_main_thread);
+
+    if (NULL == subnet_address)
+    {
+        // wait serial port thread exit
+        while (0 != g_atomic_int_get(&serial_port_thread_count))
+        {
+            g_usleep(100);
+        }
+        g_message("exit serial port thread.");
+    }
+
     g_message("exit main loop.");
 
     for (gsize i = 0; i < 255; i++)
@@ -677,6 +690,8 @@ gpointer serial_port_read_write_worker(gpointer data)
         g_error("MAVLINK_COMM_NUM_BUFFERS reached!");
     }
 
+    g_atomic_int_inc(&serial_port_thread_count);
+
     g_atomic_int_inc((gint *)&serial_chan);
 
     guint8 buf;
@@ -686,6 +701,12 @@ gpointer serial_port_read_write_worker(gpointer data)
     mavlink_status_t status;
 
     enum sp_return sp_rt = SP_OK;
+
+    while (NULL == as_main_loop)
+    {
+        g_usleep(100);
+        g_message("wait main loop");
+    }
 
     while (g_main_loop_is_running(as_main_loop))
     {
@@ -719,6 +740,8 @@ gpointer serial_port_read_write_worker(gpointer data)
             as_handle_messages(message);
         }
     }
+
+    g_atomic_int_dec_and_test(&serial_port_thread_count);
 
     return NULL;
 }
