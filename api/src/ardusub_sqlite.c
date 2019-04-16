@@ -520,3 +520,102 @@ static int sql_count_rows_callback(void *unused, int count,
 
     return 0;
 }
+
+static gchar *sql_str_creat_command_table =
+    "CREATE TABLE `as_command` \
+    (\
+    `id`	                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, \
+    `target_system`         INTEGER, \
+    `test_id`	            INTEGER, \
+    `date`	                TEXT, \
+    `time`	                TEXT, \
+    `monotonic_time`	    INTEGER, \
+    `depth_hold_cmd`	    INTEGER, \
+    `depth_hold_depth`	    REAL, \
+    `attitude_hold_cmd`	    INTEGER, \
+    `attitude_hold_yaw`	    REAL, \
+    `attitude_hold_pitch`	REAL, \
+    `attitude_hold_roll`	REAL, \
+    `flip_trick_type`	    INTEGER, \
+    `flip_trick_value`	    REAL)";
+
+static gchar *sql_str_insert_command_table =
+    "INSERT INTO `as_command` "
+    "(target_system, test_id, date, time, monotonic_time, depth_hold_cmd, depth_hold_depth, attitude_hold_cmd, attitude_hold_yaw, attitude_hold_pitch, attitude_hold_roll, flip_trick_type, flip_trick_value)"
+    "VALUES "
+    "('%d', '%d', '%s', '%s', %d, '%d', '%f', '%d','%f','%f','%f', '%d', '%f');";
+
+void as_sql_check_command_table()
+{
+    // sql statement
+    gchar *sql;
+    sql = g_new0(gchar, 300);
+
+    sprintf(sql, "select * from `as_command`;");
+
+    gint rc;
+    rc = sqlite3_exec(sql_db, sql, NULL, 0, NULL);
+
+    if (SQLITE_OK != rc)
+    {
+        gchar *errmsg;
+        errmsg = g_new0(gchar, 100);
+        rc = sqlite3_exec(sql_db, sql_str_creat_command_table, NULL, 0, &errmsg);
+
+        if (SQLITE_OK != rc)
+        {
+            g_error(errmsg);
+        }
+        else
+        {
+            g_message("CREATE TABLE `as_command`.");
+        }
+        g_free(errmsg);
+    }
+    else
+    {
+        // g_message("TABLE `as_command` exist, skip table creat.");
+    }
+    g_free(sql);
+}
+
+void as_sql_insert_command(as_command_t as_command)
+{
+    // sql statement
+    gchar *sql;
+    sql = g_new0(gchar, 3000);
+
+    GDateTime *data_time = g_date_time_new_now_local();
+    gchar *date_str = g_date_time_format(data_time, "%F");
+    gchar *time_str = g_date_time_format(data_time, "%T");
+
+    sprintf(sql, sql_str_insert_command_table,
+            as_command.target_system,
+            g_atomic_int_get(&test_id),
+            date_str,
+            time_str,
+            g_get_monotonic_time(),
+            as_command.depth_hold_cmd,
+            as_command.depth_hold_depth,
+            as_command.attitude_hold_cmd,
+            as_command.attitude_hold_yaw,
+            as_command.attitude_hold_pitch,
+            as_command.attitude_hold_roll,
+            as_command.flip_trick_type,
+            as_command.flip_trick_value
+            );
+
+    g_date_time_unref(data_time);
+    g_free(date_str);
+    g_free(time_str);
+
+    gint rc;
+    rc = sqlite3_exec(sql_db, sql, NULL, 0, NULL);
+
+    if (SQLITE_OK != rc)
+    {
+        g_error(sqlite3_errmsg(sql_db));
+    }
+
+    g_free(sql);
+}

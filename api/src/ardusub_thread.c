@@ -14,8 +14,10 @@
 #include "../inc/ardusub_msg.h"
 #include "../inc/ardusub_thread.h"
 #include "../inc/ardusub_interface.h"
+#include "../inc/ardusub_sqlite.h"
 
 gint serial_port_thread_count = 0;
+gint db_insert_command_thread_count = 0;
 
 /**
  * @brief init thread prt and running flag
@@ -88,14 +90,14 @@ void as_thread_stop_all_join()
     }
     g_thread_join(as_api_main_thread);
 
-    if (NULL == subnet_address)
+    if (NULL == subnet_address) // this means serial port connection
     {
         // wait serial port thread exit
         while (0 != g_atomic_int_get(&serial_port_thread_count))
         {
             g_usleep(100);
         }
-        g_message("exit serial port thread.");
+        g_message("exit all serial port thread.");
     }
 
     g_message("exit main loop.");
@@ -152,6 +154,13 @@ void as_thread_stop_all_join()
     {
         g_thread_join(request_data_stream_thread);
     }
+
+    // wait db_insert_command thread exit
+    while (0 != g_atomic_int_get(&db_insert_command_thread_count))
+    {
+        g_usleep(100);
+    }
+    g_message("exit all db_insert_command thread.");
 
     // close database
     as_sql_close_db();
@@ -763,6 +772,25 @@ gpointer serial_port_read_write_worker(gpointer data)
     }
 
     g_atomic_int_dec_and_test(&serial_port_thread_count);
+
+    return NULL;
+}
+
+gpointer db_insert_command_worker(gpointer data)
+{
+    g_assert(NULL != data);
+    as_command_t *as_command = (as_command_t *)data;
+
+    g_atomic_int_inc(&db_insert_command_thread_count);
+
+    as_sql_check_command_table();
+
+    as_sql_insert_command(*as_command);
+
+    g_free(as_command);
+
+    // g_message("exit db_insert_command_worker");
+    g_atomic_int_dec_and_test(&db_insert_command_thread_count);
 
     return NULL;
 }

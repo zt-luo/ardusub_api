@@ -9,7 +9,7 @@
  * 
  */
 
-#define	G_LOG_DOMAIN "[simple_example    ]"
+#define G_LOG_DOMAIN "[simple_example    ]"
 
 #include <stdio.h>
 
@@ -116,10 +116,7 @@ int main(int argc, char *argv[])
     g_message("vehicle disarm...");
     as_api_vehicle_disarm(1, 1);
 
-    while (TRUE)
-    {
-        g_usleep(1000000);
-    }
+    as_api_deinit();
 
     return 0;
 }

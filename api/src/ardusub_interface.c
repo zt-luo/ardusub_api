@@ -674,6 +674,13 @@ void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth)
     mavlink_msg_depth_hold_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &dh);
 
     send_mavlink_message(target_system, &message);
+
+    as_command_t as_command = {0};
+    as_command.target_system = target_system;
+    as_command.depth_hold_cmd = cmd;
+    as_command.depth_hold_depth = depth;
+
+    as_insert_command(as_command);
 }
 
 /**
@@ -704,6 +711,15 @@ void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float p
     mavlink_msg_attitude_hold_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &ah);
 
     send_mavlink_message(target_system, &message);
+
+    as_command_t as_command = {0};
+    as_command.target_system = target_system;
+    as_command.attitude_hold_cmd = cmd;
+    as_command.attitude_hold_yaw = yaw;
+    as_command.attitude_hold_pitch = pitch;
+    as_command.attitude_hold_roll = roll;
+
+    as_insert_command(as_command);
 }
 
 /**
@@ -730,6 +746,13 @@ void as_api_flip_trick(uint8_t target_system, uint8_t type, float value)
     mavlink_msg_flip_trick_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &ft);
 
     send_mavlink_message(target_system, &message);
+
+    as_command_t as_command = {0};
+    as_command.target_system = target_system;
+    as_command.flip_trick_type = type;
+    as_command.flip_trick_value = value;
+
+    as_insert_command(as_command);
 }
 
 /**
@@ -1009,4 +1032,13 @@ void as_api_test_start(gchar *test_info, gchar *test_note)
 void as_api_test_stop()
 {
     as_sql_test_stop();
+}
+
+void as_insert_command(as_command_t as_command)
+{
+    // as_command_p free at db_insert_command_worker
+    as_command_t *as_command_p =
+        (as_command_t *)g_memdup(&as_command, sizeof(as_command_t));
+
+    g_thread_new("", db_insert_command_worker, (gpointer)as_command_p);
 }

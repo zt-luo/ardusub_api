@@ -96,6 +96,8 @@ void as_send_request_data_stream(guint8 target_system, guint8 target_component,
                                  guint8 start_stop);
 void as_reauest_data_stream(guint8 target_system, guint8 target_component);
 
+void as_insert_command(as_command_t as_commadn);
+
 //
 // func inside low leval
 
