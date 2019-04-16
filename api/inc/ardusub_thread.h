@@ -1,6 +1,6 @@
 /**
  * @file ardusub_thread.h
- * @author Zongtong Luo (luozongtong123@163.com)
+ * @author ztluo (me@ztluo.dev)
  * @brief 
  * @version 
  * @date 2019-02-20

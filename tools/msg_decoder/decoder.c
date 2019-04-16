@@ -1,6 +1,6 @@
 /**
  * @file decoder.c
- * @author Zongtong Luo (luozongtong123@163.com)
+ * @author ztluo (me@ztluo.dev)
  * @brief 
  * @version 0.1
  * @date 2019-01-08

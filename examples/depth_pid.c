@@ -1,6 +1,6 @@
 /**
  * @file depth_pid.c
- * @author Zongtong Luo (luozongtong123@163.com)
+ * @author ztluo (me@ztluo.dev)
  * @brief 
  * @version 
  * @date 2019-04-01

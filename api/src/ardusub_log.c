@@ -1,6 +1,6 @@
 /**
  * @file ardusub_log.c
- * @author Zongtong Luo (luozongtong123@163.com)
+ * @author ztluo (me@ztluo.dev)
  * @brief 
  * @version 
  * @date 2019-02-20
