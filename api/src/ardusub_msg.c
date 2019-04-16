@@ -215,6 +215,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_COMMAND_ACK:
     {
         // g_print("MAVLINK_MSG_ID_COMMAND_ACK\n");
@@ -224,6 +225,7 @@ void as_handle_message_id(mavlink_message_t message,
         //        current_messages->command_ack.result);
         break;
     }
+
     case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
     {
         // g_print("MAVLINK_MSG_ID_NAMED_VALUE_FLOA\n");
@@ -234,6 +236,7 @@ void as_handle_message_id(mavlink_message_t message,
         named_val_float_queue_push(target_system, current_messages);
         break;
     }
+
     case MAVLINK_MSG_ID_VFR_HUD:
     {
         // g_print("MAVLINK_MSG_ID_VFR_HUD\n");
@@ -242,6 +245,7 @@ void as_handle_message_id(mavlink_message_t message,
         // g_print("heading:%d\n", current_messages->vfr_hud.heading);
         break;
     }
+
     case MAVLINK_MSG_ID_POWER_STATUS:
     {
         // g_print("MAVLINK_MSG_ID_POWER_STATUS\n");
@@ -254,6 +258,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_SYSTEM_TIME:
     {
         // g_print("MAVLINK_MSG_ID_SYSTEM_TIME\n");
@@ -263,6 +268,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_MISSION_CURRENT:
     {
         // g_print("MAVLINK_MSG_ID_MISSION_CURRENT\n");
@@ -270,6 +276,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.mission_current = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_GPS_RAW_INT:
     {
         // g_print("MAVLINK_MSG_ID_GPS_RAW_INT\n");
@@ -277,6 +284,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.gps_raw_int = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
     {
         // g_print("MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT\n");
@@ -284,6 +292,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.nav_controller_output = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_RC_CHANNELS:
     {
         // g_print("MAVLINK_MSG_ID_RC_CHANNELS\n");
@@ -293,6 +302,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_VIBRATION:
     {
         // g_print("MAVLINK_MSG_ID_VIBRATION\n");
@@ -300,6 +310,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.vibration = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_RAW_IMU:
     {
         // g_print("MAVLINK_MSG_ID_RAW_IMU\n");
@@ -309,6 +320,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_SCALED_PRESSURE:
     {
         // g_print("MAVLINK_MSG_ID_SCALED_PRESSURE\n");
@@ -318,6 +330,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_SCALED_IMU2:
     {
         // g_print("MAVLINK_MSG_ID_SCALED_IMU2\n");
@@ -325,6 +338,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.scaled_imu2 = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_SCALED_PRESSURE2:
     {
         // g_print("MAVLINK_MSG_ID_SCALED_PRESSURE2\n");
@@ -334,6 +348,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
     {
         // g_print("MAVLINK_MSG_ID_RC_CHANNELS_RAW\n");
@@ -341,6 +356,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.rc_channels_raw = g_get_monotonic_time();
         break;
     }
+
     case MAVLINK_MSG_ID_STATUSTEXT:
     {
         // g_print("MAVLINK_MSG_ID_STATUSTEXT\n");
@@ -352,6 +368,7 @@ void as_handle_message_id(mavlink_message_t message,
         // g_print("\n");
         break;
     }
+
     case MAVLINK_MSG_ID_PARAM_VALUE:
     {
         // g_print("MAVLINK_MSG_ID_PARAM_VALUE\n");
@@ -390,6 +407,7 @@ void as_handle_message_id(mavlink_message_t message,
 
         break;
     }
+
     case MAVLINK_MSG_ID_TIMESYNC:
     {
         // g_print("MAVLINK_MSG_ID_TIMESYNC\n");
@@ -397,6 +415,55 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.timesync = g_get_monotonic_time();
         break;
     }
+
+    case MAVLINK_MSG_ID_MOUNT_STATUS:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_MEMINFO:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_SENSOR_OFFSETS:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_AHRS:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_HWSTATUS:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_AHRS2:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_AHRS3:
+    {
+        // todo: deal with this
+        break;
+    }
+
+    case MAVLINK_MSG_ID_EKF_STATUS_REPORT:
+    {
+        // todo: deal with this
+        break;
+    }
+
     default:
     {
         g_warning("Warning, did not handle message id %i.", message.msgid);
