@@ -234,7 +234,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 
     if (0 == as_api_check_vehicle(sys_id))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   sys_id, __FILE__, __FUNCTION__, __LINE__);
     }
 
@@ -269,7 +269,7 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
     }
 
@@ -474,16 +474,16 @@ void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopi
  * @param name 
  * @param value 
  */
-void as_api_send_named_value_float(uint8_t target_system, char* name, float value)
+void as_api_send_named_value_float(uint8_t target_system, char *name, float value)
 {
     mavlink_named_value_float_t nvf;
     nvf.time_boot_ms = 0;
-    nvf.value =  value;
+    nvf.value = value;
     strcpy(nvf.name, name);
 
     mavlink_message_t message;
     mavlink_msg_named_value_float_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
-                                        &nvf);
+                                         &nvf);
     send_mavlink_message(target_system, &message);
 }
 
@@ -493,19 +493,18 @@ void as_api_send_named_value_float(uint8_t target_system, char* name, float valu
  * @param name 
  * @param value 
  */
-void as_api_send_named_value_int(uint8_t target_system, char* name, int value)
+void as_api_send_named_value_int(uint8_t target_system, char *name, int value)
 {
     mavlink_named_value_int_t nvi;
     nvi.time_boot_ms = 0;
-    nvi.value =  value;
+    nvi.value = value;
     strcpy(nvi.name, name);
 
     mavlink_message_t message;
     mavlink_msg_named_value_int_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message,
-                                        &nvi);
+                                       &nvi);
     send_mavlink_message(target_system, &message);
 }
-
 
 /**
  * @brief send REQUEST_DATA_STREAM ( #66 )
@@ -563,7 +562,7 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
     }
 
@@ -612,7 +611,7 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
     }
 
@@ -652,6 +651,88 @@ void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
 }
 
 /**
+ * @brief set desire depth
+ * 
+ * @param target_system 
+ * @param cmd 
+ * @param depth 
+ */
+void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
+    mavlink_depth_hold_t dh = {0};
+
+    dh.cmd = cmd;
+    dh.depth = depth;
+
+    mavlink_message_t message;
+    mavlink_msg_depth_hold_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &dh);
+
+    send_mavlink_message(target_system, &message);
+}
+
+/**
+ * @brief set desire attitude
+ * 
+ * @param target_system 
+ * @param cmd 
+ * @param yaw 
+ * @param pitch 
+ * @param roll 
+ */
+void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
+    mavlink_attitude_hold_t ah = {0};
+
+    ah.cmd = cmd;
+    ah.yaw = yaw;
+    ah.pitch = pitch;
+    ah.roll = roll;
+
+    mavlink_message_t message;
+    mavlink_msg_attitude_hold_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &ah);
+
+    send_mavlink_message(target_system, &message);
+}
+
+/**
+ * @brief do flip trick 
+ * 
+ * @param target_system 
+ * @param type 
+ * @param value 
+ */
+void as_api_flip_trick(uint8_t target_system, uint8_t type, float value)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
+    mavlink_flip_trick_t ft = {0};
+
+    ft.tpye = type;
+    ft.value = value;
+
+    mavlink_message_t message;
+    mavlink_msg_flip_trick_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &ft);
+
+    send_mavlink_message(target_system, &message);
+}
+
+/**
  * @brief pop statustex.
  * 
  * ! NULL-able return value
@@ -663,7 +744,7 @@ mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
 
         return NULL;
@@ -682,7 +763,7 @@ int as_api_statustex_count(uint8_t target_system)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
-        g_message("no vehicle id:%d, in file: %s, func: %s, line: %d",
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
 
         return 0;

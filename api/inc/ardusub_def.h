@@ -25,7 +25,7 @@
 // max MAVlink channels
 #define MAVLINK_COMM_NUM_BUFFERS (32)
 
-#include <common/mavlink.h>
+#include <ardupilotmega/mavlink.h>
 /******* MAVlink *******/
 
 #include <libserialport.h>

@@ -227,6 +227,10 @@ extern "C"
     extern void as_api_test_start(gchar *test_info, gchar *test_note);
     extern void as_api_test_stop();
 
+    extern void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);
+    extern void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll);
+    extern void as_api_flip_trick(uint8_t target_system, uint8_t type, float value);
+
 #ifdef __cplusplus
 }
 #endif
