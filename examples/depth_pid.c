@@ -76,8 +76,8 @@ gpointer depth_controller(gpointer data)
 
     as_api_test_start("depth_control", NULL);
 
-    g_message("set LAB mode.");
-    as_api_set_mode(1, LAB);
+    g_message("set LAB_REMOTE mode.");
+    as_api_set_mode(1, LAB_REMOTE);
 
     g_message("vehicle arm");
     as_api_vehicle_arm(1, 1);
