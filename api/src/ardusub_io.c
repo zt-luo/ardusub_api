@@ -295,6 +295,7 @@ void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
     g_mutex_lock(&my_mutex);
 
     // make sure msg write interval more than MIN_MSG_INTERVAL
+    // TODO: serial port maybe dont need to do this???
     while (g_get_monotonic_time() - last_monotonic_time < MIN_MSG_INTERVAL)
     {
         // g_get_monotonic_time() could return negative value
