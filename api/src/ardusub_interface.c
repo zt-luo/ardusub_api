@@ -755,6 +755,26 @@ void as_api_flip_trick(uint8_t target_system, uint8_t type, float value)
     as_insert_command(as_command);
 }
 
+void as_api_depth_pid(uint8_t target_system, uint8_t save, float kp,
+                      float ki, float kd, float imax, float filt_hz, float ff)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+
+    // mavlink_lab_depth_pid_t ld_pid = {save, p, i, d, imax, filt_hz, ff};
+
+    mavlink_message_t message;
+    // mavlink_msg_lab_depth_pid_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
+    //                                  &message, &ld_pid);
+    mavlink_msg_lab_depth_pid_pack(STATION_SYSYEM_ID, STATION_COMPONENT_ID,
+                                   &message, save, kp, ki, kd, imax, filt_hz, ff);
+
+    send_mavlink_message(target_system, &message);
+}
+
 /**
  * @brief pop statustex.
  * 

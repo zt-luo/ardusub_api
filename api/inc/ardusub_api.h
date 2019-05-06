@@ -159,16 +159,16 @@ typedef struct Vehicle_Data_s
 // Auto Pilot Modes enumeration
 typedef enum control_mode_enum
 {
-    STABILIZE =     0,  // manual angle with manual depth/throttle
-    ACRO =          1,  // manual body-frame angular rate with manual depth/throttle
-    ALT_HOLD =      2,  // manual angle with automatic depth/throttle
-    AUTO =          3,  // not implemented in sub // fully automatic waypoint control using mission commands
-    GUIDED =        4,  // not implemented in sub // fully automatic fly to coordinate or fly at velocity/direction using GCS immediate commands
-    CIRCLE =        7,  // not implemented in sub // automatic circular flight with automatic throttle
-    SURFACE =       9,  // automatically return to surface, pilot maintains horizontal control
-    POSHOLD =       16, // automatic position hold with manual override, with automatic throttle
-    MANUAL =        19, // Pass-through input with no stabilization
-    LAB_REMOTE =    60  // lab mode
+    STABILIZE = 0,  // manual angle with manual depth/throttle
+    ACRO = 1,       // manual body-frame angular rate with manual depth/throttle
+    ALT_HOLD = 2,   // manual angle with automatic depth/throttle
+    AUTO = 3,       // not implemented in sub // fully automatic waypoint control using mission commands
+    GUIDED = 4,     // not implemented in sub // fully automatic fly to coordinate or fly at velocity/direction using GCS immediate commands
+    CIRCLE = 7,     // not implemented in sub // automatic circular flight with automatic throttle
+    SURFACE = 9,    // automatically return to surface, pilot maintains horizontal control
+    POSHOLD = 16,   // automatic position hold with manual override, with automatic throttle
+    MANUAL = 19,    // Pass-through input with no stabilization
+    LAB_REMOTE = 60 // lab mode
 } control_mode_t;
 
 // indicate the status controled from this api
@@ -230,6 +230,8 @@ extern "C"
     extern void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);
     extern void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll);
     extern void as_api_flip_trick(uint8_t target_system, uint8_t type, float value);
+    extern void as_api_depth_pid(uint8_t target_system, uint8_t save, float kp,
+                                 float ki, float kd, float imax, float filt_hz, float ff);
 
 #ifdef __cplusplus
 }

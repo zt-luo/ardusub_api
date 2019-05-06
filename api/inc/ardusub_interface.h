@@ -76,6 +76,8 @@ void as_api_test_stop();
 void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);
 void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll);
 void as_api_flip_trick(uint8_t target_system, uint8_t type, float value);
+void as_api_depth_pid(uint8_t target_system, uint8_t save, float kp,
+                      float ki, float kd, float imax, float filt_hz, float ff);
 
 //
 // func inside high leval
