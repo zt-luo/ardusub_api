@@ -92,7 +92,7 @@ gpointer depth_controller(gpointer data)
     double K_I = 150;
     double K_D = -1500;
 
-    int pwm_limt = 200;
+    int pwm_limit = 200;
 
     double I_term_max = -600; // I_term_min and max prevent integral windup by saturating the I_term
     double I_term_min = -700; //
@@ -154,13 +154,13 @@ gpointer depth_controller(gpointer data)
         pwm_out = P_term + I_term + D_term;
 
         // clamp the value of pwm_out
-        if (pwm_out < -pwm_limt)
+        if (pwm_out < -pwm_limit)
         {
-            pwm_out = -pwm_limt;
+            pwm_out = -pwm_limit;
         }
-        if (pwm_out > pwm_limt)
+        if (pwm_out > pwm_limit)
         {
-            pwm_out = pwm_limt;
+            pwm_out = pwm_limit;
         }
 
         as_api_send_rc_channels_override(1, 1,
