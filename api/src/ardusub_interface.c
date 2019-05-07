@@ -208,6 +208,9 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     // init db_update_worker thread
     db_update_thread[target_system] =
         g_thread_new("db_update_worker", &db_update_worker, p_sysid);
+
+    statustex_wall_thread[target_system] =
+        g_thread_new("statustex_wall_worker", &statustex_wall_worker, p_sysid);
 }
 
 /**

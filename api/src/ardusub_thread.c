@@ -74,6 +74,11 @@ void as_thread_init_ptr_flag()
         db_update_worker_run[i] = 1;
     }
 
+    for (gsize i = 0; i < 255; i++)
+    {
+        statustex_wall_worker_run[i] = 1;
+    }
+
     log_str_write_worker_run = 1;
 }
 
@@ -111,6 +116,7 @@ void as_thread_stop_all_join()
             g_atomic_int_set(named_val_float_handle_worker_run + i, 0);
             g_atomic_int_set(vehicle_data_update_worker_run + i, 0);
             g_atomic_int_set(db_update_worker_run + i, 0);
+            g_atomic_int_set(statustex_wall_worker_run + i, 0);
 
             // join
             GThread *this_thread;
@@ -791,6 +797,48 @@ gpointer db_insert_command_worker(gpointer data)
 
     // g_message("exit db_insert_command_worker");
     g_atomic_int_dec_and_test(&db_insert_command_thread_count);
+
+    return NULL;
+}
+
+gpointer statustex_wall_worker(gpointer data)
+{
+    g_assert(NULL != data);
+
+    guint8 my_target_system = *(guint8 *)data;
+
+    mavlink_statustext_t *statustxt;
+    gchar *severity_tex[8] = {"EMERGENCY", "ALERT",
+                              "CRITICAL", "ERROR",
+                              "WARNING", "NOTICE",
+                              "INFO", "DEBUG"};
+    GDateTime *data_time;
+    gchar *data_time_str;
+
+    while (1 == g_atomic_int_get(statustex_wall_worker_run + my_target_system))
+    {
+        statustxt = as_api_statustex_queue_pop(my_target_system);
+
+        if (NULL != statustxt)
+        {
+            data_time = g_date_time_new_now_local();
+            data_time_str = g_date_time_format(data_time, "%F %T");
+            g_print("[%s:%06d] %s : %s\n",
+                    data_time_str,
+                    g_date_time_get_microsecond(data_time),
+                    severity_tex[statustxt->severity],
+                    statustxt->text);
+
+            g_date_time_unref(data_time);
+            g_free(data_time_str);
+        }
+        else
+        {
+            g_usleep(10000);
+        }
+    }
+
+    g_message("exit statustex_wall_worker.");
 
     return NULL;
 }
