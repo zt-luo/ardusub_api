@@ -47,6 +47,11 @@ void as_thread_init_ptr_flag()
         db_update_thread[i] = NULL;
     }
 
+    for (gsize i = 0; i < 255; i++)
+    {
+        statustex_wall_thread[i] = NULL;
+    }
+
     parameters_request_thread = NULL;
     request_data_stream_thread = NULL;
     log_str_write_thread = NULL;
@@ -136,6 +141,11 @@ void as_thread_stop_all_join()
                 g_thread_join(this_thread);
             }
             this_thread = db_update_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+            this_thread = statustex_wall_thread[i];
             if (NULL != this_thread)
             {
                 g_thread_join(this_thread);

@@ -221,8 +221,9 @@ void as_handle_message_id(mavlink_message_t message,
         // g_print("MAVLINK_MSG_ID_COMMAND_ACK\n");
         mavlink_msg_command_ack_decode(&message, &(current_messages->command_ack));
         current_messages->time_stamps.command_ack = g_get_monotonic_time();
-        // g_print("Command_ACK, command:%d, result:%d. \n", current_messages->command_ack.command,
-        //        current_messages->command_ack.result);
+        // g_print("Command_ACK, command:%d, result:%d. \n",
+        //         current_messages->command_ack.command,
+        //         current_messages->command_ack.result);
         break;
     }
 
