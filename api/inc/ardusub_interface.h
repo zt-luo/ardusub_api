@@ -55,23 +55,23 @@ GAsyncQueue *message_queue[255];
 void as_api_init(char *subnet_address);
 void as_api_deinit();
 int as_api_check_vehicle(uint8_t sysid);
-void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot);
-void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot);
+void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
+void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
 void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
 int as_api_statustex_count(uint8_t target_system);
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
-void as_api_set_mode(guint8 target_system, control_mode_t mode);
-void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
-                      gfloat servo_no, gfloat pwm);
-void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
-                       gfloat motor_no, gfloat pwm);
-void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+void as_api_set_mode(uint8_t target_system, control_mode_t mode);
+void as_api_set_servo(uint8_t target_system, uint8_t target_autopilot,
+                      float servo_no, float pwm);
+void as_api_motor_test(uint8_t target_system, uint8_t target_autopilot,
+                       float motor_no, float pwm);
+void as_api_send_rc_channels_override(uint8_t target_system, uint8_t target_autopilot,
                                       uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                       uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 void as_api_send_named_value_float(uint8_t target_system, char *name, float value);
 void as_api_send_named_value_int(uint8_t target_system, char *name, int value);
-void as_api_test_start(gchar *test_info, gchar *test_note);
+void as_api_test_start(char *test_info, char *test_note);
 void as_api_test_stop();
 void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);
 void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll);

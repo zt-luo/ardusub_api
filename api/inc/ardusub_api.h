@@ -153,6 +153,17 @@ typedef struct Vehicle_Data_s
     uint8_t chancount;        /*<  Total number of RC channels being received. This can be larger than 18, indicating that more channels are available but not given in this message. This value should be 0 when no RC channels are available.*/
     uint8_t rssi;             /*< [%] Receive signal strength indicator. Values: [0-100], 255: invalid/unknown.*/
 
+    // GLOBAL_POSITION_INT
+    uint32_t time_boot_ms_gpi; /*< [ms] Timestamp (time since system boot).*/
+    int32_t lat;           /*< [degE7] Latitude, expressed*/
+    int32_t lon;           /*< [degE7] Longitude, expressed*/
+    int32_t alt;           /*< [mm] Altitude (MSL). Note that virtually all GPS modules provide both WGS84 and MSL.*/
+    int32_t relative_alt;  /*< [mm] Altitude above ground*/
+    int16_t vx;            /*< [cm/s] Ground X Speed (Latitude, positive north)*/
+    int16_t vy;            /*< [cm/s] Ground Y Speed (Longitude, positive east)*/
+    int16_t vz;            /*< [cm/s] Ground Z Speed (Altitude, positive down)*/
+    uint16_t hdg;          /*< [cdeg] Vehicle heading (yaw angle), 0.0..359.99 degrees. If unknown, set to: UINT16_MAX*/
+
     // Named value
 } Vehicle_Data_t;
 
@@ -201,7 +212,7 @@ extern "C"
 
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
     extern void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot);
-    extern void as_api_set_mode(guint8 target_system, control_mode_t mode);
+    extern void as_api_set_mode(uint8_t target_system, control_mode_t mode);
 
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
@@ -212,20 +223,20 @@ extern "C"
     extern int as_api_check_vehicle(uint8_t sysid);
     extern void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons, ...);
 
-    extern void as_api_set_servo(guint8 target_system, guint8 target_autopilot,
-                                 gfloat servo_no, gfloat pwm);
+    extern void as_api_set_servo(uint8_t target_system, uint8_t target_autopilot,
+                                 float servo_no, float pwm);
 
-    extern void as_api_motor_test(guint8 target_system, guint8 target_autopilot,
-                                  gfloat motor_no, gfloat pwm);
+    extern void as_api_motor_test(uint8_t target_system, uint8_t target_autopilot,
+                                  float motor_no, float pwm);
 
-    extern void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+    extern void as_api_send_rc_channels_override(uint8_t target_system, uint8_t target_autopilot,
                                                  uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                                  uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 
     extern void as_api_send_named_value_float(uint8_t target_system, char *name, float value);
     extern void as_api_send_named_value_int(uint8_t target_system, char *name, int value);
 
-    extern void as_api_test_start(gchar *test_info, gchar *test_note);
+    extern void as_api_test_start(char *test_info, char *test_note);
     extern void as_api_test_stop();
 
     extern void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);

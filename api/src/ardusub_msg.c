@@ -169,6 +169,7 @@ void as_handle_message_id(mavlink_message_t message,
         //g_print("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
         mavlink_msg_global_position_int_decode(&message, &(current_messages->global_position_int));
         current_messages->time_stamps.global_position_int = g_get_monotonic_time();
+        queue_push = TRUE;
         break;
     }
 

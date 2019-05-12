@@ -346,9 +346,9 @@ int as_api_check_vehicle(uint8_t sysid)
  * @param servo_no 
  * @param pwm 
  */
-void as_api_set_servo(guint8 target_system,
-                      guint8 target_autopilot,
-                      gfloat servo_no, gfloat pwm)
+void as_api_set_servo(uint8_t target_system,
+                      uint8_t target_autopilot,
+                      float servo_no, float pwm)
 {
 
     mavlink_command_long_t cmd_long;
@@ -373,9 +373,9 @@ void as_api_set_servo(guint8 target_system,
  * @param motor_no 
  * @param pwm 
  */
-void as_api_motor_test(guint8 target_system,
-                       guint8 target_autopilot,
-                       gfloat motor_no, gfloat pwm)
+void as_api_motor_test(uint8_t target_system,
+                       uint8_t target_autopilot,
+                       float motor_no, float pwm)
 {
 
     mavlink_command_long_t cmd_long;
@@ -402,7 +402,7 @@ void as_api_motor_test(guint8 target_system,
  * @param target_system 
  * @param mode 
  */
-void as_api_set_mode(guint8 target_system, control_mode_t mode)
+void as_api_set_mode(uint8_t target_system, control_mode_t mode)
 {
     // TODO: need check
     mavlink_set_mode_t set_mode;
@@ -448,7 +448,7 @@ void as_request_full_parameters(guint8 target_system, guint8 target_component)
  * @param ch7 
  * @param ch8 
  */
-void as_api_send_rc_channels_override(guint8 target_system, guint8 target_autopilot,
+void as_api_send_rc_channels_override(uint8_t target_system, uint8_t target_autopilot,
                                       uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4,
                                       uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8)
 {
@@ -561,7 +561,7 @@ void as_reauest_data_stream(guint8 target_system, guint8 target_component)
  * @param target_system 
  * @param target_autopilot 
  */
-void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
+void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
@@ -610,7 +610,7 @@ void as_api_vehicle_arm(guint8 target_system, guint8 target_autopilot)
  * @param target_system 
  * @param target_autopilot 
  */
-void as_api_vehicle_disarm(guint8 target_system, guint8 target_autopilot)
+void as_api_vehicle_disarm(uint8_t target_system, uint8_t target_autopilot)
 {
     if (0 == as_api_check_vehicle(target_system))
     {
@@ -1043,7 +1043,7 @@ void message_queue_push(guint8 target_system,
  * @param test_info 
  * @param test_note 
  */
-void as_api_test_start(gchar *test_info, gchar *test_note)
+void as_api_test_start(char *test_info, char *test_note)
 {
     as_sql_test_start(test_info, test_note);
 }

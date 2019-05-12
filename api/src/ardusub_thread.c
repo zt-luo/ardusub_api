@@ -434,6 +434,7 @@ gpointer vehicle_data_update_worker(gpointer data)
             mavlink_servo_output_raw_t sor = my_mavlink_message->servo_output_raw;
             mavlink_raw_imu_t ri = my_mavlink_message->raw_imu;
             mavlink_rc_channels_t rc = my_mavlink_message->rc_channels;
+            mavlink_global_position_int_t gpi = my_mavlink_message->global_position_int;
 
             g_mutex_lock(&vehicle_data_mutex[my_target_system]);
             // update vehicle data here
@@ -571,6 +572,19 @@ gpointer vehicle_data_update_worker(gpointer data)
                 my_vehicle_data->chan18_raw = rc.chan18_raw;
                 my_vehicle_data->chancount = rc.chancount;
                 my_vehicle_data->rssi = rc.rssi;
+                break;
+
+            case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+                my_vehicle_data->time_boot_ms_gpi = gpi.time_boot_ms;
+                my_vehicle_data->lat = gpi.lat;
+                my_vehicle_data->lon = gpi.lon;
+                my_vehicle_data->alt = gpi.alt;
+                my_vehicle_data->relative_alt = gpi.relative_alt;
+                my_vehicle_data->vx = gpi.vx;
+                my_vehicle_data->vy = gpi.vy;
+                my_vehicle_data->vz = gpi.vz;
+                my_vehicle_data->hdg = gpi.hdg;
+                
                 break;
 
             default:

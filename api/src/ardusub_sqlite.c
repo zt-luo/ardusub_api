@@ -126,13 +126,22 @@ static gchar *sql_str_creat_vechle_table =
     `chan17_raw` INTEGER,\
     `chan18_raw` INTEGER,\
     `chancount` INTEGER,\
-    `rssi` INTEGER\
+    `rssi` INTEGER,\
+    `time_boot_ms_gpi` INTEGER,\
+    `lat` INTEGER,\
+    `lon` INTEGER,\
+    `alt` INTEGER,\
+    `relative_alt` INTEGER,\
+    `vx` INTEGER,\
+    `vy` INTEGER,\
+    `vz` INTEGER,\
+    `hdg` INTEGER\
     );";
 
 static gchar *sql_str_insert_vechle_table =
     "INSERT INTO `vehicle_%d` "
-    "(date, time, monotonic_time, test_id, type, autopilot, base_mode, custom_mode, system_status, mavlink_version, load, voltage_battery, current_battery, drop_rate_comm, errors_comm, errors_count1, errors_count2, errors_count3, errors_count4, battery_remaining, onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, current_consumed, energy_consumed, temperature_bs, current_battery_bs, battery_id, battery_function, type_bs, battery_remaining_bs, time_remaining, charge_state, Vcc_ps, Vservo_ps, flags_ps, time_unix_usec, time_boot_ms, time_boot_ms_at, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, time_boot_ms_sp, press_abs, press_diff, temperature_sp, time_boot_ms_sp2, press_abs2, press_diff2, temperature2, time_usec_sor, servo1_raw, servo2_raw, servo3_raw, servo4_raw, servo5_raw, servo6_raw, servo7_raw, servo8_raw, port, servo9_raw, servo10_raw, servo11_raw, servo12_raw, servo13_raw, servo14_raw, servo15_raw, servo16_raw, time_usec_ri, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag, time_boot_ms_rc, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw, chancount, rssi)"
-    "VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %f, %d, %d, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);";
+    "(date, time, monotonic_time, test_id, type, autopilot, base_mode, custom_mode, system_status, mavlink_version, load, voltage_battery, current_battery, drop_rate_comm, errors_comm, errors_count1, errors_count2, errors_count3, errors_count4, battery_remaining, onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, current_consumed, energy_consumed, temperature_bs, current_battery_bs, battery_id, battery_function, type_bs, battery_remaining_bs, time_remaining, charge_state, Vcc_ps, Vservo_ps, flags_ps, time_unix_usec, time_boot_ms, time_boot_ms_at, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, time_boot_ms_sp, press_abs, press_diff, temperature_sp, time_boot_ms_sp2, press_abs2, press_diff2, temperature2, time_usec_sor, servo1_raw, servo2_raw, servo3_raw, servo4_raw, servo5_raw, servo6_raw, servo7_raw, servo8_raw, port, servo9_raw, servo10_raw, servo11_raw, servo12_raw, servo13_raw, servo14_raw, servo15_raw, servo16_raw, time_usec_ri, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag, time_boot_ms_rc, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw, chancount, rssi, time_boot_ms_gpi, lat, lon, alt, relative_alt, vx, vy, vz, hdg)"
+    "VALUES ('%s', '%s', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f, %f, %f, %f, %d, %f, %f, %d, %d, %f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);";
 
 /**
  * @brief as_sql_open_db
@@ -329,13 +338,24 @@ void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data)
             vehicle_data->chan17_raw,
             vehicle_data->chan18_raw,
             vehicle_data->chancount,
-            vehicle_data->rssi);
+            vehicle_data->rssi,
+            vehicle_data->time_boot_ms_gpi,
+            vehicle_data->lat,
+            vehicle_data->lon,
+            vehicle_data->alt,
+            vehicle_data->relative_alt,
+            vehicle_data->vx,
+            vehicle_data->vy,
+            vehicle_data->vz,
+            vehicle_data->hdg);
 
     g_mutex_unlock(&vehicle_data_mutex[sys_id]);
 
     g_date_time_unref(data_time);
     g_free(date_str);
     g_free(time_str);
+
+    // g_print(sql);
 
     gint rc;
     rc = sqlite3_exec(sql_db, sql, NULL, 0, NULL);
