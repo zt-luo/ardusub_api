@@ -30,28 +30,33 @@ int main()
 
     g_message("system 1 is active.");
 
-    as_api_depth_hold(1, 1, 2.0);
-    as_api_attitude_hold(1, 1, 2.0, 3.0, 4.0);
-    as_api_flip_trick(1, 1, 6.0);
+    g_message("set LAB_REMOTE mode.");
+    as_api_set_mode(1, LAB_ALT_HOLD);
+    // as_api_set_mode(1, LAB_REMOTE);
+    g_usleep(1000000);
+
+    as_api_test_start("depth_hold", "");
+    g_message("vehicle arm");
+    as_api_vehicle_arm(1, 1);
+
+    as_api_depth_hold(1, 1, -0.5);
+    // as_api_attitude_hold(1, 1, 2.0, 3.0, 4.0);
+    // as_api_flip_trick(1, 1, 6.0);
+    // as_api_depth_pid(1, 0, 1.1, 1.2, 1.3, 0, 0, 0);
 
     g_usleep(1000000);
 
-    g_print("\nstatustex count:%d\n",
-            as_api_statustex_count(1));
-    mavlink_statustext_t *statustxt = as_api_statustex_queue_pop(1);
-    for (gint i = 0; i < 50 && statustxt != NULL; i++)
-    {
-        g_print("severity:%d, text:%s\n",
-                statustxt->severity,
-                statustxt->text);
-        statustxt = as_api_statustex_queue_pop(1);
-    }
+    as_api_depth_hold(1, 1, -0.2);
+    g_usleep(1000000);
+    g_usleep(1000000);
+    g_usleep(1000000);
+
 
     getchar();
 
+    as_api_vehicle_disarm(1, 1);
+    as_api_test_stop();
     as_api_deinit();
-
-    g_usleep(1000000);
 
     return 0;
 }

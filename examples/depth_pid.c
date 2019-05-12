@@ -65,9 +65,10 @@ void update_vehicle_data()
     yaw = vehicle_data->yaw * D_PER_RAD;
     pitch = vehicle_data->pitch * D_PER_RAD;
     roll = vehicle_data->roll * D_PER_RAD;
-    depth = vehicle_data->press_diff / 9800.0; // m
+    depth = vehicle_data->alt / 1000.0; // m
+    // depth = vehicle_data->press_abs2 / 9800.0; // m
 
-    // g_message("yaw: %f, pitch: %f, roll: %f, depth: %f m.\n", yaw, pitch, roll, depth);
+    g_message("yaw: %f, pitch: %f, roll: %f, depth: %f m.\n", yaw, pitch, roll, depth);
 }
 
 gpointer depth_controller(gpointer data)
@@ -82,17 +83,17 @@ gpointer depth_controller(gpointer data)
     g_message("vehicle arm");
     as_api_vehicle_arm(1, 1);
 
-    double z_d = 0; // [m] desired depth
+    double z_d = -0.5; // [m] desired depth
     int pwm_out = 1500;
 
     gint64 tnow, dt = 50000;
 
     // gains for depth controller
-    double K_P = 1700;
-    double K_I = 150;
-    double K_D = -1500;
+    double K_P = 300;
+    double K_I = 0;
+    double K_D = 0;
 
-    int pwm_limit = 200;
+    int pwm_limit = 150;
 
     double I_term_max = -600; // I_term_min and max prevent integral windup by saturating the I_term
     double I_term_min = -700; //
@@ -166,17 +167,28 @@ gpointer depth_controller(gpointer data)
         as_api_send_rc_channels_override(1, 1,
                                          1500, 1500,
                                          1500, 1500,
-                                         1500 - pwm_out,
                                          1500 + pwm_out,
                                          1500 - pwm_out,
+                                         1500 - pwm_out,
                                          1500 + pwm_out);
+
+
+
+        // as_api_send_rc_channels_override(1, 1,
+        //                                  1500, 1500,
+        //                                  1500, 1500,
+        //                                  1500 - pwm_out,
+        //                                  1500 + pwm_out,
+        //                                  1500 - pwm_out,
+        //                                  1500 + pwm_out);
 
         while (tnow + dt > g_get_monotonic_time())
         {
             g_usleep(20);
         }
 
-        g_print("time error: %ld.\n", tnow + dt - g_get_monotonic_time());
+        // g_print("time error: %ld.\n", tnow + dt - g_get_monotonic_time());
+        g_print("pwm_out: %d\n", pwm_out);
     }
 
     g_message("vehicle disarm");
