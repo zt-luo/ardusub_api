@@ -295,6 +295,8 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
 
     g_mutex_unlock(&my_mutex);
 
+    last_vehicle_data->monotonic_time = g_get_monotonic_time();
+
     return last_vehicle_data;
 }
 
