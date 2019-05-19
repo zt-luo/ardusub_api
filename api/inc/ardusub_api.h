@@ -32,7 +32,7 @@ typedef struct __mavlink_statustext_t
 
 typedef struct Vehicle_Data_s
 {
-    uint64_t monotonic_time;
+    int64_t monotonic_time;
 
     // Heartbeat
     uint8_t type;            /*<  Type of the system (quadrotor, helicopter, etc.). Components use the same type as their associated system.*/
