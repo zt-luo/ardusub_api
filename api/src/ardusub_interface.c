@@ -290,7 +290,7 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
     g_mutex_lock(&vehicle_data_mutex[target_system]);
     last_vehicle_data = g_memdup(
         g_atomic_pointer_get(vehicle_data_array + target_system),
-        sizeof(Mavlink_Messages_t));
+        sizeof(Vehicle_Data_t));
     g_mutex_unlock(&vehicle_data_mutex[target_system]);
 
     g_mutex_unlock(&my_mutex);
@@ -298,6 +298,35 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
     last_vehicle_data->monotonic_time = g_get_monotonic_time();
 
     return last_vehicle_data;
+}
+
+/**
+ * @brief get vechicle data 2.
+ * 
+ * @param target_system 
+ * @return Vehicle_Data_t* 
+ */
+int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+    }
+    else
+    {
+        return 0;
+    }
+
+    g_mutex_lock(&vehicle_data_mutex[target_system]);
+    vehicle_data = g_memdup(
+        g_atomic_pointer_get(vehicle_data_array + target_system),
+        sizeof(Vehicle_Data_t));
+    g_mutex_unlock(&vehicle_data_mutex[target_system]);
+
+    vehicle_data->monotonic_time = g_get_monotonic_time();
+
+    return 1;
 }
 
 /**

@@ -61,6 +61,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 int as_api_statustex_count(uint8_t target_system);
 mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
+int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data);
 void as_api_set_mode(uint8_t target_system, control_mode_t mode);
 void as_api_set_servo(uint8_t target_system, uint8_t target_autopilot,
                       float servo_no, float pwm);

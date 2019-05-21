@@ -219,6 +219,7 @@ extern "C"
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
     extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
+    extern int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data);
 
     extern int as_api_statustex_count(uint8_t target_system);
 
