@@ -38,7 +38,7 @@ void as_api_init(const char *p_subnet_address)
         }
         else
         {
-            subnet_address = p_subnet_address;
+            subnet_address = g_strdup(p_subnet_address);
         }
 
         as_thread_init_ptr_flag();
