@@ -52,7 +52,7 @@ GAsyncQueue *message_queue[255];
 //
 // public api
 
-void as_api_init(char *subnet_address);
+void as_api_init(const char *subnet_address);
 void as_api_deinit();
 int as_api_check_vehicle(uint8_t sysid);
 void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);

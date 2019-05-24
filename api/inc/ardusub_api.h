@@ -209,7 +209,7 @@ extern "C"
 {
 #endif
 
-    extern void as_api_init(char *subnet_address);
+    extern void as_api_init(const char *subnet_address);
     extern void as_api_deinit();
 
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
