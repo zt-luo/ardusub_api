@@ -922,6 +922,19 @@ void statustex_queue_push(guint8 target_system,
                        statustex_p);
 }
 
+mavlink_named_value_float_t *as_api_named_val_float_queue_pop(guint8 target_system)
+{
+    if (0 == as_api_check_vehicle(target_system))
+    {
+        g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
+                  target_system, __FILE__, __FUNCTION__, __LINE__);
+
+        return NULL;
+    }
+
+    return named_val_float_queue_pop(target_system);
+}
+
 /**
  * @brief pop named_val_float 
  * 
