@@ -32,7 +32,9 @@ GThread *depth_controller_thread;
  */
 int main()
 {
-    as_api_init(NULL);
+    as_api_init(NULL, F_THREAD_FETCH_FULL_PARAM |
+                          F_THREAD_NAMED_VAL_FLOAT |
+                          F_THREAD_STATUSTEX_WALL);
 
     g_message("Checking if system 1 is active...");
 
@@ -171,8 +173,6 @@ gpointer depth_controller(gpointer data)
                                          1500 - pwm_out,
                                          1500 - pwm_out,
                                          1500 + pwm_out);
-
-
 
         // as_api_send_rc_channels_override(1, 1,
         //                                  1500, 1500,

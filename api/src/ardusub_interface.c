@@ -18,7 +18,7 @@
  * 
  * @param p_subnet_address ["serial port" for serial port]
  */
-void as_api_init(const char *p_subnet_address)
+void as_api_init(const char *p_subnet_address, const unsigned int flag)
 {
     static GMutex my_mutex;
     g_mutex_lock(&my_mutex);
@@ -27,6 +27,8 @@ void as_api_init(const char *p_subnet_address)
     if (TRUE != as_init_status)
     {
         // initialize
+
+        thread_flag = flag;
 
         if (NULL == p_subnet_address)
         {
@@ -189,7 +191,10 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
 
     g_atomic_pointer_set(sys_key + target_system, p_sysid);
 
-    as_request_full_parameters(target_system, target_autopilot);
+    if (thread_flag & F_THREAD_FETCH_FULL_PARAM)
+    {
+        as_request_full_parameters(target_system, target_autopilot);
+    }
 
     as_reauest_data_stream(target_system, target_autopilot);
 
@@ -198,8 +203,11 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
         g_thread_new("manual_control_worker", &manual_control_worker, p_sysid);
 
     // init named_val_float_handle_worker thread
-    named_val_float_handle_thread[target_system] =
-        g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
+    if (thread_flag & F_THREAD_NAMED_VAL_FLOAT)
+    {
+        named_val_float_handle_thread[target_system] =
+            g_thread_new("named_val_float_handle_worker", &named_val_float_handle_worker, p_sysid);
+    }
 
     // init vehicle_data_update_worker thread
     vehicle_data_update_thread[target_system] =
@@ -209,8 +217,12 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
     db_update_thread[target_system] =
         g_thread_new("db_update_worker", &db_update_worker, p_sysid);
 
-    // statustex_wall_thread[target_system] =
-    //     g_thread_new("statustex_wall_worker", &statustex_wall_worker, p_sysid);
+    // statustex_wall_thread
+    if (thread_flag & F_THREAD_STATUSTEX_WALL)
+    {
+        statustex_wall_thread[target_system] =
+            g_thread_new("statustex_wall_worker", &statustex_wall_worker, p_sysid);
+    }
 }
 
 /**

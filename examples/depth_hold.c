@@ -19,7 +19,9 @@
 
 int main()
 {
-    as_api_init(NULL);
+    as_api_init(NULL, F_THREAD_FETCH_FULL_PARAM |
+                          F_THREAD_NAMED_VAL_FLOAT |
+                          F_THREAD_STATUSTEX_WALL);
 
     g_message("Checking if system 1 is active...");
 
@@ -50,7 +52,6 @@ int main()
     g_usleep(1000000);
     g_usleep(1000000);
     g_usleep(1000000);
-
 
     getchar();
 

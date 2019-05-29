@@ -19,6 +19,7 @@
 
 guint sys_count;
 gboolean as_init_status;
+unsigned int thread_flag;
 
 // atomic operations should apply on this
 guint8 *sys_key[255];
@@ -52,7 +53,7 @@ GAsyncQueue *message_queue[255];
 //
 // public api
 
-void as_api_init(const char *subnet_address);
+void as_api_init(const char *subnet_address, const unsigned int flag);
 void as_api_deinit();
 int as_api_check_vehicle(uint8_t sysid);
 void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);

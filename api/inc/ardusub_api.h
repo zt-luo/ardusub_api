@@ -28,7 +28,19 @@ typedef struct __mavlink_statustext_t
     char text[50];    /*<  Status text message, without null termination character*/
 } mavlink_statustext_t;
 
+
+typedef struct __mavlink_named_value_float_t {
+ uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
+ float value; /*<  Floating point value*/
+ char name[10]; /*<  Name of the debug variable*/
+} mavlink_named_value_float_t;
+
 #endif // MAVLINK_H
+
+#define F_THREAD_NONE (0U)
+#define F_THREAD_STATUSTEX_WALL (1U)
+#define F_THREAD_NAMED_VAL_FLOAT (1U << 1)
+#define F_THREAD_FETCH_FULL_PARAM (1U << 2)
 
 typedef struct Vehicle_Data_s
 {
@@ -157,14 +169,14 @@ typedef struct Vehicle_Data_s
 
     // GLOBAL_POSITION_INT
     uint32_t time_boot_ms_gpi; /*< [ms] Timestamp (time since system boot).*/
-    int32_t lat;           /*< [degE7] Latitude, expressed*/
-    int32_t lon;           /*< [degE7] Longitude, expressed*/
-    int32_t alt;           /*< [mm] Altitude (MSL). Note that virtually all GPS modules provide both WGS84 and MSL.*/
-    int32_t relative_alt;  /*< [mm] Altitude above ground*/
-    int16_t vx;            /*< [cm/s] Ground X Speed (Latitude, positive north)*/
-    int16_t vy;            /*< [cm/s] Ground Y Speed (Longitude, positive east)*/
-    int16_t vz;            /*< [cm/s] Ground Z Speed (Altitude, positive down)*/
-    uint16_t hdg;          /*< [cdeg] Vehicle heading (yaw angle), 0.0..359.99 degrees. If unknown, set to: UINT16_MAX*/
+    int32_t lat;               /*< [degE7] Latitude, expressed*/
+    int32_t lon;               /*< [degE7] Longitude, expressed*/
+    int32_t alt;               /*< [mm] Altitude (MSL). Note that virtually all GPS modules provide both WGS84 and MSL.*/
+    int32_t relative_alt;      /*< [mm] Altitude above ground*/
+    int16_t vx;                /*< [cm/s] Ground X Speed (Latitude, positive north)*/
+    int16_t vy;                /*< [cm/s] Ground Y Speed (Longitude, positive east)*/
+    int16_t vz;                /*< [cm/s] Ground Z Speed (Altitude, positive down)*/
+    uint16_t hdg;              /*< [cdeg] Vehicle heading (yaw angle), 0.0..359.99 degrees. If unknown, set to: UINT16_MAX*/
 
     // Named value
 } Vehicle_Data_t;
@@ -209,7 +221,7 @@ extern "C"
 {
 #endif
 
-    extern void as_api_init(const char *subnet_address);
+    extern void as_api_init(const char *subnet_address, const unsigned int flag);
     extern void as_api_deinit();
 
     extern void as_api_vehicle_arm(uint8_t target_system, uint8_t target_autopilot);
@@ -218,7 +230,7 @@ extern "C"
 
     extern mavlink_statustext_t *as_api_statustex_queue_pop(uint8_t target_system);
 
-    extern  mavlink_named_value_float_t *as_api_named_val_float_queue_pop(guint8 target_system);
+    extern mavlink_named_value_float_t *as_api_named_val_float_queue_pop(uint8_t target_system);
 
     extern Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system);
     extern int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data);

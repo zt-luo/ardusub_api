@@ -43,17 +43,23 @@ int main(int argc, char *argv[])
     if ('1' == s)
     {
         g_message("subnet address 192.168.%c.*", s);
-        as_api_init("192.168.1.");
+        as_api_init("192.168.1.", F_THREAD_FETCH_FULL_PARAM |
+                                      F_THREAD_NAMED_VAL_FLOAT |
+                                      F_THREAD_STATUSTEX_WALL);
     }
     else if ('2' == s)
     {
         g_message("subnet address 192.168.%c.*", s);
-        as_api_init(NULL);
+        as_api_init(NULL, F_THREAD_FETCH_FULL_PARAM |
+                              F_THREAD_NAMED_VAL_FLOAT |
+                              F_THREAD_STATUSTEX_WALL);
     }
     else if ('3' == s)
     {
         g_message("connecting to serial port.");
-        as_api_init("serial port");
+        as_api_init("serial port", F_THREAD_FETCH_FULL_PARAM |
+                                       F_THREAD_NAMED_VAL_FLOAT |
+                                       F_THREAD_STATUSTEX_WALL);
     }
     else
     {
