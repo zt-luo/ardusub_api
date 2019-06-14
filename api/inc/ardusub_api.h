@@ -253,7 +253,7 @@ extern "C"
     extern void as_api_send_named_value_float(uint8_t target_system, char *name, float value);
     extern void as_api_send_named_value_int(uint8_t target_system, char *name, int value);
 
-    extern void as_api_test_start(char *test_info, char *test_note);
+    extern void as_api_test_start(const char *test_info, char *test_note);
     extern void as_api_test_stop();
 
     extern void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);

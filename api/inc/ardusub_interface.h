@@ -74,7 +74,7 @@ void as_api_send_rc_channels_override(uint8_t target_system, uint8_t target_auto
                                       uint16_t ch5, uint16_t ch6, uint16_t ch7, uint16_t ch8);
 void as_api_send_named_value_float(uint8_t target_system, char *name, float value);
 void as_api_send_named_value_int(uint8_t target_system, char *name, int value);
-void as_api_test_start(char *test_info, char *test_note);
+void as_api_test_start(const char *test_info, char *test_note);
 void as_api_test_stop();
 void as_api_depth_hold(uint8_t target_system, uint8_t cmd, float depth);
 void as_api_attitude_hold(uint8_t target_system, uint8_t cmd, float yaw, float pitch, float roll);
