@@ -428,7 +428,7 @@ void as_sql_check_test_info_table()
 
 static gint rows_count = 0;
 static const gchar *str_test_info_ptr = "";
-static gchar *str_test_note_ptr = "";
+static const gchar *str_test_note_ptr = "";
 
 /**
  * @brief insert test_info
@@ -473,7 +473,7 @@ void as_sql_insert_test_info()
  * @param test_info must not NULL
  * @param test_note nullable
  */
-void as_sql_test_start(const gchar *test_info, gchar *test_note)
+void as_sql_test_start(const gchar *test_info, const gchar *test_note)
 {
     g_assert(NULL != test_info);
 

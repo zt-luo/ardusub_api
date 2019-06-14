@@ -34,7 +34,7 @@ void as_sql_check_vechle_table(guint8 sys_id);
 void as_sql_insert_vechle_table(guint8 sys_id, Vehicle_Data_t *vehicle_data);
 void as_sql_check_test_info_table();
 void as_sql_insert_test_info();
-void as_sql_test_start(const gchar *test_info, gchar *test_note);
+void as_sql_test_start(const gchar *test_info, const gchar *test_note);
 void as_sql_test_stop();
 void as_sql_check_command_table();
 void as_sql_insert_command(as_command_t as_command);

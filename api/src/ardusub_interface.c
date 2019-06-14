@@ -1099,7 +1099,7 @@ void message_queue_push(guint8 target_system,
  * @param test_info 
  * @param test_note 
  */
-void as_api_test_start(const char *test_info, char *test_note)
+void as_api_test_start(const char *test_info, const char *test_note)
 {
     as_sql_test_start(test_info, test_note);
 }
