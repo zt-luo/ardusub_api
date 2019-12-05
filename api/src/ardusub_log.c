@@ -55,7 +55,14 @@ void as_set_log_handler()
 {
     log_str_queue = g_async_queue_new();
 
-    g_log_set_default_handler(my_log_handler, NULL);
+    // g_log_set_default_handler(my_log_handler, NULL);
+    g_log_set_handler("ardusub ini       ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub interface ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub io        ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub log       ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub msg       ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub sqlite    ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
+    g_log_set_handler("ardusub thread    ", G_LOG_LEVEL_MASK, my_log_handler, NULL);
 
     log_str_write_thread =
         g_thread_new("log_str_write_worker", &log_str_write_worker, NULL);
