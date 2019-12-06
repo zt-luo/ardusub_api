@@ -26,6 +26,7 @@ GThread *named_val_float_handle_thread[255];
 GThread *vehicle_data_update_thread[255];
 GThread *db_update_thread[255];
 GThread *statustex_wall_thread[255];
+GThread *heartbeat_thread[255];
 GThread *log_str_write_thread;
 GThread *as_api_main_thread;
 
@@ -36,6 +37,7 @@ volatile gint named_val_float_handle_worker_run[255];
 volatile gint vehicle_data_update_worker_run[255];
 volatile gint db_update_worker_run[255];
 volatile gint statustex_wall_worker_run[255];
+volatile gint heartbeat_worker_run[255];
 volatile gint log_str_write_worker_run;
 
 void as_thread_init_ptr_flag();
@@ -54,6 +56,7 @@ gpointer log_str_write_worker(gpointer data);
 gpointer serial_port_read_write_worker(gpointer data);
 gpointer db_insert_command_worker(gpointer data);
 gpointer statustex_wall_worker(gpointer data);
+gpointer heartbeat_worker(gpointer data);
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer socket_udp_write); // udp read worker

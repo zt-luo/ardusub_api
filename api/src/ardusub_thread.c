@@ -84,6 +84,11 @@ void as_thread_init_ptr_flag()
         statustex_wall_worker_run[i] = 1;
     }
 
+    for (gsize i = 0; i < 255; i++)
+    {
+        heartbeat_worker_run[i] = 1;
+    }
+
     log_str_write_worker_run = 1;
 }
 
@@ -105,7 +110,7 @@ void as_thread_stop_all_join()
         // wait serial port thread exit
         while (0 != g_atomic_int_get(&serial_port_thread_count))
         {
-            g_usleep(100);
+            as_thread_msleep(10);
         }
         g_message("exit all serial port thread.");
     }
@@ -122,6 +127,7 @@ void as_thread_stop_all_join()
             g_atomic_int_set(vehicle_data_update_worker_run + i, 0);
             g_atomic_int_set(db_update_worker_run + i, 0);
             g_atomic_int_set(statustex_wall_worker_run + i, 0);
+            g_atomic_int_set(heartbeat_worker_run + i, 0);
 
             // join
             GThread *this_thread;
@@ -130,26 +136,42 @@ void as_thread_stop_all_join()
             {
                 g_thread_join(this_thread);
             }
+            manual_control_thread[i] = NULL;
+            
             this_thread = named_val_float_handle_thread[i];
             if (NULL != this_thread)
             {
                 g_thread_join(this_thread);
             }
+            named_val_float_handle_thread[i] = NULL;
+
             this_thread = vehicle_data_update_thread[i];
             if (NULL != this_thread)
             {
                 g_thread_join(this_thread);
             }
+            vehicle_data_update_thread[i] = NULL;
+
             this_thread = db_update_thread[i];
             if (NULL != this_thread)
             {
                 g_thread_join(this_thread);
             }
+            db_update_thread[i] = NULL;
+
             this_thread = statustex_wall_thread[i];
             if (NULL != this_thread)
             {
                 g_thread_join(this_thread);
             }
+            statustex_wall_thread[i] = NULL;
+
+            this_thread = heartbeat_thread[i];
+            if (NULL != this_thread)
+            {
+                g_thread_join(this_thread);
+            }
+            heartbeat_thread[i] = NULL;
         }
     }
 
@@ -174,7 +196,7 @@ void as_thread_stop_all_join()
     // wait db_insert_command thread exit
     while (0 != g_atomic_int_get(&db_insert_command_thread_count))
     {
-        g_usleep(100);
+        as_thread_msleep(10);
     }
     g_message("exit all db_insert_command thread.");
 
@@ -198,7 +220,8 @@ gpointer manual_control_worker(gpointer data)
 
     while (1 == g_atomic_int_get(manual_control_worker_run + my_target_system))
     {
-        if (SYS_ARMED == g_atomic_int_get(vehicle_status + my_target_system)) // Atomic Operation
+        if (SYS_ARMED == g_atomic_int_get(vehicle_status + my_target_system) &&
+            MANUAL == g_atomic_int_get(vehicle_mode + my_target_system)) // Atomic Operation
         {
             g_rw_lock_reader_lock(&manual_control_hash_table_lock);
             mavlink_manual_control_t *my_manual_control =
@@ -217,11 +240,13 @@ gpointer manual_control_worker(gpointer data)
 
             g_free(safe_manual_control); // free
 
-            g_usleep(100000);
+            // g_usleep(100000);
+            as_thread_msleep(100);
         }
         else
         {
-            g_usleep(100);
+            // g_usleep(100000);
+            as_thread_msleep(20);
         }
     }
 
@@ -326,19 +351,19 @@ gpointer request_data_stream_worker(gpointer data)
     // g_message("start request_data_stream.");
 
     as_send_request_data_stream(target_system, target_component,
-                                1, 2, 1);
+                                1, 10, 1);
     as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
-                                2, 2, 1);
+                                2, 4, 1);
     as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
-                                3, 2, 1);
+                                3, 4, 1);
     as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
-                                6, 3, 1);
+                                6, 10, 1);
     as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
-                                10, 20, 1);
+                                10, 10, 1);
     as_thread_msleep(500);
     as_send_request_data_stream(target_system, target_component,
                                 11, 10, 1);
@@ -368,7 +393,7 @@ gpointer named_val_float_handle_worker(gpointer data)
     while (NULL == g_atomic_pointer_get(
                        named_val_float_queue + my_target_system))
     {
-        g_usleep(100);
+        as_thread_msleep(100);
     }
 
     mavlink_named_value_float_t *my_named_value_float =
@@ -385,7 +410,7 @@ gpointer named_val_float_handle_worker(gpointer data)
         }
         else
         {
-            g_usleep(10000);
+            as_thread_msleep(10);
         }
 
         my_named_value_float =
@@ -411,7 +436,7 @@ gpointer vehicle_data_update_worker(gpointer data)
 
     while (NULL == g_atomic_pointer_get(vehicle_data_array + my_target_system))
     {
-        g_usleep(10);
+        as_thread_msleep(10);
     }
 
     Vehicle_Data_t *my_vehicle_data = g_atomic_pointer_get(vehicle_data_array + my_target_system);
@@ -595,7 +620,7 @@ gpointer vehicle_data_update_worker(gpointer data)
         }
         else
         {
-            g_usleep(100);
+            as_thread_msleep(10);
         }
         my_mavlink_message = message_queue_pop(my_target_system);
     }
@@ -626,7 +651,7 @@ gpointer db_update_worker(gpointer data)
     {
         as_sql_insert_vechle_table(my_target_system, my_vehicle_data);
 
-        g_usleep(10000);
+        as_thread_msleep(10);
     }
 
     // stop test
@@ -662,7 +687,7 @@ gpointer log_str_write_worker(gpointer data)
         }
         else
         {
-            g_usleep(10000);
+            as_thread_msleep(10);
         }
 
         log_str = pop_log_str();
@@ -764,7 +789,7 @@ gpointer serial_port_read_write_worker(gpointer data)
 
     while (NULL == as_main_loop)
     {
-        g_usleep(100);
+        as_thread_msleep(10);
         g_message("wait main loop");
     }
 
@@ -858,11 +883,29 @@ gpointer statustex_wall_worker(gpointer data)
         }
         else
         {
-            g_usleep(10000);
+            as_thread_msleep(10);
         }
     }
 
     g_message("exit statustex_wall_worker.");
+
+    return NULL;
+}
+
+gpointer heartbeat_worker(gpointer data)
+{
+    g_assert(NULL != data);
+
+    guint8 my_target_system = *(guint8 *)data;
+
+    while (1 == g_atomic_int_get(heartbeat_worker_run + my_target_system))
+    {
+        send_heartbeat(my_target_system);
+
+        as_thread_msleep(500);
+    }
+
+    g_message("exit heartbeat_worker.");
 
     return NULL;
 }
