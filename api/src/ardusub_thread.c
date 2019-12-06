@@ -99,7 +99,7 @@ void as_thread_init_ptr_flag()
 void as_thread_stop_all_join()
 {
     // exit main loop
-    if (g_main_loop_is_running(as_main_loop))
+    if (as_main_loop != NULL && TRUE == g_main_loop_is_running(as_main_loop))
     {
         g_main_loop_quit(as_main_loop);
     }
@@ -914,7 +914,7 @@ void as_thread_msleep(gint ms)
 {
     for (gint i = 0; i < ms; i++)
     {
-        if (TRUE == g_main_loop_is_running(as_main_loop))
+        if (as_main_loop != NULL && TRUE == g_main_loop_is_running(as_main_loop))
         {
             g_usleep(1000);
         }
