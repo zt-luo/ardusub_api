@@ -107,7 +107,7 @@ void as_handle_message_id(mavlink_message_t message,
         // g_message("heartbeat msg from system:%d", current_messages->sysid);
 
         // send heartbeat
-        send_heartbeat(target_system);
+        // send_heartbeat(target_system);
 
         queue_push = TRUE;
 
@@ -166,9 +166,10 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
     {
-        //g_print("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
+        // g_print("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
         mavlink_msg_global_position_int_decode(&message, &(current_messages->global_position_int));
         current_messages->time_stamps.global_position_int = g_get_monotonic_time();
+        // g_print("POSITION_INT\n");
         queue_push = TRUE;
         break;
     }
@@ -202,6 +203,7 @@ void as_handle_message_id(mavlink_message_t message,
         // g_print("MAVLINK_MSG_ID_ATTITUDE\n");
         mavlink_msg_attitude_decode(&message, &(current_messages->attitude));
         current_messages->time_stamps.attitude = g_get_monotonic_time();
+        // g_printf("ATTITUDE\n");
         queue_push = TRUE;
 
         break;
@@ -235,7 +237,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.named_value_float = g_get_monotonic_time();
         // g_print(current_messages->named_value_float.name);
         // g_print(": %f \n", current_messages->named_value_float.value);
-        named_val_float_queue_push(target_system, current_messages);
+        as_handle_named_value_float(target_system, current_messages);
         break;
     }
 
@@ -348,6 +350,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.scaled_pressure2 = g_get_monotonic_time();
         queue_push = TRUE;
 
+        g_print("SCALED_PRESSURE2\n");
         break;
     }
 
@@ -480,4 +483,60 @@ void as_handle_message_id(mavlink_message_t message,
     {
         message_queue_push(target_system, current_messages);
     }
+}
+
+void as_handle_named_value_float(guint8 target_system,
+                                 Mavlink_Messages_t *current_messages)
+{
+    g_assert(NULL != current_messages);
+
+    mavlink_named_value_float_t msg = current_messages->named_value_float;
+
+    guint8 my_target_system = target_system;
+
+    if (NULL == g_atomic_pointer_get(vehicle_data_array + my_target_system))
+    {
+        return;
+    }
+
+    Vehicle_Data_t *my_vehicle_data = g_atomic_pointer_get(vehicle_data_array + my_target_system);
+    g_assert(NULL != my_vehicle_data);
+
+    if (0 == g_ascii_strncasecmp(msg.name, "CamTilt", 10))
+    {
+        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+        my_vehicle_data->CamTilt = msg.value;
+        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
+
+        return;
+    }
+
+    if (0 == g_ascii_strncasecmp(msg.name, "CamPan", 10))
+    {
+        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+        my_vehicle_data->CamPan = msg.value;
+        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
+
+        return;
+    }
+
+    if (0 == g_ascii_strncasecmp(msg.name, "Lights1", 10))
+    {
+        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+        my_vehicle_data->Lights1 = msg.value;
+        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
+
+        return;
+    }
+
+    if (0 == g_ascii_strncasecmp(msg.name, "Lights2", 10))
+    {
+        g_mutex_lock(&vehicle_data_mutex[my_target_system]);
+        my_vehicle_data->Lights2 = msg.value;
+        g_mutex_unlock(&vehicle_data_mutex[my_target_system]);
+
+        return;
+    }
+
+    named_val_float_queue_push(target_system, current_messages);
 }

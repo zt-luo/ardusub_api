@@ -17,13 +17,14 @@
 //   Variables
 // ------------------------------------------------------------------------------
 
-guint sys_count;
-gboolean as_init_status;
-unsigned int thread_flag;
+volatile guint sys_count;
+volatile gboolean as_init_status;
+volatile unsigned int thread_flag;
 
 // atomic operations should apply on this
 guint8 *sys_key[255];
 system_status_t vehicle_status[255];
+control_mode_t vehicle_mode[255];
 
 // maybe a hash table is no need, a simple array is enough
 GHashTable *message_hash_table;
@@ -92,7 +93,7 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
                    GSocket *current_target_socket,
                    guint8 *current_targer_serial_port);
 
-Mavlink_Messages_t *as_get_meaasge(uint8_t sysid);
+Mavlink_Messages_t *as_get_message(uint8_t sysid);
 
 void as_request_full_parameters(guint8 target_system, guint8 target_component);
 

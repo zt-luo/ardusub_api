@@ -179,6 +179,10 @@ typedef struct Vehicle_Data_s
     uint16_t hdg;              /*< [cdeg] Vehicle heading (yaw angle), 0.0..359.99 degrees. If unknown, set to: UINT16_MAX*/
 
     // Named value
+    float CamTilt;
+    float CamPan;
+    float Lights1;
+    float Lights2;
 } Vehicle_Data_t;
 
 // Auto Pilot Modes enumeration

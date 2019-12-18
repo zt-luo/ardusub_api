@@ -117,6 +117,27 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "Launch simple_example(Linux)",
+            //"preLaunchTask": "build",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/examples/simple_example",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}/build/examples",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

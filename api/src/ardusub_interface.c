@@ -28,6 +28,11 @@ void as_api_init(const char *p_subnet_address, const unsigned int flag)
     {
         // initialize
 
+        for (size_t i = 0; i < 255; i++)
+        {
+            vehicle_mode[i] = MANUAL;
+        }
+
         thread_flag = flag;
 
         if (NULL == p_subnet_address)
@@ -191,6 +196,9 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
 
     g_atomic_pointer_set(sys_key + target_system, p_sysid);
 
+    heartbeat_thread[target_system] =
+        g_thread_new("heartbeat_worker", &heartbeat_worker, p_sysid);
+
     if (thread_flag & F_THREAD_FETCH_FULL_PARAM)
     {
         as_request_full_parameters(target_system, target_autopilot);
@@ -239,13 +247,10 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 {
     uint8_t sys_id = 1;
 
-    if (sys_count > 1)
-    {
-        va_list ap;
-        va_start(ap, 1);
-        sys_id = va_arg(ap, int);
-        va_end(ap);
-    }
+    va_list ap;
+    va_start(ap, 1);
+    sys_id = va_arg(ap, int);
+    va_end(ap);
 
     if (0 == as_api_check_vehicle(sys_id))
     {
@@ -266,6 +271,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
     g_rw_lock_reader_unlock(&manual_control_hash_table_lock);
 
     g_mutex_lock(&manual_control_mutex[sys_id]); // lock
+    p_manual_control->target = sys_id;
     p_manual_control->x = x;
     p_manual_control->y = y;
     p_manual_control->z = z;
@@ -275,7 +281,7 @@ void as_api_manual_control(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t 
 }
 
 /**
- * @brief get vechicle data.
+ * @brief get vehicles data.
  * 
  * @param target_system 
  * @return Vehicle_Data_t* 
@@ -286,6 +292,7 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
     {
         g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
+        return NULL;
     }
 
     static Vehicle_Data_t *last_vehicle_data;
@@ -313,10 +320,10 @@ Vehicle_Data_t *as_api_get_vehicle_data(uint8_t target_system)
 }
 
 /**
- * @brief get vechicle data 2.
+ * @brief get vehicles data 2.
  * 
  * @param target_system 
- * @return Vehicle_Data_t* 
+ * @return int 1 for success
  */
 int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data)
 {
@@ -324,15 +331,13 @@ int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data
     {
         g_warning("no vehicle id:%d, in file: %s, func: %s, line: %d",
                   target_system, __FILE__, __FUNCTION__, __LINE__);
-    }
-    else
-    {
         return 0;
     }
 
     g_mutex_lock(&vehicle_data_mutex[target_system]);
-    vehicle_data = g_memdup(
-        g_atomic_pointer_get(vehicle_data_array + target_system),
+    memcpy(
+        (void *)vehicle_data,
+        (void *)g_atomic_pointer_get(vehicle_data_array + target_system),
         sizeof(Vehicle_Data_t));
     g_mutex_unlock(&vehicle_data_mutex[target_system]);
 
@@ -342,12 +347,12 @@ int as_api_get_vehicle_data2(uint8_t target_system, Vehicle_Data_t *vehicle_data
 }
 
 /**
- * @brief get meaasge
+ * @brief get message
  * 
  * @param sysid 
  * @return Mavlink_Messages_t* 
  */
-Mavlink_Messages_t *as_get_meaasge(uint8_t sysid)
+Mavlink_Messages_t *as_get_message(uint8_t sysid)
 {
     gpointer system_key_ = g_atomic_pointer_get(sys_key + sysid);
     g_assert(NULL != system_key_);
@@ -457,6 +462,10 @@ void as_api_set_mode(uint8_t target_system, control_mode_t mode)
     mavlink_msg_set_mode_encode(STATION_SYSYEM_ID, STATION_COMPONENT_ID, &message, &set_mode);
 
     send_mavlink_message(target_system, &message);
+
+    printf("sys_id: %d, set mode to %d \n", target_system, mode);
+
+    g_atomic_int_set(vehicle_mode + target_system, mode);
 }
 
 /**
@@ -1009,7 +1018,7 @@ void named_val_float_queue_push(guint8 target_system,
     }
 
     gpointer named_val_float_p = g_memdup(&current_messages->named_value_float,
-                                          sizeof(mavlink_statustext_t));
+                                          sizeof(mavlink_named_value_float_t));
 
     if (NULL == named_val_float_p)
     {
