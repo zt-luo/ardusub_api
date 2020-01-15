@@ -42,6 +42,10 @@ void as_api_init(const char *p_subnet_address, const unsigned int flag)
         else if (0 == g_strcmp0(p_subnet_address, "serial port"))
         {
             subnet_address = NULL;
+
+            #ifdef NO_SERISL
+            g_error("NO serial port support on Windows!");
+            #endif
         }
         else
         {
@@ -72,7 +76,11 @@ void as_api_init(const char *p_subnet_address, const unsigned int flag)
         else
         {
             // serial port here
+#ifndef NO_SERISL
             as_serial_read_init();
+#else
+            g_error("NO serial port support on Windows!");
+#endif
         }
 
         as_api_main_thread =

@@ -3,15 +3,23 @@
 
 ## build requirement 
 
-### Windows  
+### Windows (without serial port support)  
 
-not supported yet.
+only support MinGW compilers of Msys2.  
+
+``` shell
+# x86_64
+sudo pacman -S mingw-w64-x86_64-glib2 mingw-w64-x86_64-json-glib mingw-w64-x86_64-sqlite3 
+
+# i686
+sudo pacman -S mingw-w64-i686-glib2 mingw-w64-i686-json-glib mingw-w64-i686-sqlite3 
+```
 
 ### Linux  
 
 For Arch Linux:  
 ``` shell
-sudo pacman -S glib2 libserialport sqlite json-glib
+sudo pacman -S glib2 json-glib sqlite libserialport
 ```
 
 ## Build  
@@ -19,27 +27,12 @@ sudo pacman -S glib2 libserialport sqlite json-glib
 ``` shell
 mkdir build
 cd build
+
+# use ninja
 cmake .. -GNinja
 ninja
+
+# or use make
+cmake ..
+make
 ```
-
-## LOC
-
-```
-github.com/AlDanial/cloc v 1.82  T=0.03 s (1010.7 files/s, 203287.3 lines/s)
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-C                               12            840            856           3260
-C/C++ Header                     9            159            181            476
-JSON                             3              0              0            200
-CMake                            4             53             23            107
-Markdown                         2             20              0             59
-Bourne Shell                     1              0              0              1
--------------------------------------------------------------------------------
-SUM:                            31           1072           1060           4103
--------------------------------------------------------------------------------
-```
-
-123 commits  15,307(264,666 - 249,359) ++  9,032 --
-

@@ -16,7 +16,10 @@
 #include "../inc/ardusub_interface.h"
 #include "../inc/ardusub_sqlite.h"
 
+#ifndef NO_SERISL
 gint serial_port_thread_count = 0;
+#endif
+
 gint db_insert_command_thread_count = 0;
 
 /**
@@ -104,7 +107,9 @@ void as_thread_stop_all_join()
         g_main_loop_quit(as_main_loop);
     }
     g_thread_join(as_api_main_thread);
+    g_message("exit main loop.");
 
+#ifndef NO_SERISL
     if (NULL == subnet_address) // this means serial port connection
     {
         // wait serial port thread exit
@@ -114,8 +119,7 @@ void as_thread_stop_all_join()
         }
         g_message("exit all serial port thread.");
     }
-
-    g_message("exit main loop.");
+#endif
 
     for (gsize i = 0; i < 255; i++)
     {
@@ -761,6 +765,7 @@ gboolean udp_read_callback(GIOChannel *channel,
  * @param data 
  * @return gpointer 
  */
+#ifndef NO_SERISL
 gpointer serial_port_read_write_worker(gpointer data)
 {
     struct sp_port *my_serial_port = NULL;
@@ -830,6 +835,7 @@ gpointer serial_port_read_write_worker(gpointer data)
 
     return NULL;
 }
+#endif
 
 gpointer db_insert_command_worker(gpointer data)
 {

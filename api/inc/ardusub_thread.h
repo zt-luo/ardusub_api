@@ -53,10 +53,13 @@ gpointer named_val_float_handle_worker(gpointer data);
 gpointer vehicle_data_update_worker(gpointer data);
 gpointer db_update_worker(gpointer data);
 gpointer log_str_write_worker(gpointer data);
-gpointer serial_port_read_write_worker(gpointer data);
 gpointer db_insert_command_worker(gpointer data);
 gpointer statustex_wall_worker(gpointer data);
 gpointer heartbeat_worker(gpointer data);
 gboolean udp_read_callback(GIOChannel *channel,
                            GIOCondition condition,
                            gpointer socket_udp_write); // udp read worker
+
+#ifndef NO_SERISL
+gpointer serial_port_read_write_worker(gpointer data);
+#endif

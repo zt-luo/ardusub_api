@@ -50,6 +50,7 @@
             "includePath": [
                 "${SCOOP}/apps/cutil/current/include/**",
                 "${SCOOP}/apps/cutil/current/lib/glib-2.0/include",
+                "${workspaceFolder}/api/inc",
                 "${workspaceFolder}/mavlink/v2.0/**",
                 "${workspaceFolder}/**"
             ],
@@ -57,7 +58,7 @@
                 "_DEBUG",
                 "UNICODE"
             ],
-            "intelliSenseMode": "msvc-x64",
+            "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
                     "${SCOOP}/apps/cutil/current/include/**",
@@ -67,8 +68,7 @@
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
-            },
-            "configurationProvider": "vector-of-bool.cmake-tools"
+            }
         }
     ],
     "version": 4

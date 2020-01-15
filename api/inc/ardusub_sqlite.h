@@ -26,7 +26,7 @@ typedef struct as_command_s
     float flip_trick_value;
 } as_command_t;
 
-#include "../../sqlite/sqlite3.h"
+#include <sqlite3.h>
 
 void as_sql_open_db();
 void as_sql_close_db();

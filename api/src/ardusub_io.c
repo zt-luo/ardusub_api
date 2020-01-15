@@ -58,6 +58,7 @@ void as_udp_read_init()
  * @brief serial read init
  * 
  */
+#ifndef NO_SERISL
 void as_serial_read_init()
 {
     // prepare serial_write_buf_queue
@@ -149,6 +150,7 @@ void as_serial_read_init()
 
     // sp_free_port_list(serial_port_list);
 }
+#endif
 
 /**
  * @brief serial write init
@@ -337,11 +339,13 @@ void send_mavlink_message(guint8 target_system, mavlink_message_t *message)
             g_error(error->message);
         }
     }
+#ifndef NO_SERISL
     else
     {
         // for serial port "target" is target serial chan
         serial_write_buf_queue_push(*(guint8 *)target, msg_buf, msg_len);
     }
+#endif
 
     g_mutex_unlock(&my_mutex);
 }
@@ -465,6 +469,7 @@ gchar *serial_write_buf_queue_pop(guint8 chan)
  * @param buf 
  * @param buf_len 
  */
+#ifndef NO_SERISL
 void serial_write_buf_queue_push(guint8 chan, gchar *buf, gsize buf_len)
 {
     g_assert(NULL != buf);
@@ -500,3 +505,4 @@ void serial_write_buf_queue_push(guint8 chan, gchar *buf, gsize buf_len)
     g_async_queue_push(my_serial_write_buf_queue,
                        (gpointer)serial_write_buf_p);
 }
+#endif

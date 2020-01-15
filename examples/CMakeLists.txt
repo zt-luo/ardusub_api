@@ -2,17 +2,12 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(examples VERSION 0.1.0)
 
-if (DEBUG_WITH_VS MATCHES "yes")
-
-else ()
-
 add_compile_options(-g -O0 
                     # -Wno-unused-parameter
                     -static)
                     # -shared)
 # TODO: add different compile options for different compiler
 
-endif (DEBUG_WITH_VS MATCHES "yes")
 
 set(ARDUSUB_API_LIB_INC_DIR "../api/inc")
 
@@ -26,4 +21,6 @@ add_executable(depth_pid "depth_pid.c")
 
 add_executable(depth_hold "depth_hold.c")
 
+if(with_serial)
 add_executable(libserialport_example "libserialport_example.c")
+endif(with_serial)

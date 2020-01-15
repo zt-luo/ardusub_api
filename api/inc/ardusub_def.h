@@ -28,7 +28,6 @@
 #include <ardupilotmega/mavlink.h>
 /******* MAVlink *******/
 
-#include <libserialport.h>
 
 #include "ardusub_io.h"
 #include "ardusub_api.h"
