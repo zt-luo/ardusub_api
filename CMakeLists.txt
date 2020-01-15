@@ -26,6 +26,17 @@ else ()
 
 endif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 
+if (CMAKE_COMPILER_IS_GNUCC)
+message(STATUS "Using gcc for c")
+else (CMAKE_COMPILER_IS_GNUCC)
+message(FATAL_ERROR "only support gcc!")
+endif (CMAKE_COMPILER_IS_GNUCC)
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+message(STATUS "Using g++ for cpp")
+else (CMAKE_COMPILER_IS_GNUCXX)
+message(FATAL_ERROR "only support g++!")
+endif (CMAKE_COMPILER_IS_GNUCXX)
 
 add_compile_options(-std=c99
                     -W -Wall)

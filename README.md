@@ -3,6 +3,8 @@
 
 ## build requirement 
 
+only support gcc/g++.
+
 ### Windows (without serial port support)  
 
 only support MinGW compilers of Msys2.  
