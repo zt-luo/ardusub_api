@@ -4,8 +4,9 @@ project(ardusub VERSION 0.1.0)
 
 # compile options
 add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 
-                    -Wshadow -Wunreachable-code -Wpointer-arith -Wcast-qual -Wcast-align 
-                    -Wno-varargs 
+                    -Wall -Wextra -Wshadow -Wunreachable-code -Wpointer-arith 
+                    -Wcast-qual -Wcast-align 
+                    -Wno-varargs -Wno-address-of-packed-member
                     # -shared)
                     -static)
 # TODO: separate debug options
