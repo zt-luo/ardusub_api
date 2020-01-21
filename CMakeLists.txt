@@ -44,7 +44,7 @@ add_compile_options(-std=c99
                     -Wno-varargs -Wno-address-of-packed-member)
 
 if (CMAKE_BUILD_TYPE STREQUAL Release)
-add_compile_options(-Wno-maybe-uninitialized -Wno-ninitialized)
+add_compile_options(-Wno-maybe-uninitialized -Wno-uninitialized)
 endif ()
 
 # check and search moudles
