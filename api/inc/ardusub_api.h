@@ -41,6 +41,17 @@ typedef struct __mavlink_named_value_float_t {
 #define F_THREAD_STATUSTEX_WALL (1U)
 #define F_THREAD_NAMED_VAL_FLOAT (1U << 1)
 #define F_THREAD_FETCH_FULL_PARAM (1U << 2)
+#define F_THREAD_ALL (F_THREAD_STATUSTEX_WALL | \
+                      F_THREAD_NAMED_VAL_FLOAT | \
+                      F_THREAD_FETCH_FULL_PARAM)
+
+#define F_STORAGE_NONE (0U)
+#define F_STORAGE_DATABASE (1U << 8)
+#define F_STORAGE_LOG (1U << 9)
+#define F_STORAGE_INI (1U << 10)
+#define F_STORAGE_ALL (F_STORAGE_DATABASE | \
+                       F_STORAGE_LOG | \
+                       F_STORAGE_INI)
 
 typedef struct Vehicle_Data_s
 {

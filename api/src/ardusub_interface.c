@@ -60,13 +60,22 @@ void as_api_init(const char *p_subnet_address, const unsigned int flag)
         target_hash_table = g_hash_table_new(g_int_hash, g_int_equal);
 
         // load ini config file
-        as_read_ini_file();
+        if (thread_flag & F_STORAGE_INI)
+        {
+            as_read_ini_file();
+        }
 
         // set log handler
-        as_set_log_handler();
+        if (thread_flag & F_STORAGE_LOG)
+        {
+            as_set_log_handler();
+        }
 
         // init database
-        as_sql_open_db();
+        if (thread_flag & F_STORAGE_DATABASE)
+        {
+            as_sql_open_db();
+        }
 
         if (NULL != subnet_address)
         {
@@ -232,8 +241,11 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
         g_thread_new("vehicle_data_update_worker", &vehicle_data_update_worker, p_sysid);
 
     // init db_update_worker thread
-    db_update_thread[target_system] =
-        g_thread_new("db_update_worker", &db_update_worker, p_sysid);
+    if (thread_flag & F_STORAGE_DATABASE)
+    {
+        db_update_thread[target_system] =
+            g_thread_new("db_update_worker", &db_update_worker, p_sysid);
+    }
 
     // statustex_wall_thread
     if (thread_flag & F_THREAD_STATUSTEX_WALL)
