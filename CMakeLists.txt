@@ -43,6 +43,10 @@ add_compile_options(-std=c99
                     -Wcast-qual -Wcast-align 
                     -Wno-varargs -Wno-address-of-packed-member)
 
+if (CMAKE_BUILD_TYPE STREQUAL Release)
+add_compile_options(-Wno-maybe-uninitialized -Wno-ninitialized)
+endif ()
+
 # check and search moudles
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)

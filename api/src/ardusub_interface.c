@@ -107,7 +107,7 @@ void as_api_init(const char *p_subnet_address, const unsigned int flag)
  */
 void as_api_deinit()
 {
-    gint wait_count;
+    gint wait_count = 0;
     while (TRUE != as_init_status)
     {
         g_usleep(100000);
