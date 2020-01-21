@@ -13,6 +13,11 @@
 			"**/sqlite/*.*",
 			"**/mavlink/*/*.*",
 			"**/mavlink/*/*/*.*"
+		],
+		"todo-tree.filtering.excludeGlobs": [
+			"**/sqlite/*.*",
+			"**/mavlink/*/*.*",
+			"**/mavlink/*/*/*.*"
 		]
 	}
 }

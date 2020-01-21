@@ -305,10 +305,10 @@ void json_iterator(JsonArray *array, guint index_,
     g_object_unref(reader);
 }
 
-void as_handle_message_id(mavlink_message_t message)
+void as_handle_message_id(mavlink_message_t msg)
 {
     // Handle Message ID
-    switch (message.msgid)
+    switch (msg.msgid)
     {
 
         /* MAY THE SOURCE BE WITH YOU */
@@ -316,7 +316,7 @@ void as_handle_message_id(mavlink_message_t message)
     case MAVLINK_MSG_ID_HEARTBEAT:
     {
         mavlink_heartbeat_t hb;
-        mavlink_msg_heartbeat_decode(&message, &hb);
+        mavlink_msg_heartbeat_decode(&msg, &hb);
 
         g_print("HEARTBEAT(#0) -> ");
         g_print("type:%d, autopilot:%d, base_mode:%d, custom_mode:%d, system_status:%d, mavlink_version:%d \n",
@@ -330,10 +330,10 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_system_time_t st;
 
-        mavlink_msg_system_time_decode(&message, &st);
+        mavlink_msg_system_time_decode(&msg, &st);
 
         g_print("SYSTEM_TIME(#2) -> ");
-        g_print("time_unix_usec:%lu, time_boot_ms:%d \n",
+        g_print("time_unix_usec:%llu, time_boot_ms:%d \n",
                 st.time_unix_usec, st.time_boot_ms);
 
         break;
@@ -343,7 +343,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_param_request_read_t prr;
 
-        mavlink_msg_param_request_read_decode(&message, &prr);
+        mavlink_msg_param_request_read_decode(&msg, &prr);
 
         g_print("PARAM_REQUEST_READ(#20) -> ");
         g_print("target_system:%d, target_component:%d, param_id:%s, param_index:%d \n",
@@ -357,7 +357,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_param_request_list_t prl;
 
-        mavlink_msg_param_request_list_decode(&message, &prl);
+        mavlink_msg_param_request_list_decode(&msg, &prl);
 
         g_print("PARAM_REQUEST_LIST(#21) -> ");
         g_print("target_system:%d, target_component:%d \n",
@@ -370,7 +370,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_mission_request_list_t mrl;
 
-        mavlink_msg_mission_request_list_decode(&message, &mrl);
+        mavlink_msg_mission_request_list_decode(&msg, &mrl);
 
         g_print("MISSION_REQUEST_LIST(#43) -> ");
         g_print("target_system:%d, target_component:%d, mission_type:%d \n",
@@ -383,7 +383,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_mission_ack_t ma;
 
-        mavlink_msg_mission_ack_decode(&message, &ma);
+        mavlink_msg_mission_ack_decode(&msg, &ma);
 
         g_print("MISSION_ACK(#47) -> ");
         g_print("target_system:%d, target_component:%d, type:%d, mission_type:%d \n",
@@ -396,7 +396,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_request_data_stream_t rds;
 
-        mavlink_msg_request_data_stream_decode(&message, &rds);
+        mavlink_msg_request_data_stream_decode(&msg, &rds);
 
         g_print("REQUEST_DATA_STREAM(#66) -> ");
         g_print("target_system:%d, target_component:%d, req_stream_id:%d, ",
@@ -410,7 +410,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_manual_control_t mc;
 
-        mavlink_msg_manual_control_decode(&message, &mc);
+        mavlink_msg_manual_control_decode(&msg, &mc);
 
         g_print("MANUAL_CONTROL(#69) -> ");
         g_print("target:%d, x:%d, y:%d, z:%d, r:%d, buttons:%d \n",
@@ -423,7 +423,7 @@ void as_handle_message_id(mavlink_message_t message)
     {
         mavlink_command_long_t cl;
 
-        mavlink_msg_command_long_decode(&message, &cl);
+        mavlink_msg_command_long_decode(&msg, &cl);
 
         g_print("COMMAND_LONG (#76) -> ");
         g_print("target_system:%d, target_component:%d, command:%d, confirmation:%d, ",

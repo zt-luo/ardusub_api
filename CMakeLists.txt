@@ -39,7 +39,9 @@ message(FATAL_ERROR "only support g++!")
 endif (CMAKE_COMPILER_IS_GNUCXX)
 
 add_compile_options(-std=c99
-                    -W -Wall)
+                    -W -Wall -Wextra -Wshadow -Wunreachable-code -Wpointer-arith 
+                    -Wcast-qual -Wcast-align 
+                    -Wno-varargs -Wno-address-of-packed-member)
 
 # check and search moudles
 find_package(PkgConfig REQUIRED)

@@ -175,12 +175,14 @@ void as_system_add(guint8 target_system, guint8 target_autopilot,
         g_hash_table_insert(target_hash_table, p_sysid, current_target_socket);
     }
 
+#ifndef NO_SERISL
     if (NULL != current_targer_serial_chan)
     {
         // serial port
         as_serial_write_init();
         g_hash_table_insert(target_hash_table, p_sysid, current_targer_serial_chan);
     }
+#endif
 
     mavlink_manual_control_t *p_manual_control = g_new0(mavlink_manual_control_t, 1);
     p_manual_control->z = 500; // 500 is z axis zero leval

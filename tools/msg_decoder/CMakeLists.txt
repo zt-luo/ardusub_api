@@ -4,6 +4,7 @@ project(decoder VERSION 0.1.0)
 
 add_compile_options(-g -O0 
                     # -Wno-unused-parameter 
+                    -Wno-cast-qual
                     -static)
 
 pkg_check_modules(JSON_GLIB REQUIRED json-glib-1.0)

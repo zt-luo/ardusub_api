@@ -3,10 +3,7 @@ cmake_minimum_required(VERSION 3.13.0)
 project(ardusub VERSION 0.1.0)
 
 # compile options
-add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS -g -O0 
-                    -Wall -Wextra -Wshadow -Wunreachable-code -Wpointer-arith 
-                    -Wcast-qual -Wcast-align 
-                    -Wno-varargs -Wno-address-of-packed-member
+add_compile_options(-DGLIB_DISABLE_DEPRECATION_WARNINGS
                     # -shared)
                     -static)
 # TODO: separate debug options
