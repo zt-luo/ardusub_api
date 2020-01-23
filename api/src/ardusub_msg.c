@@ -351,7 +351,7 @@ void as_handle_message_id(mavlink_message_t message,
         current_messages->time_stamps.scaled_pressure2 = g_get_monotonic_time();
         queue_push = TRUE;
 
-        g_print("SCALED_PRESSURE2\n");
+        // g_print("SCALED_PRESSURE2\n");
         break;
     }
 
