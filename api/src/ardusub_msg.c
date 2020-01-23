@@ -166,7 +166,7 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
     {
-        // g_print("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
+        // g_message("MAVLINK_MSG_ID_GLOBAL_POSITION_INT\n");
         mavlink_msg_global_position_int_decode(&message, &(current_messages->global_position_int));
         current_messages->time_stamps.global_position_int = g_get_monotonic_time();
         // g_print("POSITION_INT\n");
@@ -200,10 +200,11 @@ void as_handle_message_id(mavlink_message_t message,
 
     case MAVLINK_MSG_ID_ATTITUDE:
     {
-        // g_print("MAVLINK_MSG_ID_ATTITUDE\n");
+        // g_message("MAVLINK_MSG_ID_ATTITUDE\n");
         mavlink_msg_attitude_decode(&message, &(current_messages->attitude));
         current_messages->time_stamps.attitude = g_get_monotonic_time();
         // g_printf("ATTITUDE\n");
+        // g_message("yaw: %f, pitch: %f, roll: %f.", current_messages->attitude.yaw, current_messages->attitude.pitch, current_messages->attitude.roll);
         queue_push = TRUE;
 
         break;

@@ -353,6 +353,7 @@ gpointer request_data_stream_worker(gpointer data)
     target_component &= target_;
 
     // g_message("start request_data_stream.");
+    // g_message("target_system: %d, target_component: %d.", target_system, target_component);
 
     as_send_request_data_stream(target_system, target_component,
                                 1, 10, 1);
